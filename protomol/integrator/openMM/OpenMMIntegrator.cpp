@@ -249,7 +249,7 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
     unsigned int numRBDih = app->topology->rb_dihedrals.size();
 
 #ifdef DEBUG
-  mFile << "RBDihedrals " << numRBDihNz << std::endl;
+  mFile << "RBDihedrals " << numRBDih << std::endl;
 #endif
 
     RBDihedral = new OpenMM::RBTorsionForce();
@@ -306,7 +306,7 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
       Real mass = app->topology->atoms[i].scaledMass;
       //
 #ifdef DEBUG
-      mFile << charge << " " << mass << std::endl;  
+      mFile << charge << " " << mass << " " << sigma * Constant::ANGSTROM_NM << " " << epsilon * Constant::KCAL_KJ << std::endl;  
 #endif
         
       nonbonded->addParticle( charge, sigma * Constant::ANGSTROM_NM , epsilon * Constant::KCAL_KJ );
@@ -318,8 +318,9 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
 #endif
 
     //1-4 interactions, note fudgeQQ set to 0.6059 and fudgeLJ set to 0.33333.
-    std::vector<NBForce> mForces;
-
+#ifdef DEBUG
+    std::vector<NBForce> mForces, mForcesF;
+#endif
 
     for (unsigned int i = 0; i < exclSz; i++){
         
@@ -329,8 +330,11 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
       //full exclusion?
       if ((app->topology->exclusions.getTable())[i].excl == EXCLUSION_FULL) {
           
-          nonbonded->addException( atom1, atom2, 0.0, 0.0, 0.0 );
-            
+          nonbonded->addException( atom1, atom2, 0.0, 1.0, 0.0 );
+
+#ifdef DEBUG
+          mForcesF.push_back( NBForce( atom1, atom2, 0.0, 1.0, 0.0 ) );
+#endif
       }
         
       //modified exclusion?
@@ -340,35 +344,44 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
         unsigned int type2 = app->topology->atoms[atom2].type;
         Real sigma = 0.5 * (app->topology->atomTypes[type1].sigma +
                               app->topology->atomTypes[type2].sigma);
-        Real epsilon = sqrt(app->topology->atomTypes[type1].epsilon * 
+        Real epsilon = app->topology->LJScalingFactor * 
+                          sqrt(app->topology->atomTypes[type1].epsilon * 
                               app->topology->atomTypes[type2].epsilon);
-        Real chargeij =  //app->topology->coulombScalingFactor * //FudgeQQ
+        Real chargeij =  app->topology->coulombScalingFactor * //FudgeQQ
                           (app->topology->atoms[atom1].scaledCharge / Constant::SQRTCOULOMBCONSTANT) *
                             (app->topology->atoms[atom2].scaledCharge / Constant::SQRTCOULOMBCONSTANT); 
 
-
-        mForces.push_back( NBForce( atom1, atom2, chargeij, sigma, epsilon ) );
 #ifdef DEBUG
-        mFile << i << " " << atom1 << " " << atom2 << " " << chargeij << " " << 
-            sigma << " " << epsilon << std::endl;  
+        mForces.push_back( NBForce( atom1, atom2, chargeij, sigma * Constant::ANGSTROM_NM, epsilon * Constant::KCAL_KJ ) );
 #endif
-          
         nonbonded->addException( atom1, atom2, chargeij, sigma * Constant::ANGSTROM_NM, epsilon * Constant::KCAL_KJ);
           
       }
     }
   
-    std::sort( mForces.begin(), mForces.end() );
-
 #ifdef DEBUG
-    mFile << "NonBonded 1-4 Force " << exclSzMod << std::endl;
+    std::sort( mForces.begin(), mForces.end() );
+    std::sort( mForcesF.begin(), mForcesF.end() );
+
+    mFile << "NonBonded 1-4 Force " << mForces.size() << std::endl;//exclSzMod
 
     for( unsigned int i = 0; i < mForces.size(); i++){
       const NBForce &temp = mForces[i];
       
-      mFile  << temp.atom1 << " " << temp.atom2 << " " << temp.charge << " " << temp.sigma << " " << temp.epsilon << " " << temp.c6 << " " << temp.c12 << std::endl;
+      mFile  << temp.atom1 << " " << temp.atom2 << " " << temp.charge << " " << temp.sigma << " " << 
+          temp.epsilon << std::endl;
     }
     mFile << std::endl;
+
+    mFile << "NonBonded Full force " << mForcesF.size() << std::endl;//exclSzMod
+
+    for( unsigned int i = 0; i < mForcesF.size(); i++){
+      const NBForce &temp = mForcesF[i];
+      
+      mFile  << temp.atom1 << " " << temp.atom2 << std::endl;
+    }
+    mFile << std::endl;
+
 #endif
 
   }
