@@ -848,7 +848,7 @@ void ProtoMol::buildTopology(GenericTopology *topo, const PSF &psf,
     } else if ( name[0] == 'P') {
        tempatom->myGBSA_T->scalingFactor = 0.86;
     } else if (name[0] == 'S') {
-       tempatom->myGBSA_T->scalingFactor = 0.85;
+       tempatom->myGBSA_T->scalingFactor = 0.96;
     } else {
        tempatom->myGBSA_T->scalingFactor = 0.8;
     }
