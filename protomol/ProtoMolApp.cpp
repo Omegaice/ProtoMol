@@ -309,7 +309,7 @@ bool ProtoMolApp::step(unsigned inc) {
   if (outputs->run(currentStep)) {
 #ifdef HAVE_LIBFAH
     // Make sure we save the latest checksum information after writing data.
-    FAH::Core::instance().checkpoint();
+    if (FAH::Core::isActive()) FAH::Core::instance().checkpoint();
 #endif
   }
 

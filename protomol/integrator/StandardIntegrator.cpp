@@ -84,18 +84,7 @@ void StandardIntegrator::calculateForces() {
   myPotEnergy = app->energies.potentialEnergy() - myPotEnergy;
 
 #ifdef HAVE_LIBFAH
-  static bool fahCoreActive = true;
-  if (fahCoreActive) {
-    FAH::Core *core = 0;
-    try {
-      core = &FAH::Core::instance();
-    } catch (const FAH::Exception &e) {
-      report << warning << "Built for FAH but Core not active" << endr;
-      fahCoreActive = false;
-    }
-
-    if (core) core->checkIn();
-  }
+  if (FAH::Core::isActive()) FAH::Core::instance().checkIn();
 #endif
 }
 
