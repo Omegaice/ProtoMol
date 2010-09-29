@@ -3,6 +3,8 @@
 
 #ifdef _WIN32
 #include "os/win32.h"
+#elif __APPLE__
+#include "os/cygwin.h"
 #elif __CYGWIN__
 #include "os/cygwin.h"
 #else
