@@ -174,7 +174,15 @@ Matrix3By3 ReducedHessGB::operator()( Real a,
 
    Real second_derivative_born = charge_i*charge_j*(1/power(fGB_ij,2))*d2fGBdrij2 - (2/power(fGB_ij,3))*dfGBdrij*dfGBdrij;
 
+   // self terms
+   second_derivative_born += power(charge_i, 2) / power(bornRad_i, 2) * (d2Ridrij2 / 2 - power( bornRadiusDerivative_ij, 2) / bornRad_i);
+   second_derivative_born += power(charge_j, 2) / power(bornRad_j, 2) * (d2Rjdrij2 / 2 - power( bornRadiusDerivative_ji, 2) / bornRad_j);
+
    Real first_derivative_born = (charge_i*charge_j)*(1/power(fGB_ij,2))*dfGBdrij;
+
+   //self terms
+   first_derivative_born += power(charge_i, 2) * bornRadiusDerivative_ij / (2 * power(bornRad_i, 2));
+   first_derivative_born += power(charge_j, 2) * bornRadiusDerivative_ji / (2 * power(bornRad_j, 2));
 
    Real d2Gikterm = 0;
    Real dGikterm = 0;

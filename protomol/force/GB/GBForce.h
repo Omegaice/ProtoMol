@@ -75,18 +75,18 @@ namespace ProtoMol {
       //Equation (16)
       energy = -(scaledCharge_i*scaledCharge_j)*(1/fGB_ij)*((1/soluteDielec) - (1/solventDielec));
 
-/*
+
       //self terms (Equation (18))
       if (!topo->atoms[atom1].myGBSA_T->doSelfForceTerm) {
-         energy -= (scaledCharge_i*scaledCharge_i)*(1/bornRad_i)*((1/soluteDielec) - (1/solventDielec));
+         energy -= 0.5 * (scaledCharge_i*scaledCharge_i)*(1/bornRad_i)*((1/soluteDielec) - (1/solventDielec));
          topo->atoms[atom1].myGBSA_T->doSelfForceTerm = true;
       }
 
       if (!topo->atoms[atom2].myGBSA_T->doSelfForceTerm) {
-         energy -= (scaledCharge_j*scaledCharge_j)*(1/bornRad_j)*((1/soluteDielec) - (1/solventDielec));
+         energy -= 0.5 * (scaledCharge_j*scaledCharge_j)*(1/bornRad_j)*((1/soluteDielec) - (1/solventDielec));
          topo->atoms[atom2].myGBSA_T->doSelfForceTerm = true;
       }
-*/
+
 
 
 
@@ -172,6 +172,12 @@ namespace ProtoMol {
      //force due to pairwise i-j term
      //Check Equation (19-20). Next line only finds the pairwise terms.
      force -= scaledCharge_i*scaledCharge_j*(1/(fGBij*fGBij))*0.5*(1/fGBij)*((2*dist - 0.5*exp(-expterm_ij)*dist) + exp(-expterm_ij)*dRidrij*(bornRad_j + (dist*dist)/(4*bornRad_i)) + exp(-expterm_ij)*dRjdrji*(bornRad_i + (dist*dist)/(4*bornRad_j)))*(1/dist);
+
+     // calculation of self (i-i and j-j) terms
+     force -= 0.5 * scaledCharge_i * scaledCharge_i * dRidrij / (bornRad_i * bornRad_i) / dist;
+       
+     force -= 0.5 * scaledCharge_j * scaledCharge_j * dRjdrji / (bornRad_j * bornRad_j) / dist;
+     //
 
      force -= Force_i_term(topo, atom1, atom2, dRidrij)*(1/dist);
 
