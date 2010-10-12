@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 #ifdef HAVE_LIBFAH
-    #include <fah/checksum/ChecksumDevice.h>
+    #include <fah/io/File.h>
 #else
     #include <fstream>
 #endif
@@ -255,7 +255,7 @@ Real HessianInt::calcQ() {
 void HessianInt::outputDiagHess(int numModes) {
   unsigned int i;
 #ifdef HAVE_LIBFAH
-  FAH::ChecksummedFile myFile;
+  FAH::File myFile;
 #else
     ofstream myFile;
 #endif

@@ -8,7 +8,7 @@
 #include <protomol/base/Timer.h>
 
 #ifdef HAVE_LIBFAH
-#include <fah/checksum/ChecksumDevice.h>
+#include <fah/io/File.h>
 
 #else
 #include <fstream>
@@ -99,7 +99,7 @@ namespace ProtoMol {
     Timer myTimer;
 
 #ifdef HAVE_LIBFAH
-    FAH::ChecksummedFile myFile;
+    FAH::File myFile;
 #else
     std::ofstream myFile;
 #endif

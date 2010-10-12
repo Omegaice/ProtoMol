@@ -7,7 +7,7 @@
 #include <protomol/base/Exception.h>
 
 #ifdef HAVE_LIBFAH
-#include <fah/checksum/ChecksumDevice.h>
+#include <fah/io/File.h>
 #else
 #include <fstream>
 #endif
@@ -33,7 +33,7 @@ namespace ProtoMol {
     std::string filename;
     std::string comment;
 #ifdef HAVE_LIBFAH
-    FAH::ChecksummedFile file;
+    FAH::File file;
 #else
     std::fstream file;
 #endif
