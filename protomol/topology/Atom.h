@@ -85,6 +85,7 @@ namespace ProtoMol {
       doneCalculateBornRadius = false;
       doSelfForceTerm = false;
       doneACEPotential = false;
+      havePartialGBForceTerms = false;
     }
 
     Real bornRad, burialTerm;
@@ -117,6 +118,12 @@ namespace ProtoMol {
 
     //flag to control calculation of i-i term
     bool doSelfForceTerm;
+
+    // For optimization purposes, we're memoizing the calculation of the forces
+    // between i and all of the other atoms.  We use a flag to determine if the
+    // force needs to be computed.
+    bool havePartialGBForceTerms;
+    Real partialGBForceTerms;
 
     //flag for setting ACE potential
     bool doneACEPotential;
