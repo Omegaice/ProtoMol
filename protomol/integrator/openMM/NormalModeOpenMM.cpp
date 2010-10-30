@@ -33,7 +33,7 @@ namespace ProtoMol {
 
   void NormalModeOpenMM::initialize(ProtoMolApp* app){
 
-      report << plain << "Vectors " << app->eigenInfo.myNumEigenvectors << " " << app->eigenInfo.myNumUsedEigenvectors << " " << app->eigenInfo.myEigenvectorLength << endr;
+    report << plain << "OpenMM NML Vector information: Vector number " << app->eigenInfo.myNumEigenvectors << ", length " << app->eigenInfo.myEigenvectorLength << "." << endr;
     //NM initialization
     NormalModeUtilities::initialize((int)app->positions.size(), app,
 				    myForces, NO_NM_FLAGS);
@@ -54,7 +54,6 @@ namespace ProtoMol {
   }
 
   void NormalModeOpenMM::run(int numTimesteps) {
-            report << plain << "Vectors " << app->eigenInfo.myNumEigenvectors << " " << app->eigenInfo.myNumUsedEigenvectors << " " << app->eigenInfo.myEigenvectorLength << endr;
 
     if( numTimesteps < 1 ){
         return;
