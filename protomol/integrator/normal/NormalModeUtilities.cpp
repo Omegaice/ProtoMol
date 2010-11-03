@@ -76,7 +76,7 @@ namespace ProtoMol {
     _rfM = numMode + (firstMode-1);
     //Degrees of freedom
     myTopo->degreesOfFreedom = _rfM - (firstMode-1);
-    if(firstMode == 1) myTopo->degreesOfFreedom -= 3;
+    //Removed 11/03/2010 by CRS, correct temperature calculated when assuming NO conserved DOF: if(firstMode == 1) myTopo->degreesOfFreedom -= 3;
     //temporary mode space variable for intermediate calculations
     tmpC = new double[_3N];
     //define temporary position/force vector
