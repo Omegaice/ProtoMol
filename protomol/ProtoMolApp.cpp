@@ -24,6 +24,7 @@
 
 #include <protomol/topology/GenericTopology.h>
 #include <protomol/topology/BuildTopology.h>
+#include <protomol/topology/BuildTopologyFromTpr.h>
 #include <protomol/topology/TopologyUtilities.h>
 
 #include <protomol/output/OutputCollection.h>
@@ -138,99 +139,129 @@ bool ProtoMolApp::configure(const vector<string> &args) {
 }
 
 void ProtoMolApp::build() {
-  // Read data
-  modManager->read(this);
+
+  //TPR input for topology, positions and velocities?
+  //Then check for Gromacs support
+#if defined (HAVE_GROMACS)
+#else
+  if( config.valid(InputGromacsTprFile::keyword) ){
+      THROW(string("GROMACS support not available for '") +
+          config[InputGromacsTprFile::keyword].getString() + "'.");
+  }
+#endif
+
+  //floag for TPR
+  bool GROMACRTPR(false);
+
+  //test TPR file
+  if( config.valid(InputGromacsTprFile::keyword) ) GROMACRTPR = true;
+
+  // Read data if not TPR
+  if( !GROMACRTPR ) modManager->read(this);
 
   // Build topology
   try {
     topology = topologyFactory.make(&config);
   } catch (const Exception &e) {
-    // Try to get some defaults with the postions known ...
-    const GenericTopology *prototype =
-      topologyFactory.find(config[GenericTopology::keyword].getString());
 
-    if (prototype) {
-      vector<Parameter> parameters = prototype->getDefaults(positions);
+      if( !GROMACRTPR ){
+        // Try to get some defaults with the postions known ...
+        const GenericTopology *prototype =
+          topologyFactory.find(config[GenericTopology::keyword].getString());
 
-      for (unsigned int i = 0; i < parameters.size(); i++)
-        if (!config.valid(parameters[i].keyword) &&
-            parameters[i].value.valid()) {
-          config.set(parameters[i].keyword, parameters[i].value);
-          report << hint << parameters[i].keyword << " undefined, using "
-                 << parameters[i].value.getString() << "." << endr;
+        if (prototype) {
+          vector<Parameter> parameters = prototype->getDefaults(positions);
+
+          for (unsigned int i = 0; i < parameters.size(); i++)
+            if (!config.valid(parameters[i].keyword) &&
+                parameters[i].value.valid()) {
+              config.set(parameters[i].keyword, parameters[i].value);
+              report << hint << parameters[i].keyword << " undefined, using "
+                     << parameters[i].value.getString() << "." << endr;
+            }
+
+          topology = topologyFactory.make(&config);
         }
-
-      topology = topologyFactory.make(&config);
-    }
+      }
 
     if (!topology) throw e;
   }
 
-  // Using SCPISM parameter? Flag or filename
-  if (config[InputDoSCPISM::keyword] || SCPISMParameters) {
+  if( !GROMACRTPR ){
 
-    if(config[InputDoSCPISM::keyword])
-       topology->doSCPISM = config[InputDoSCPISM::keyword];
+      // Using SCPISM parameter? Flag or filename
+      if (config[InputDoSCPISM::keyword] || SCPISMParameters) {
 
-    if ((topology->doSCPISM < 1 || topology->doSCPISM > 3) && !SCPISMParameters)
-      THROW("doscpism should be between 1 and 3 or an input file should be "
-            "used.");
+        if(config[InputDoSCPISM::keyword])
+           topology->doSCPISM = config[InputDoSCPISM::keyword];
 
-    if(SCPISMParameters) {
-       if(!config[InputDoSCPISM::keyword]) topology->doSCPISM = 4;
-    } else {
-      SCPISMParameters = new CoulombSCPISMParameterTable;
-      SCPISMParameters->populateTable();
-    }
+        if ((topology->doSCPISM < 1 || topology->doSCPISM > 3) && !SCPISMParameters)
+          THROW("doscpism should be between 1 and 3 or an input file should be "
+                "used.");
+
+        if(SCPISMParameters) {
+           if(!config[InputDoSCPISM::keyword]) topology->doSCPISM = 4;
+        } else {
+          SCPISMParameters = new CoulombSCPISMParameterTable;
+          SCPISMParameters->populateTable();
+        }
 
 
-    report << "SCPISM: doSCPISM set to " << topology->doSCPISM << "." << endr;
+        report << "SCPISM: doSCPISM set to " << topology->doSCPISM << "." << endr;
 
-    if (topology->doSCPISM == 3) {
-      // Quartic switch parameters
-      SCPISMParameters->myData["H"].hbond_factor = 0.4695;
-      SCPISMParameters->myData["HC"].hbond_factor = 7.2560;
-    }
+        if (topology->doSCPISM == 3) {
+          // Quartic switch parameters
+          SCPISMParameters->myData["H"].hbond_factor = 0.4695;
+          SCPISMParameters->myData["HC"].hbond_factor = 7.2560;
+        }
 
-    SCPISMParameters->displayTable();
+        SCPISMParameters->displayTable();
 
+      }
+
+      //using GBSA with openMM
+      if (config[InputDoGBSAObc::keyword]) {
+         topology->doGBSAOpenMM = 1;
+         topology->obcType = config[InputDoGBSAObc::keyword];
+
+         if (topology->obcType == 1) {
+           topology->alphaObc = 0.8;
+           topology->betaObc = 0;
+           topology->gammaObc = 2.91;
+
+         } else if (topology->obcType == 2) {
+           //obctype = 2
+           topology->alphaObc = 1.0;
+           topology->betaObc = 0.8;
+           topology->gammaObc = 4.85;
+         }
+         topology->dielecOffset = 0.09;
+
+      }
+
+
+      //find force field type before building topology
+      if (config.valid(InputGromacsTopo::keyword) &&
+        config.valid(InputGromacsParamPath::keyword)) {
+          topology->forceFieldFlag = GROMACS;
+      }
+
+      // Build the topology
+      buildTopology(topology, psf, par, config[InputDihedralMultPSF::keyword],
+                    SCPISMParameters);
+
+  }else{
+
+      //TPR/GROMACS if here
+      topology->forceFieldFlag = GROMACS;//TPR;
+
+      // Build the topology from the tpr file
+      buildTopologyFromTpr( topology, positions, velocities,
+                            config[InputGromacsTprFile::keyword].getString() );
   }
-
-  //using GBSA with openMM
-  if (config[InputDoGBSAObc::keyword]) {
-     topology->doGBSAOpenMM = 1;
-     topology->obcType = config[InputDoGBSAObc::keyword];
-
-     if (topology->obcType == 1) {
-       topology->alphaObc = 0.8;
-       topology->betaObc = 0;
-       topology->gammaObc = 2.91;
-
-     } else if (topology->obcType == 2) {
-       //obctype = 2
-       topology->alphaObc = 1.0;
-       topology->betaObc = 0.8;
-       topology->gammaObc = 4.85;
-     }
-     topology->dielecOffset = 0.09;
-
-  }
-
-
-  //find force field type before building topology
-  if (config.valid(InputGromacsTopo::keyword) && 
-    config.valid(InputGromacsParamPath::keyword)) {
-      topology->forceFieldFlag = GROMACS; 
-  }
-
-  // Build the topology
-  buildTopology(topology, psf, par, config[InputDihedralMultPSF::keyword],
-                SCPISMParameters);
-
 
   // Register Forces
   modManager->registerForces(this);
-
 
   // Build the integrators and forces
   integrator =

@@ -38,6 +38,8 @@ defineInputValue(InputGromacsTopo, "gromacstopologyfile");
 defineInputValue(InputGromacsParamPath, "gromacsparameterpath");
 defineInputValue(InputGromacsGBParameterFile, "gromacsGBparameterfile");
 
+defineInputValue(InputGromacsTprFile, "gromacstprfile");
+
 void IOModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;
   
@@ -53,6 +55,8 @@ void IOModule::init(ProtoMolApp *app) {
   InputGromacsTopo::registerConfiguration(config);
   InputGromacsParamPath::registerConfiguration(config);
   InputGromacsGBParameterFile::registerConfiguration(config);
+
+  InputGromacsTprFile::registerConfiguration(config);
 
 }
 

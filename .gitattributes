@@ -439,6 +439,8 @@ protomol/topology/BankLennardJonesParameterTable.h -text
 protomol/topology/Bond.h -text
 protomol/topology/BuildTopology.cpp -text
 protomol/topology/BuildTopology.h -text
+protomol/topology/BuildTopologyFromTpr.cpp -text
+protomol/topology/BuildTopologyFromTpr.h -text
 protomol/topology/CellListEnumerator.h -text
 protomol/topology/CellListEnumeratorPeriodicBoundaries.h -text
 protomol/topology/CellListEnumeratorStandard.h -text
