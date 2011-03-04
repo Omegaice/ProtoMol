@@ -42,12 +42,13 @@ HessianInt::HessianInt() :
 HessianInt::HessianInt(Real timestep, string evec_s, string eval_s,
                        string hess_s, bool sorta, int fm, bool tef,
                        bool fdi, Real evt, int bvc, int rpb, Real bct,
-                       bool masswt, bool bnm, bool aparm,
+                       bool masswt, bool bnm, bool aparm, bool geo, bool num,
                        ForceGroup *overloadedForces) :
   STSIntegrator(timestep, overloadedForces), evecfile(evec_s),
   evalfile(eval_s), hessfile(hess_s), sortOnAbs(sorta), numberOfModes(fm),
   textEig(tef), fullDiag(fdi),
   massWeight(masswt), noseMass(bnm), autoParmeters(aparm),
+  geometricfdof(geo), numerichessians(num),
   eigenValueThresh(evt), blockCutoffDistance(bct),
   blockVectorCols(bvc), residuesPerBlock(rpb) {
   eigVec = 0;
@@ -176,7 +177,7 @@ void HessianInt::initialize(ProtoMolApp *app) {
   if(fullDiag){
     blockDiag.initialize(sz);
   }else{
-    blockDiag.initialize(&hsn, sz);
+    blockDiag.initialize(&hsn, sz, (StandardIntegrator *)this);
   }
   //
   totStep = 0;
@@ -228,7 +229,8 @@ void HessianInt::run(int numTimesteps) {
       max_eigenvalue = blockDiag.findEigenvectors(&app->positions, app->topology,
                                                   eigVec, sz, numberOfModes,
                                                   blockCutoffDistance, eigenValueThresh,
-                                                  blockVectorCols);
+                                                  blockVectorCols,
+						  geometricfdof, numerichessians);
       residues_total_eigs = blockDiag.residues_total_eigs;
     }
     report << hint << "[HessianInt::Find Hessian] Hessian found!" << endr;
@@ -459,12 +461,21 @@ void HessianInt::getParameters(vector<Parameter> &parameters) const {
     (Parameter("autoParameters",
                Value(autoParmeters, ConstraintValueType::NoConstraints()),
                false, Text("Automatically generate diagonalization parameters.")));
+  parameters.push_back
+    (Parameter("geometricfdof",
+               Value(geometricfdof, ConstraintValueType::NoConstraints()),
+               false, Text("Calculate fixed degrees of freedom geometrically.")));
+  parameters.push_back
+    (Parameter("numericHessians",
+               Value(numerichessians, ConstraintValueType::NoConstraints()),
+               false, Text("Calculate Hessians numerically.")));
 }
 
 STSIntegrator *HessianInt::doMake(const vector<Value> &values,
                                   ForceGroup *fg) const {
   return new HessianInt(values[0], values[1], values[2], values[3], values[4],
                         values[5], values[6], values[7], values[8], values[9],
-                        values[10], values[11], values[12], values[13], values[14], fg);
+                        values[10], values[11], values[12], values[13], 
+                        values[14], values[15], values[16], fg);
 }
 

@@ -49,7 +49,9 @@ namespace ProtoMol {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Initialize for Block Hessians
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  void BlockHessianDiagonalize::initialize(BlockHessian * bHessIn, const int sz) {
+  void BlockHessianDiagonalize::initialize(BlockHessian * bHessIn, 
+                        const int sz, StandardIntegrator *intg) {
+  this->intg = intg;
 
 #if defined (HAVE_LAPACK)
 #else
@@ -58,6 +60,7 @@ namespace ProtoMol {
     THROW("Block Hessian diagonalization requires Lapack libraries.");
 #endif
 #endif
+
     //assign pointer to BlockHessian object    
     bHess = bHessIn;  
     //assign arrays
@@ -120,37 +123,58 @@ namespace ProtoMol {
   // Find course eigenvectors, put into array with pointer mhQu, 
   // _3N rows, _rfM columns
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  Real BlockHessianDiagonalize::findEigenvectors(const Vector3DBlock *myPositions,
+  Real BlockHessianDiagonalize::findEigenvectors( Vector3DBlock *myPositions,
                        GenericTopology *myTopo, 
                        double * mhQu, const int sz_row, const int sz_col, 
                        const Real blockCutoffDistance, const Real eigenValueThresh,
-                       const int blockVectorCols) {
+                       const int blockVectorCols,
+                       const bool geom, const bool numeric) {
 
     //find 'minimum' Hessians for blocks
     hessianTime.start();	//time Hessian
-    bHess->evaluateResidues(myPositions, myTopo, true);
+
+    //evaluate numerically?
+    if( !numeric ){
+        bHess->evaluateResidues(myPositions, myTopo, true); //true for quasi-munimum
+    }else{
+        bHess->evaluateNumericalResidues(myPositions, myTopo);
+    }
+
     hessianTime.stop();	//stop timer
     //
     if(OUTPUTBHESS) outputDiagnostics(2); //Output block Hessian matrix
     //Diagonalize residue Hessians       
     //find coarse block eigenvectors 
-    Real max_eigenvalue = findCoarseBlockEigs(eigenValueThresh, blockVectorCols);
+    Real max_eigenvalue = findCoarseBlockEigs(myPositions, myTopo,
+                                    eigenValueThresh, blockVectorCols, geom); //true=remove geometric dof
     //
     report << debug(2) << "[BlockHessianDiagonalize::findEigenvectors] Average residue eigenvalues "<<residues_total_eigs/bHess->num_blocks<<
               ", for "<<bHess->num_blocks<<" blocks."<<endr;
     //**** Find 'inner' Hessian H *********************************************
     //Find local block Hessian, and inter block Hessian within distance 'blockCutoffDistance'
     hessianTime.start();	//time Hessian
+
+    //~~~~inner hessian is constructed and projected here~~~~~~~~~~~~~~~~~~~~~~~
+
     bHess->clearBlocks();
     bHess->evaluateBlocks(blockCutoffDistance, myPositions, myTopo);
     hessianTime.stop();	//stop timer
-    //put Q^T H Q into 'innerDiag' matrix
-    innerHessian();
-    //If cuttoff small do full calculation
-    if(bHess->fullElectrostatics){
-      //Q^T H Q for full electrostatics
-      fullElectrostaticBlocks();
+    
+    //calculate S numerically?
+    if( !numeric ){
+        //put Q^T H Q into 'innerDiag' matrix
+        innerHessian();
+        //If cuttoff small do full calculation
+        if(bHess->fullElectrostatics){
+          //Q^T H Q for full electrostatics
+          fullElectrostaticBlocks();
+        }
+    }else{
+        calculateS(myPositions, myTopo);
     }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     if(OUTPUTIHESS) outputDiagnostics(0); //Output inner hessian Matrices
     //**** diagonalize 'inner' Hessian ****************************************
     int numeFound;
@@ -176,6 +200,102 @@ namespace ProtoMol {
   }
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Find 'inner' matrix, S=Q^T H Q, using numerical methods
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  void BlockHessianDiagonalize::calculateS( Vector3DBlock *myPositions,
+                                                GenericTopology *myTopo ){
+      
+    //save current time (calculate forces updates!)
+    Real actTime = myTopo->time;
+
+    //Initialize storage
+    innerDiag.initialize(0,0,residues_total_eigs,residues_total_eigs); //set small output matrix
+    innerDiag.clear();
+    memory_footprint += residues_total_eigs * residues_total_eigs;
+
+    //Re-size eigs space for num_eig vectors per block
+    unsigned int i_res_sum = 0;
+    for(int i=0;i<bHess->num_blocks;i++){
+      blockEigVect[i].blockMove(blockEigVect[i].RowStart, i_res_sum);
+      blockEigVect[i].columnResize(blocks_num_eigs[i]);
+      i_res_sum += blocks_num_eigs[i];
+    }
+
+    //get size
+    unsigned int sz = myPositions->size();
+
+    //creat full matrix of reduced initial eigenvectors
+    BlockMatrix fullEigs( 0, 0, 3 * sz, residues_total_eigs );
+    fullEigs.clear();
+
+    //copy accross
+    for(int i=0;i<bHess->num_blocks;i++){
+        fullEigs += blockEigVect[i];
+    }
+    
+    //save positions
+    Vector3DBlock tempPos = *myPositions;
+
+    //get initial force
+    intg->calculateForces();
+
+    Vector3DBlock tempForce = *(intg->getForces());
+
+    //define epsilon
+    Real epsilon = 1e-9;
+
+    //loop over each eigenvector purtubation
+    for(int eg=0; eg<residues_total_eigs; eg++ ){
+
+        //get purturbed position
+        for( int i=0; i < sz; i++ ){
+            for( int j=0; j<3; j++ ){
+                (*myPositions)[i][j] = tempPos[i][j]
+                    + epsilon * ( 1.0 / sqrt(myTopo->atoms[i].scaledMass))
+                        * fullEigs( i*3+j, eg );
+
+            }
+        }
+
+        //get new forces and find difference
+        intg->calculateForces();
+
+        Vector3DBlock deltaForce = *(intg->getForces()) - tempForce;
+
+        //creat row matrix of deltaForce vector
+        BlockMatrix dForce( 0, 0, 1, 3 * sz );
+
+        for( int i=0; i < 3 * sz; i++ ){
+            dForce[i] = deltaForce[i/3][i%3]
+                            * ( 1.0 / sqrt(myTopo->atoms[i/3].scaledMass) )
+                                * ( 1.0 / epsilon );
+        }
+
+        //create output column matrix
+        BlockMatrix opVector( 0, 0, 1, residues_total_eigs );
+        opVector.clear();
+
+        //get product
+        for(int i=0;i<bHess->num_blocks;i++){
+            dForce.product( blockEigVect[i], opVector );
+        }
+
+        //copy product
+        for(int i=0;i<residues_total_eigs;i++){
+            innerDiag(i,eg) = opVector[i];
+        }
+
+    }//~~~~
+
+    //restore positions
+    *myPositions = tempPos;
+
+    //reset time
+    myTopo->time = actTime;
+
+  }
+
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Find 'inner' matrix, S=Q^T H Q, using block matrix arithmetic
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   void BlockHessianDiagonalize::innerHessian(){
@@ -184,6 +304,7 @@ namespace ProtoMol {
     innerDiag.initialize(0,0,residues_total_eigs,residues_total_eigs); //set small output matrix
     innerDiag.clear();
     memory_footprint += residues_total_eigs * residues_total_eigs;
+
     //Re-size eigs space for num_eig vectors per block
     unsigned int i_res_sum = 0;
     for(int i=0;i<bHess->num_blocks;i++){
@@ -191,12 +312,14 @@ namespace ProtoMol {
       blockEigVect[i].columnResize(blocks_num_eigs[i]);
       i_res_sum += blocks_num_eigs[i];
     }
+
     //Do blocks if Hessian distance is 0
     for(int ii=0;ii<bHess->num_blocks;ii++){  
       BlockMatrix tempM((blockEigVect[ii]).ColumnStart, (bHess->blocks[ii]).ColumnStart, (blockEigVect[ii]).Columns, (bHess->blocks[ii]).Columns);
       (blockEigVect[ii]).transposeProduct(bHess->blocks[ii], tempM); //Aaa^{T}This
       tempM.product(blockEigVect[ii], innerDiag); //Aaa^{T}HAaa
     }
+
     //Do blocks if Hessian distance is 1
     for(int ii=0;ii<bHess->num_blocks-1;ii++){  
       BlockMatrix tempM((blockEigVect[ii]).ColumnStart, (bHess->adj_blocks[ii]).ColumnStart, (blockEigVect[ii]).Columns, (bHess->adj_blocks[ii]).Columns);
@@ -260,14 +383,18 @@ namespace ProtoMol {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Find isolated block eigenvectors
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  Real BlockHessianDiagonalize::findCoarseBlockEigs(const Real eigenValueThresh,
-                                                    const int blockVectorCols) {
+  Real BlockHessianDiagonalize::findCoarseBlockEigs(const Vector3DBlock *myPositions,
+                                                        const GenericTopology *myTopo,
+                                                            const Real eigenValueThresh,
+                                                                const int blockVectorCols,
+                                                                    const bool geom) {
 
     //clear number of cols vector
     blocVectCol.clear();
     //number of cols precidence?
     bool blockVprec = false;
     if(blockVectorCols > 0) blockVprec = true;
+
     //size and position eigvects
     for(int i=0;i<bHess->num_blocks;i++){
       unsigned int start = blockEigVect[i].RowStart;
@@ -278,16 +405,204 @@ namespace ProtoMol {
     residues_total_eigs = 0;	//find total residue modes to use
     Real max_eigenvalue = 0;
     int bHess_num_blks = bHess->num_blocks;
+
+    //find atom block start
+    unsigned int block_start = 0;
+
+    //for each block
     for(int ii=0;ii<bHess_num_blks;ii++){
       int numFound;
+
+      //diagonalize block
       rediagTime.start();
       int infor = diagHessian(blockEigVect[ii].arrayPointer(), &rE[bHess->hess_eig_point[ii] * 3], 
                                 bHess->blocks[ii].arrayPointer(), bHess->blocks[ii].Rows, numFound);
       rediagTime.stop();
+
       if(infor) report << error << "[BlockHessianDiagonalize::findCoarseBlockEigs] Residue "<<ii+1<<" diagonalization failed."<<endr;
+
+      //sort by magnitude of eigenvalue
       for(int i=0;i<bHess->blocks_max[ii] * 3;i++) eigIndx[i] = i;
       absSort(blockEigVect[ii].arrayPointer(), &rE[bHess->hess_eig_point[ii] * 3], eigIndx, bHess->blocks_max[ii] * 3);
-      //find number of eigs required
+
+      //~~~~Use geometrically generated conserved dof to generate a new basis set?
+      if( geom ){
+          //create temporary matrix
+          const unsigned int rowstart = blockEigVect[ii].RowStart;
+          const unsigned int colstart = blockEigVect[ii].ColumnStart;
+
+          BlockMatrix tmpEigs( rowstart, colstart,
+                                blockEigVect[ii].Rows, blockEigVect[ii].Columns );
+
+          //clear it
+          tmpEigs.clear();
+
+          //find positions
+          const unsigned int block_max = bHess->blocks_max[ii];
+
+          //find center and norm (1/sqrt mass)
+          Vector3D pos_center(0.0,0.0,0.0);
+          Real totalmass = 0.0;
+          Real inorm = 0;
+
+          for( int jj=0; jj<block_max; jj++ ){
+              const unsigned int atomindex = block_start + jj;
+              //sums
+              const Real mass = myTopo->atoms[atomindex].scaledMass;
+              pos_center += (*myPositions)[atomindex] * mass;
+              totalmass += mass;
+
+              const Real oneosrm = sqrt(myTopo->atoms[atomindex].scaledMass);
+              inorm += oneosrm * oneosrm;
+          }
+
+          //get inverse of actual norm
+          inorm = 1.0 / sqrt(inorm);
+
+          //actual center
+          pos_center /= totalmass;//(Real)block_max;
+
+          //create fixed dof vectors
+          for( int jj=0; jj<block_max; jj++ ){
+              const unsigned int atomindex = block_start + jj;
+
+              //translational dof
+              Real factor = inorm * sqrt(myTopo->atoms[atomindex].scaledMass);
+              tmpEigs(rowstart + jj*3,colstart) = factor;
+              tmpEigs(rowstart + jj*3+1,colstart + 1) = factor;
+              tmpEigs(rowstart + jj*3+2,colstart + 2) = factor;
+
+              //rotational dof
+              //cross product of rotation axis and vector to center of molecule
+              //axb=ia2b3+ja3b1+ka1b2-ia3b2-ja1b3-ka2b1
+              //x-axis (b1=1) ja3-ka2
+              //y-axis (b2=1) ka1-ia3
+              //z-axis (b3=1) ia2-ja1
+              Vector3D diff = (*myPositions)[atomindex] - pos_center;
+              //x
+              tmpEigs(rowstart + jj*3+1,colstart + 3) = diff.c[2] * factor;//z;
+              tmpEigs(rowstart + jj*3+2,colstart + 3) = -diff.c[1] * factor;//y;
+              //y
+              tmpEigs(rowstart + jj*3,colstart + 4) = -diff.c[2] * factor;//z;
+              tmpEigs(rowstart + jj*3+2,colstart + 4) = diff.c[0] * factor;//x;
+              //y
+              tmpEigs(rowstart + jj*3,colstart + 5) = diff.c[1] * factor;//y;
+              tmpEigs(rowstart + jj*3+1,colstart + 5) = -diff.c[0] * factor;//x;
+
+          }
+
+          //~~~~Norm vector 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          //norm the rotational vectors
+          Real rotnorm = 0.0;
+          for( int ll=0; ll<block_max * 3; ll++ ){
+                rotnorm += tmpEigs(rowstart + ll, colstart + 3)
+                                * tmpEigs(rowstart + ll, colstart + 3);
+          }
+          rotnorm = 1.0 / sqrt(rotnorm);
+          //do norm
+          for( int ll=0; ll<block_max * 3; ll++ ){
+                tmpEigs(rowstart + ll, colstart + 3) *= rotnorm;
+          }
+          //~~~~orthoganalize vectors 2 and 3~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          for( int jj=4; jj<=5; jj++ ){
+
+              //(new vectors already have cdof vectors in them)
+              for( int kk=3; kk<jj; kk++ ){
+
+                  //get dot product (and norm of dots)
+                  Real dots = 0.0;
+                  for( int ll=0; ll<block_max * 3; ll++ ){
+                    dots += tmpEigs(rowstart + ll, colstart + kk)
+                                    * tmpEigs(rowstart + ll, colstart + jj);
+                  }
+
+                  //subtract it from current vector
+                  for( int ll=0; ll<block_max * 3; ll++ ){
+                      tmpEigs(rowstart + ll,colstart + jj) -=
+                              tmpEigs(rowstart + ll,colstart + kk) * dots;
+                  }
+
+              }
+
+              Real nnorm = 0.0;
+              for( int ll=0; ll<block_max * 3; ll++ ){
+                  nnorm += tmpEigs(rowstart + ll,colstart + jj) * tmpEigs(rowstart + ll,colstart + jj);
+              }
+
+              nnorm = 1.0 / sqrt(nnorm);
+              //scale
+              for( int ll=0; ll<block_max * 3; ll++ ){
+                  tmpEigs(rowstart + ll,colstart + jj) *= nnorm;
+              }
+
+          }
+          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+          //do dotprod
+          Real dotprod = 0.0;
+          for( int ll=0; ll<block_max * 3; ll++ ){
+                dotprod += tmpEigs(rowstart + ll, colstart + 3)
+                                * tmpEigs(rowstart + ll, colstart + 4);
+          }
+
+          //set conserved dof
+          unsigned int cdof = 6;
+
+          //loop over each vector in block
+          for( int jj=0; jj<block_max - cdof; jj++ ){
+
+              //copy original vector
+              for( int ll=0; ll<block_max * 3; ll++ ){
+                  tmpEigs(rowstart + ll, colstart + jj + cdof) = blockEigVect[ii](rowstart + ll,colstart + jj);
+              }
+
+              //get dot product with eack previous vector
+              //(new vectors already have cdof vectors in them)
+              for( int kk=0; kk<jj+cdof; kk++ ){
+
+                  //get dot product (and norm of dots)
+                  Real dots = 0.0;
+                  for( int ll=0; ll<block_max * 3; ll++ ){
+                    dots += tmpEigs(rowstart + ll, colstart + kk)
+                                    * blockEigVect[ii](rowstart + ll, colstart + jj);
+                  }
+
+                  //subtract it from current vector
+                  for( int ll=0; ll<block_max * 3; ll++ ){
+                      tmpEigs(rowstart + ll,colstart + jj + cdof) -=
+                              tmpEigs(rowstart + ll,colstart + kk) * dots;
+                  }
+
+              }
+
+              Real nnorm = 0.0;
+              for( int ll=0; ll<block_max * 3; ll++ ){
+                  nnorm += tmpEigs(rowstart + ll,colstart + jj + cdof) * tmpEigs(rowstart + ll,colstart + jj + cdof);
+              }
+
+              nnorm = 1.0 / sqrt(nnorm);
+              //scale
+              for( int ll=0; ll<block_max * 3; ll++ ){
+                  tmpEigs(rowstart + ll,colstart + jj + cdof) *= nnorm;
+              }
+
+              if( nnorm > 20 && cdof > 0 ){//TODO## AND not last?
+                  report << debug(10) << "Final norm was high = " << nnorm << " ,skipping." << endr;
+                  cdof--;
+              }
+
+          }
+
+          //copy across
+          blockEigVect[ii] = tmpEigs;
+
+          //update start atom for next block
+          block_start += block_max;
+
+      }
+      //~~~~End geometric~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+      //find number of eigs required, by the eigenvalue threshold
       for(int jj=0;jj<bHess->blocks_max[ii] * 3;jj++){
         Real currEig = fabs(rE[bHess->hess_eig_point[ii] * 3 + jj]);
         if(currEig >= eigenValueThresh){
@@ -297,13 +612,15 @@ namespace ProtoMol {
         }
         if(blockVprec) blocVectCol.push_back(currEig);
       }
-      //
+
+      //find maximum eigenvalue
       Real tempf = rE[(bHess->hess_eig_point[ii] + bHess->blocks_max[ii] - 1) * 3];
       if(max_eigenvalue < tempf) max_eigenvalue = tempf;
       //
       //####for(int jj=0;jj<bHess->blocks_max[ii] * 3;jj++)
       //####  report << hint << "Loop "<<ii<<", Eig "<<jj<<", value "<<rE[bHess->hess_eig_point[ii]*3+jj]<<", index "<<eigIndx[jj]<<" eigs "<<blocks_num_eigs[ii]<<" tot "<<residues_total_eigs<<" Thresh "<<eigenValueThresh<<endr;
     }
+
     //use target number of block eigenvectors?
     if(blockVprec && 
        (unsigned)(bHess_num_blks * blockVectorCols) < blocVectCol.size()){ 
@@ -322,6 +639,8 @@ namespace ProtoMol {
         }
       }
     }
+
+
     return max_eigenvalue;
     //
   }

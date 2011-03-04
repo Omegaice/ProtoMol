@@ -58,7 +58,6 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // My methods
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private:
     void calcRBTorsion(const TBoundaryConditions &boundary, const RBTorsion &currRBTorsion,
               const Vector3DBlock *positions, Vector3DBlock *forces,
               Real &energy, ScalarStructure *energies ) {

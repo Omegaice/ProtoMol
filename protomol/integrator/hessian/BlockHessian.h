@@ -35,6 +35,11 @@ namespace ProtoMol {
     void evaluateResidues(const Vector3DBlock *myPositions,
                           const GenericTopology *myTopo,
                           bool simuMin);
+    void evaluateNumericalResidues(const Vector3DBlock *myPositions,
+                          const GenericTopology *myTopo);
+    void evaluateBlockForces(const unsigned int blockStart, const unsigned int blockMax,
+                                const Vector3DBlock *myPositions,
+                                    const GenericTopology *myTopo, Vector3DBlock *blockForces);
     void evaluateBlocks(const Real cutoffDistance, 
                         const Vector3DBlock *myPositions,
                         GenericTopology *myTopo);

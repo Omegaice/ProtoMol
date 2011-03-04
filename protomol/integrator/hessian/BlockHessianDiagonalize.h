@@ -6,6 +6,8 @@
 #include <protomol/integrator/hessian/BlockHessian.h>
 #include <protomol/type/BlockMatrix.h>
 #include <protomol/base/Timer.h>
+#include <protomol/ProtoMolApp.h>
+#include <protomol/integrator/StandardIntegrator.h>
 
 namespace ProtoMol {
   /**
@@ -34,21 +36,30 @@ namespace ProtoMol {
     // New methods of class BlockHessianDiagonalize
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    void initialize(BlockHessian * bHessIn, const int sz);
+    void initialize(BlockHessian * bHessIn, const int sz, 
+            StandardIntegrator *intg);
     void initialize(const int sz);
-    Real findEigenvectors(const Vector3DBlock *myPositions,
+    Real findEigenvectors(Vector3DBlock *myPositions,
                           GenericTopology *myTopo, double * mhQu, 
                           const int _3N, const int _rfM, 
                           const Real blockCutoffDistance, 
                           const Real eigenValueThresh,
-                          const int blockVectorCols);
+                          const int blockVectorCols,
+                          const bool geom, const bool numeric);
     int diagHessian(double *eigVecO, double *eigValO,
                     double *hsnhessM, int dim, int &numFound);
     void absSort(double *eigVec, double *eigVal, int *eigIndx, int dim);
 
   private:
     void innerHessian();
-    Real findCoarseBlockEigs(const Real eigenValueThresh, const int blockVectorCols);
+    void calculateS(Vector3DBlock *myPositions,
+                       GenericTopology *myTopo);
+
+    Real findCoarseBlockEigs(const Vector3DBlock *myPositions,
+                                const GenericTopology *myTopo,
+                                    const Real eigenValueThresh,
+                                        const int blockVectorCols,
+                                            const bool geom);
     void fullElectrostaticBlocks();
     void outputDiagnostics(int typ); 
 
@@ -69,6 +80,8 @@ namespace ProtoMol {
     vector<BlockMatrix> blockEigVect;
     BlockMatrix innerDiag, innerEigVec;
     vector<Real> blocVectCol;
+    //
+    StandardIntegrator *intg;
     //
   public:
     //Diagnostic data

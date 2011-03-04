@@ -160,7 +160,7 @@ namespace ProtoMol
     if ( fullDiag ) {
       blockDiag.initialize( _3N );
     } else {
-      blockDiag.initialize( &rHsn, _3N );
+      blockDiag.initialize( &rHsn, _3N, (StandardIntegrator *)this );
     }
 
     //Diagnostics
@@ -297,7 +297,8 @@ namespace ProtoMol
           report << debug(2) << "Start coarse diagonalization." << endr;
           Real max_eigenvalue = blockDiag.findEigenvectors( &diagAt, app->topology,
                                 *Q , _3N, _rfM,
-                                blockCutoffDistance, eigenValueThresh, blockVectorCols );
+                                blockCutoffDistance, eigenValueThresh, blockVectorCols,
+								false, false);
 
           //Stats/diagnostics
           rediagCounter++; hessianCounter++;

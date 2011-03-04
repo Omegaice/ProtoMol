@@ -28,7 +28,15 @@
 #include <protomol/force/GB/GBForce.h>
 #include <protomol/force/hessian/ReducedHessGB.h>
 
+#include <protomol/topology/SemiGenericTopology.h>
+#include <protomol/topology/VacuumBoundaryConditions.h>
 #include <protomol/type/BlockMatrix.h>
+
+#include <protomol/force/bonded/BondSystemForce.h>
+#include <protomol/force/bonded/AngleSystemForce.h>
+#include <protomol/force/bonded/ImproperSystemForce.h>
+#include <protomol/force/bonded/DihedralSystemForce.h>
+#include <protomol/force/bonded/RBDihedralSystemForce.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -928,3 +936,278 @@ void BlockHessian::outputMatrix(int i, int j, Real sqrtMassi, Real sqrtMassj,
 
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// find forces in block for 'small' numerical Hessian
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const unsigned int blockEnd,
+                            const Vector3DBlock *myPositions,
+                                const GenericTopology *myTopo, Vector3DBlock *blockForces){
+
+  //clear array
+  for (unsigned int i = blockStart; i <= blockEnd; i++){
+      (*blockForces)[i] = Vector3D(0.0, 0.0, 0.0);
+  }
+
+  //get boundary and dummy energies
+  const VacuumBoundaryConditions &boundary =
+            ((SemiGenericTopology<VacuumBoundaryConditions> &)(*myTopo)).boundaryConditions;
+    
+  ScalarStructure energies;
+  energies.clear();
+
+    //~~~~Bonds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myBond){
+    for (int i = 0; i < myTopo->bonds.size(); i++) {
+      const unsigned int a1 = myTopo->bonds[i].atom1;
+      const unsigned int a2 = myTopo->bonds[i].atom2;
+
+      //in this block?
+      if( (a1 >= blockStart && a1 <= blockEnd) || (a2 >= blockStart && a2 <= blockEnd) ){
+
+        //call force calculaton
+        BondSystemForce<VacuumBoundaryConditions> bsf;
+
+        bsf.calcBond(boundary,
+                        myTopo->bonds[i], myPositions, blockForces, &energies);
+
+      }
+    }
+  }
+
+  //~~~~Angles~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myAngle){
+    for (int i = 0; i < myTopo->angles.size(); i++) {
+      const unsigned int a1 = myTopo->angles[i].atom1;
+      const unsigned int a2 = myTopo->angles[i].atom2;
+      const unsigned int a3 = myTopo->angles[i].atom3;
+      
+      //in this block?
+      if( (a1 >= blockStart && a1 <= blockEnd) ||
+            (a2 >= blockStart && a2 <= blockEnd) ||
+                (a3 >= blockStart && a3 <= blockEnd) ){
+      
+          AngleSystemForce<VacuumBoundaryConditions> asf;
+
+          asf.calcAngle(boundary, myTopo->angles[i],
+                        myPositions, blockForces, &energies);
+          
+      }
+    }
+  }
+
+  //~~~~Impropers~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myImproper) {
+    for (unsigned int i = 0; i < myTopo->impropers.size(); i++) {
+      const unsigned int a1 = myTopo->impropers[i].atom1;
+      const unsigned int a2 = myTopo->impropers[i].atom2;
+      const unsigned int a3 = myTopo->impropers[i].atom3;
+      const unsigned int a4 = myTopo->impropers[i].atom4;
+
+      //in this block?
+      if( (a1 >= blockStart && a1 <= blockEnd) ||
+            (a2 >= blockStart && a2 <= blockEnd) ||
+                (a3 >= blockStart && a3 <= blockEnd) ||
+                    (a4 >= blockStart && a4 <= blockEnd) ){
+          ImproperSystemForce<VacuumBoundaryConditions> isf;
+
+          isf.calcTorsion(boundary, myTopo->impropers[i], myPositions,
+                            blockForces, (energies)[ScalarStructure::IMPROPER], &energies);
+      }
+
+    }
+  }
+
+  //~~~~Dihedrals~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myDihedral) {
+    for (unsigned int i = 0; i < myTopo->dihedrals.size(); i++) {
+      const unsigned int a1 = myTopo->dihedrals[i].atom1;
+      const unsigned int a2 = myTopo->dihedrals[i].atom2;
+      const unsigned int a3 = myTopo->dihedrals[i].atom3;
+      const unsigned int a4 = myTopo->dihedrals[i].atom4;
+
+      //in this block?
+      if( (a1 >= blockStart && a1 <= blockEnd) ||
+            (a2 >= blockStart && a2 <= blockEnd) ||
+                (a3 >= blockStart && a3 <= blockEnd) ||
+                    (a4 >= blockStart && a4 <= blockEnd) ){
+          DihedralSystemForce<VacuumBoundaryConditions> dsf;
+
+          dsf.calcTorsion(boundary, myTopo->dihedrals[i], myPositions,
+                            blockForces, (energies)[ScalarStructure::DIHEDRAL], &energies);
+      }
+
+    }
+  }
+
+  //~~~~RBDihedrals~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myRBDihedral) {
+    for (unsigned int i = 0; i < myTopo->rb_dihedrals.size(); i++) {
+      const unsigned int a1 = myTopo->rb_dihedrals[i].atom1;
+      const unsigned int a2 = myTopo->rb_dihedrals[i].atom2;
+      const unsigned int a3 = myTopo->rb_dihedrals[i].atom3;
+      const unsigned int a4 = myTopo->rb_dihedrals[i].atom4;
+
+      //in this block?
+      if( (a1 >= blockStart && a1 <= blockEnd) ||
+            (a2 >= blockStart && a2 <= blockEnd) ||
+                (a3 >= blockStart && a3 <= blockEnd) ||
+                    (a4 >= blockStart && a4 <= blockEnd) ){
+          RBDihedralSystemForce<VacuumBoundaryConditions> dsf;
+
+          dsf.calcRBTorsion(boundary, myTopo->rb_dihedrals[i], myPositions,
+                            blockForces, (energies)[ScalarStructure::OTHER], &energies);
+      }
+
+    }
+  }
+
+  //~~~~Lennard Jones~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myLennardJones) {
+    //loop over all pairs in this block only
+    for (unsigned int i = blockStart; i <= blockEnd; i++){
+        for (unsigned int j = i + 1; j <= blockEnd; j++){
+
+          //if not bonded/dihedral
+          const ExclusionClass ec = myTopo->exclusions.check(i, j);
+          
+          if (ec != EXCLUSION_FULL) {
+
+            Vector3D rij = myTopo->minimalDifference((*myPositions)[i], (*myPositions)[j]);
+
+            const Real a = rij.normSquared();
+
+            Real rawE = 0.0; Real rawForce = 0.0;
+
+            LennardJonesForce jlf;
+
+            jlf(rawE, rawForce, a, 1.0 / a, rij, myTopo, i, j, ec);
+
+            // Add this force into the atom forces.
+            Vector3D fij = -rij * rawForce;
+            (*blockForces)[i] += fij;
+            (*blockForces)[j] -= fij;
+
+          }
+
+        }
+    }
+  }
+
+  //~~~~Coulomb~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (myCoulomb) {
+    //loop over all pairs in this block only
+    for (unsigned int i = blockStart; i <= blockEnd; i++){
+        for (unsigned int j = i + 1; j <= blockEnd; j++){
+
+          //if not bonded/dihedral
+          const ExclusionClass ec = myTopo->exclusions.check(i, j);
+
+          if (ec != EXCLUSION_FULL) {
+
+            Vector3D rij = myTopo->minimalDifference((*myPositions)[i], (*myPositions)[j]);
+
+            const Real a = rij.normSquared();
+
+            Real rawE = 0.0; Real rawForce = 0.0;
+
+            CoulombForce cf;
+
+            cf(rawE, rawForce, a, 1.0 / a, rij, myTopo, i, j, ec);
+
+            // Add this force into the atom forces.
+            Vector3D fij = -rij * rawForce;
+            (*blockForces)[i] += fij;
+            (*blockForces)[j] -= fij;
+
+          }
+
+        }
+    }
+
+  }
+
+  //~~~~End~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Evaluate course high frequency Hessians
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void BlockHessian::evaluateNumericalResidues(const Vector3DBlock *myPositions,
+                       const GenericTopology *myTopo) {
+
+    unsigned int block_start = 0;
+
+    const unsigned int size = myPositions->size();
+    
+    const Real epsilon = 1e-12;
+
+    const Real inv_epsilon = 1.0 / epsilon;
+
+    //setup vectors
+    Vector3DBlock blockForces, tempPositions, blockInitialForces;
+
+    blockForces.resize(size);
+    blockInitialForces.resize(size);
+
+    //copy positions
+    tempPositions = *myPositions;
+
+    //for each block
+    for(int i=0;i<num_blocks;i++){
+
+        //get position in Hessian
+        const unsigned int rowstart = blocks[i].RowStart;
+        const unsigned int colstart = blocks[i].ColumnStart;
+
+        //clear block
+        blocks[i].clear();
+
+        //find atoms in block
+        const unsigned int block_max = blocks_max[i];
+
+        //get initial forces for block
+        evaluateBlockForces( block_start, block_start + block_max - 1,
+                                myPositions, myTopo, &blockInitialForces);
+
+        //calculate forces for each atom change
+        for( int j=0; j<block_max; j++ ){
+            //x,y,z
+            for( int k=0; k<3; k++ ){
+
+                //peturb
+                tempPositions[block_start + j][k] += epsilon;
+
+                //coulumn of data force calc
+                evaluateBlockForces( block_start, block_start + block_max - 1,
+                                        &tempPositions, myTopo, &blockForces);
+
+                //un-peturb
+                tempPositions[block_start + j][k] -= epsilon;
+
+                //copy force array to column of numerical Hessian
+                for( int l=0; l<block_max; l++ ){
+                    //x,y,z
+                    for( int m=0; m<3; m++ ){
+
+                        blocks[i](rowstart + j*3+k, colstart + l*3+m) =
+                                            -( blockForces[block_start + l][m]
+                                                - blockInitialForces[block_start + l][m])
+                                                    * inv_epsilon
+                                                        * ( 1.0 /
+                                                            ( sqrt(myTopo->atoms[block_start+l].scaledMass) * sqrt(myTopo->atoms[block_start+j].scaledMass ) )  );
+
+                    }
+                }
+                
+            }
+
+        }
+
+
+        //end of loop, update for next block
+        block_start += block_max;
+
+    }
+
+}
