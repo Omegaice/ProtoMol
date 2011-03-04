@@ -17,6 +17,7 @@
 #include <protomol/output/OutputFAHGUI.h>
 #include <protomol/output/OutputFAHFile.h>
 #include <protomol/output/OutputScreen.h>
+#include <protomol/output/OutputXTCTrajectory.h>
 
 using namespace std;
 using namespace ProtoMol;
@@ -38,4 +39,6 @@ void OutputModule::init(ProtoMolApp *app) {
   f.registerExemplar(new OutputFAHGUI());
 #endif
   f.registerExemplar(new OutputFAHFile());
+  f.registerExemplar(new OutputXTCTrajectory());
+
 }

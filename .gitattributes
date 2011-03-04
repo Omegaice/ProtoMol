@@ -401,6 +401,8 @@ protomol/output/OutputFinalXYZVel.cpp -text
 protomol/output/OutputFinalXYZVel.h -text
 protomol/output/OutputScreen.cpp -text
 protomol/output/OutputScreen.h -text
+protomol/output/OutputXTCTrajectory.cpp -text
+protomol/output/OutputXTCTrajectory.h -text
 protomol/output/OutputXYZTrajectoryForce.cpp -text
 protomol/output/OutputXYZTrajectoryForce.h -text
 protomol/output/OutputXYZTrajectoryPos.cpp -text
