@@ -33,11 +33,13 @@ private:
      */
     class reportlevel {
 public:
-      reportlevel() : myReportlevel(0) {}
-      reportlevel(short l) : myReportlevel(l) {}
+      reportlevel() : myReportlevel(0), myReportlimit(0) {}
+      reportlevel(short l) : myReportlevel(l), myReportlimit(0) {}
+      reportlevel(short l, short m) : myReportlevel(l), myReportlimit(m) {}
       MyStreamer &operator()(MyStreamer &stream) const;
 private:
       short myReportlevel;
+      short myReportlimit;
     };
 
     //_________________________________________ MyStreamer
@@ -95,6 +97,7 @@ public:
       void setQuit(bool);
       void setAllNodes(bool);
       void setReportLevel(short level) {myReportLevel = level;}
+      void setReportLimit(short limit) {myReportLimit = limit;}
       void setLevel(short level) {myLevel = level;}
       void setIAmMaster(bool master) {myIAmMaster = master;}
 
@@ -151,8 +154,9 @@ public:
 
 private:
       bool print() const {
-        return mySilentHint < 1 && myLevel <= myReportLevel &&
-          (myAllNodes || myIAmMaster);
+        return mySilentHint < 1 && 
+               ( myLevel < 0 || (myLevel <= myReportLevel && (myReportLimit == 0 || myLevel >= myReportLimit )) ) &&
+                    (myAllNodes || myIAmMaster);
       }
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,6 +174,7 @@ private:
       bool myDoHint;
       short mySilentHint;
       short myReportLevel;
+      short myReportLimit;
       short myLevel;
     };
 

@@ -309,7 +309,8 @@ void ProtoMolApp::build() {
   outputCache.add(par);
 
   // Print Factories
-  if ((int)config[InputDebug::keyword] >= 5) {
+	if ((int)config[InputDebug::keyword] >= 5  &&
+		(int)config[InputDebugLimit::keyword] <= 5) {
     cout
       << headerRow("Factories")     << endl
       << headerRow("Configuration") << endl << config            << endl

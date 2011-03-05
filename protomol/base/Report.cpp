@@ -17,6 +17,7 @@ namespace ProtoMol {
 
     MyStreamer &reportlevel::operator()(MyStreamer &stream) const {
       stream.setReportLevel(myReportlevel);
+      stream.setReportLimit(myReportlimit);
       return stream;
     }
     //___________________________________________________________ 

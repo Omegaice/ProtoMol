@@ -34,6 +34,7 @@ defineInputValue(InputOutput,"output");
 defineInputValueAndText(InputMinimalImage, "minimalImage",
                         "global default flag whether the coordinates should be "
                         "transformed to minimal image or not");
+defineInputValue(InputDebugLimit, "debugstart");
 
 void MainModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;
@@ -54,13 +55,15 @@ void MainModule::init(ProtoMolApp *app) {
   InputOutputfreq::registerConfiguration(&app->config, 1);
   InputMinimalImage::registerConfiguration(&app->config, false);
   InputDoGBSAObc::registerConfiguration(config, 0);
+  InputDebugLimit::registerConfiguration(config, 0);
 }
 
 void MainModule::configure(ProtoMolApp *app) {
   Configuration &config = app->config;
 
   //  Set report level
-  report << reportlevel((int)config[InputDebug::keyword]);
+  report << reportlevel((int)config[InputDebug::keyword],
+                            (int)config[InputDebugLimit::keyword]);
 
   // Set random seed
   int seed = config[InputSeed::keyword];
