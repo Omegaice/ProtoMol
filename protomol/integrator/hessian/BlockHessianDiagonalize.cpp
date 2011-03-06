@@ -507,7 +507,7 @@ namespace ProtoMol {
           for( unsigned jj=4; jj<=5; jj++ ){
 
               //(new vectors already have cdof vectors in them)
-              for( int kk=3; kk<jj; kk++ ){
+              for( unsigned kk=3; kk<jj; kk++ ){
 
                   //get dot product (and norm of dots)
                   Real dots = 0.0;
