@@ -957,7 +957,7 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
 
     //~~~~Bonds~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (myBond){
-    for (int i = 0; i < myTopo->bonds.size(); i++) {
+    for (unsigned i = 0; i < myTopo->bonds.size(); i++) {
       const unsigned int a1 = myTopo->bonds[i].atom1;
       const unsigned int a2 = myTopo->bonds[i].atom2;
 
@@ -976,7 +976,7 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
 
   //~~~~Angles~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if (myAngle){
-    for (int i = 0; i < myTopo->angles.size(); i++) {
+    for (unsigned i = 0; i < myTopo->angles.size(); i++) {
       const unsigned int a1 = myTopo->angles[i].atom1;
       const unsigned int a2 = myTopo->angles[i].atom2;
       const unsigned int a3 = myTopo->angles[i].atom3;
@@ -1171,9 +1171,9 @@ void BlockHessian::evaluateNumericalResidues(const Vector3DBlock *myPositions,
                                 myPositions, myTopo, &blockInitialForces);
 
         //calculate forces for each atom change
-        for( int j=0; j<block_max; j++ ){
+        for( unsigned j=0; j<block_max; j++ ){
             //x,y,z
-            for( int k=0; k<3; k++ ){
+            for( unsigned k=0; k<3; k++ ){
 
                 //peturb
                 tempPositions[block_start + j][k] += epsilon;
@@ -1186,9 +1186,9 @@ void BlockHessian::evaluateNumericalResidues(const Vector3DBlock *myPositions,
                 tempPositions[block_start + j][k] -= epsilon;
 
                 //copy force array to column of numerical Hessian
-                for( int l=0; l<block_max; l++ ){
+                for( unsigned l=0; l<block_max; l++ ){
                     //x,y,z
-                    for( int m=0; m<3; m++ ){
+                    for( unsigned m=0; m<3; m++ ){
 
                         blocks[i](rowstart + j*3+k, colstart + l*3+m) =
                                             -( blockForces[block_start + l][m]

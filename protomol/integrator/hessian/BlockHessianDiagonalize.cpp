@@ -248,8 +248,8 @@ namespace ProtoMol {
     for(int eg=0; eg<residues_total_eigs; eg++ ){
 
         //get purturbed position
-        for( int i=0; i < sz; i++ ){
-            for( int j=0; j<3; j++ ){
+        for( unsigned i=0; i < sz; i++ ){
+            for( unsigned j=0; j<3; j++ ){
                 (*myPositions)[i][j] = tempPos[i][j]
                     + epsilon * ( 1.0 / sqrt(myTopo->atoms[i].scaledMass))
                         * fullEigs( i*3+j, eg );
@@ -265,7 +265,7 @@ namespace ProtoMol {
         //creat row matrix of deltaForce vector
         BlockMatrix dForce( 0, 0, 1, 3 * sz );
 
-        for( int i=0; i < 3 * sz; i++ ){
+        for( unsigned i=0; i < 3 * sz; i++ ){
             dForce[i] = deltaForce[i/3][i%3]
                             * ( 1.0 / sqrt(myTopo->atoms[i/3].scaledMass) )
                                 * ( 1.0 / epsilon );
@@ -445,7 +445,7 @@ namespace ProtoMol {
           Real totalmass = 0.0;
           Real inorm = 0;
 
-          for( int jj=0; jj<block_max; jj++ ){
+          for( unsigned jj=0; jj<block_max; jj++ ){
               const unsigned int atomindex = block_start + jj;
               //sums
               const Real mass = myTopo->atoms[atomindex].scaledMass;
@@ -463,7 +463,7 @@ namespace ProtoMol {
           pos_center /= totalmass;//(Real)block_max;
 
           //create fixed dof vectors
-          for( int jj=0; jj<block_max; jj++ ){
+          for( unsigned jj=0; jj<block_max; jj++ ){
               const unsigned int atomindex = block_start + jj;
 
               //translational dof
@@ -494,30 +494,30 @@ namespace ProtoMol {
           //~~~~Norm vector 1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
           //norm the rotational vectors
           Real rotnorm = 0.0;
-          for( int ll=0; ll<block_max * 3; ll++ ){
+          for( unsigned ll=0; ll<block_max * 3; ll++ ){
                 rotnorm += tmpEigs(rowstart + ll, colstart + 3)
                                 * tmpEigs(rowstart + ll, colstart + 3);
           }
           rotnorm = 1.0 / sqrt(rotnorm);
           //do norm
-          for( int ll=0; ll<block_max * 3; ll++ ){
+          for( unsigned ll=0; ll<block_max * 3; ll++ ){
                 tmpEigs(rowstart + ll, colstart + 3) *= rotnorm;
           }
           //~~~~orthoganalize vectors 2 and 3~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          for( int jj=4; jj<=5; jj++ ){
+          for( unsigned jj=4; jj<=5; jj++ ){
 
               //(new vectors already have cdof vectors in them)
               for( int kk=3; kk<jj; kk++ ){
 
                   //get dot product (and norm of dots)
                   Real dots = 0.0;
-                  for( int ll=0; ll<block_max * 3; ll++ ){
+                  for( unsigned ll=0; ll<block_max * 3; ll++ ){
                     dots += tmpEigs(rowstart + ll, colstart + kk)
                                     * tmpEigs(rowstart + ll, colstart + jj);
                   }
 
                   //subtract it from current vector
-                  for( int ll=0; ll<block_max * 3; ll++ ){
+                  for( unsigned ll=0; ll<block_max * 3; ll++ ){
                       tmpEigs(rowstart + ll,colstart + jj) -=
                               tmpEigs(rowstart + ll,colstart + kk) * dots;
                   }
@@ -525,13 +525,13 @@ namespace ProtoMol {
               }
 
               Real nnorm = 0.0;
-              for( int ll=0; ll<block_max * 3; ll++ ){
+              for( unsigned ll=0; ll<block_max * 3; ll++ ){
                   nnorm += tmpEigs(rowstart + ll,colstart + jj) * tmpEigs(rowstart + ll,colstart + jj);
               }
 
               nnorm = 1.0 / sqrt(nnorm);
               //scale
-              for( int ll=0; ll<block_max * 3; ll++ ){
+              for( unsigned ll=0; ll<block_max * 3; ll++ ){
                   tmpEigs(rowstart + ll,colstart + jj) *= nnorm;
               }
 
@@ -540,7 +540,7 @@ namespace ProtoMol {
 
           //do dotprod
           Real dotprod = 0.0;
-          for( int ll=0; ll<block_max * 3; ll++ ){
+          for( unsigned ll=0; ll<block_max * 3; ll++ ){
                 dotprod += tmpEigs(rowstart + ll, colstart + 3)
                                 * tmpEigs(rowstart + ll, colstart + 4);
           }
@@ -549,26 +549,26 @@ namespace ProtoMol {
           unsigned int cdof = 6;
 
           //loop over each vector in block
-          for( int jj=0; jj<block_max - cdof; jj++ ){
+          for( unsigned jj=0; jj<block_max - cdof; jj++ ){
 
               //copy original vector
-              for( int ll=0; ll<block_max * 3; ll++ ){
+              for( unsigned ll=0; ll<block_max * 3; ll++ ){
                   tmpEigs(rowstart + ll, colstart + jj + cdof) = blockEigVect[ii](rowstart + ll,colstart + jj);
               }
 
               //get dot product with eack previous vector
               //(new vectors already have cdof vectors in them)
-              for( int kk=0; kk<jj+cdof; kk++ ){
+              for( unsigned kk=0; kk<jj+cdof; kk++ ){
 
                   //get dot product (and norm of dots)
                   Real dots = 0.0;
-                  for( int ll=0; ll<block_max * 3; ll++ ){
+                  for( unsigned ll=0; ll<block_max * 3; ll++ ){
                     dots += tmpEigs(rowstart + ll, colstart + kk)
                                     * blockEigVect[ii](rowstart + ll, colstart + jj);
                   }
 
                   //subtract it from current vector
-                  for( int ll=0; ll<block_max * 3; ll++ ){
+                  for( unsigned ll=0; ll<block_max * 3; ll++ ){
                       tmpEigs(rowstart + ll,colstart + jj + cdof) -=
                               tmpEigs(rowstart + ll,colstart + kk) * dots;
                   }
@@ -576,13 +576,13 @@ namespace ProtoMol {
               }
 
               Real nnorm = 0.0;
-              for( int ll=0; ll<block_max * 3; ll++ ){
+              for( unsigned ll=0; ll<block_max * 3; ll++ ){
                   nnorm += tmpEigs(rowstart + ll,colstart + jj + cdof) * tmpEigs(rowstart + ll,colstart + jj + cdof);
               }
 
               nnorm = 1.0 / sqrt(nnorm);
               //scale
-              for( int ll=0; ll<block_max * 3; ll++ ){
+              for( unsigned ll=0; ll<block_max * 3; ll++ ){
                   tmpEigs(rowstart + ll,colstart + jj + cdof) *= nnorm;
               }
 
