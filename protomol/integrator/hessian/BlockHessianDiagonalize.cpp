@@ -158,7 +158,7 @@ namespace ProtoMol {
 
     bHess->clearBlocks();
     bHess->evaluateBlocks(blockCutoffDistance, myPositions, myTopo);
-    hessianTime.stop();	//stop timer
+    //hessianTime.stop();	//stop timer
     
     //calculate S numerically?
     if( !numeric ){
@@ -172,6 +172,9 @@ namespace ProtoMol {
     }else{
         calculateS(myPositions, myTopo);
     }
+
+    //include inner matrix construction
+    hessianTime.stop();	//stop timer
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -580,7 +583,7 @@ namespace ProtoMol {
               //remove if 1/20 th of original
               if( nnorm < 0.05 && cdof > 0 ){//TODO## AND not last?
                   report << debug(12) << "Residual vector " << jj << " norm is low = " << nnorm << " in block " 
-                                << ii << " , skipping." << endr;
+                                << ii << ", skipping." << endr;
                   cdof--;
               }else{
                   
