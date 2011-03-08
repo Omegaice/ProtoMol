@@ -427,6 +427,9 @@ namespace ProtoMol {
 
       //~~~~Use geometrically generated conserved dof to generate a new basis set?
       if( geom ){
+          //set conserved dof
+          unsigned int cdof = 6;
+
           //create temporary matrix
           const unsigned int rowstart = blockEigVect[ii].RowStart;
           const unsigned int colstart = blockEigVect[ii].ColumnStart;
@@ -538,15 +541,8 @@ namespace ProtoMol {
           }
           //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-          //do dotprod
-          Real dotprod = 0.0;
-          for( unsigned ll=0; ll<block_max * 3; ll++ ){
-                dotprod += tmpEigs(rowstart + ll, colstart + 3)
-                                * tmpEigs(rowstart + ll, colstart + 4);
-          }
-
-          //set conserved dof
-          unsigned int cdof = 6;
+          //sift actual vectors into array, orthogonalizing w.r.t. the conserved dof.
+          //conserved dof, cdof, set at top of routine
 
           //loop over each vector in block
           for( unsigned jj=0; jj<block_max - cdof; jj++ ){
@@ -575,20 +571,25 @@ namespace ProtoMol {
 
               }
 
+              //normalize the residual vector
               Real nnorm = 0.0;
               for( unsigned ll=0; ll<block_max * 3; ll++ ){
                   nnorm += tmpEigs(rowstart + ll,colstart + jj + cdof) * tmpEigs(rowstart + ll,colstart + jj + cdof);
               }
 
-              nnorm = 1.0 / sqrt(nnorm);
-              //scale
-              for( unsigned ll=0; ll<block_max * 3; ll++ ){
-                  tmpEigs(rowstart + ll,colstart + jj + cdof) *= nnorm;
-              }
-
-              if( nnorm > 20 && cdof > 0 ){//TODO## AND not last?
-                  report << debug(10) << "Final norm was high = " << nnorm << " ,skipping." << endr;
+              //remove if 1/20 th of original
+              if( nnorm < 0.05 && cdof > 0 ){//TODO## AND not last?
+                  report << debug(12) << "Residual vector " << jj << " norm is low = " << nnorm << " in block " 
+                                << ii << " , skipping." << endr;
                   cdof--;
+              }else{
+                  
+                  nnorm = 1.0 / sqrt(nnorm);
+                  //scale
+                  for( unsigned ll=0; ll<block_max * 3; ll++ ){
+                      tmpEigs(rowstart + ll,colstart + jj + cdof) *= nnorm;
+                  }
+                  
               }
 
           }

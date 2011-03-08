@@ -962,7 +962,7 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
       const unsigned int a2 = myTopo->bonds[i].atom2;
 
       //in this block?
-      if( (a1 >= blockStart && a1 <= blockEnd) || (a2 >= blockStart && a2 <= blockEnd) ){
+      if( (a1 >= blockStart && a1 <= blockEnd) && (a2 >= blockStart && a2 <= blockEnd) ){
 
         //call force calculaton
         BondSystemForce<VacuumBoundaryConditions> bsf;
@@ -982,8 +982,8 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
       const unsigned int a3 = myTopo->angles[i].atom3;
       
       //in this block?
-      if( (a1 >= blockStart && a1 <= blockEnd) ||
-            (a2 >= blockStart && a2 <= blockEnd) ||
+      if( (a1 >= blockStart && a1 <= blockEnd) &&
+            (a2 >= blockStart && a2 <= blockEnd) &&
                 (a3 >= blockStart && a3 <= blockEnd) ){
       
           AngleSystemForce<VacuumBoundaryConditions> asf;
@@ -1004,9 +1004,9 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
       const unsigned int a4 = myTopo->impropers[i].atom4;
 
       //in this block?
-      if( (a1 >= blockStart && a1 <= blockEnd) ||
-            (a2 >= blockStart && a2 <= blockEnd) ||
-                (a3 >= blockStart && a3 <= blockEnd) ||
+      if( (a1 >= blockStart && a1 <= blockEnd) &&
+            (a2 >= blockStart && a2 <= blockEnd) &&
+                (a3 >= blockStart && a3 <= blockEnd) &&
                     (a4 >= blockStart && a4 <= blockEnd) ){
           ImproperSystemForce<VacuumBoundaryConditions> isf;
 
@@ -1026,11 +1026,11 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
       const unsigned int a4 = myTopo->dihedrals[i].atom4;
 
       //in this block?
-      if( (a1 >= blockStart && a1 <= blockEnd) ||
-            (a2 >= blockStart && a2 <= blockEnd) ||
-                (a3 >= blockStart && a3 <= blockEnd) ||
-                    (a4 >= blockStart && a4 <= blockEnd) ){
-          DihedralSystemForce<VacuumBoundaryConditions> dsf;
+		if( (a1 >= blockStart && a1 <= blockEnd) &&
+                (a2 >= blockStart && a2 <= blockEnd) &&
+                    (a3 >= blockStart && a3 <= blockEnd) &&
+                        (a4 >= blockStart && a4 <= blockEnd) ){
+			DihedralSystemForce<VacuumBoundaryConditions> dsf;
 
           dsf.calcTorsion(boundary, myTopo->dihedrals[i], myPositions,
                             blockForces, (energies)[ScalarStructure::DIHEDRAL], &energies);
@@ -1048,11 +1048,11 @@ void BlockHessian::evaluateBlockForces( const unsigned int blockStart, const uns
       const unsigned int a4 = myTopo->rb_dihedrals[i].atom4;
 
       //in this block?
-      if( (a1 >= blockStart && a1 <= blockEnd) ||
-            (a2 >= blockStart && a2 <= blockEnd) ||
-                (a3 >= blockStart && a3 <= blockEnd) ||
-                    (a4 >= blockStart && a4 <= blockEnd) ){
-          RBDihedralSystemForce<VacuumBoundaryConditions> dsf;
+		if( (a1 >= blockStart && a1 <= blockEnd) &&
+                (a2 >= blockStart && a2 <= blockEnd) &&
+                    (a3 >= blockStart && a3 <= blockEnd) &&
+                        (a4 >= blockStart && a4 <= blockEnd) ){
+			RBDihedralSystemForce<VacuumBoundaryConditions> dsf;
 
           dsf.calcRBTorsion(boundary, myTopo->rb_dihedrals[i], myPositions,
                             blockForces, (energies)[ScalarStructure::OTHER], &energies);
