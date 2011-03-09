@@ -51,7 +51,10 @@ namespace ProtoMol {
 			STSIntegrator::initialize(app);
 			initializeForces();
 			//NM initialization if OK
-			NormalModeUtilities::initialize((int)app->positions.size(), app, myForces, NO_NM_FLAGS); //last for non-complimentary forces
+            //changed NO_NM_FLAGS to COMPLIMENT_FORCES so that this integrator uses the complement 'space' 
+            //compared to the previous integrator, see NormalModeMinimizey
+            NormalModeUtilities::initialize((int)app->positions.size(), app, myForces, COMPLIMENT_FORCES);
+                                            //NO_NM_FLAGS); //last for non-complimentary forces
 			//
 			//initialize minimizer noise vars
 			randStp = 0.0;
