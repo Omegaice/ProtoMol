@@ -52,9 +52,14 @@ void LangevinLeapfrogIntegrator::doHalfKick() {
 
     for (unsigned int i = 0; i < count; i++ ) {
         //  Generate gaussian random numbers for each spatial direction
-        Vector3D gaussRandCoord1(randomGaussianNumber(mySeed),
-                                 randomGaussianNumber(mySeed),
-                                 randomGaussianNumber(mySeed));
+        //force order of generation
+        Real rand1 = randomGaussianNumber(mySeed);
+        Real rand2 = randomGaussianNumber(mySeed);
+        Real rand3 = randomGaussianNumber(mySeed);
+        
+        //into vector
+        Vector3D gaussRandCoord1(rand3, rand2, rand1);
+        
         Real mass = app->topology->atoms[i].scaledMass;
         Real sqrtFCoverM = sqrt(forceConstant / mass);
         // semi-update velocities

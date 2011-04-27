@@ -69,12 +69,18 @@ void LangevinImpulseIntegrator::fluctuationLI() {
     //  that is  used was taken from X-PLOR. The algorithm is a "sum of
     //  uniform deviates algorithm" which may be found in Abramowitz and
     //  Stegun, "Handbook of Mathematical Functions", pg 952.
-    Vector3D gaussRandCoord1(randomGaussianNumber(mySeed),
-                             randomGaussianNumber(mySeed),
-                             randomGaussianNumber(mySeed));
-    Vector3D gaussRandCoord2(randomGaussianNumber(mySeed),
-                             randomGaussianNumber(mySeed),
-                             randomGaussianNumber(mySeed));
+    //force order of generation
+    Real rand1 = randomGaussianNumber(mySeed);
+    Real rand2 = randomGaussianNumber(mySeed);
+    Real rand3 = randomGaussianNumber(mySeed);
+      
+    //into vector
+    Vector3D gaussRandCoord1(rand3, rand2, rand1);
+      
+    rand1 = randomGaussianNumber(mySeed);
+    rand2 = randomGaussianNumber(mySeed);
+    rand3 = randomGaussianNumber(mySeed);
+    Vector3D gaussRandCoord2(rand3, rand2, rand1);
 
     // update drift(fluctuation)
     app->positions[i] +=
