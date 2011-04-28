@@ -12,6 +12,7 @@
 
 #include <protomol/base/PMConstants.h>
 
+#include <iterator>
 #include <algorithm>
 
 using namespace std;

@@ -2,15 +2,7 @@
 #include <protomol/topology/TopologyUtilities.h>
 #include <protomol/type/ScalarStructure.h>
 
-#if defined (HAVE_LAPACK)
-#include <protomol/integrator/hessian/LapackProtomol.h>
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#include "SimTKlapack.h"
-#endif
-#endif
-
-
+#include <protomol/base/Lapack.h>
 
 using namespace ProtoMol::Report;
 
@@ -36,14 +28,9 @@ namespace ProtoMol {
   }
 
   void NormalModeUtilities::initialize(int sz, ProtoMolApp *app, Vector3DBlock * myForces, int nm_flags){
-
-#if defined(HAVE_LAPACK)
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-#else
-    report << error << "Normal Mode integrators require Lapack libraries."<<endr;
-#endif
-#endif
+	if( !Lapack::isEnabled() ){
+		THROW("Normal Mode integrators require Lapack libraries.");
+	}
 
     //Set up eigenvector pointers
     numEigvectsu = app->eigenInfo.myNumEigenvectors;
@@ -142,35 +129,18 @@ namespace ProtoMol {
     for( int i=0; i < _3N; i++)
          iPforce->c[i] *= invSqrtMass[i/3];
     //c=hQ^T*M^{-1/2}*f
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'T';							// Transpose Q, LAPACK checks only first character N/V
     int m = _3N; int n = _rfM; int incxy = 1;	//sizes
-#endif
     double alpha = 1.0;	double beta = 0.0;		//multiplyers, see Blas docs.
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, (*Q), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;							//length of transA
-    dgemv_ (transA, m, n, alpha, (*Q), m, iPforce->c, incxy, beta, tmpC, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, (*Q), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
+
     //calculate f''=M^{-1/2}*f'-hQc using BLAS
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transB = 'N';
-#endif
     alpha = -1.0;	beta = 1.0;
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transB, &m, &n, &alpha, (*Q), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    dgemv_ (transB, m, n, alpha, (*Q), m, tmpC, incxy, beta, iPforce->c, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transB, &m, &n, &alpha, (*Q), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
+
     //f'''=M^{1/2}*f''
     for( int i=0; i < _3N; i++)
             iPforce->c[i] *= sqrtMass[i/3];
@@ -191,35 +161,18 @@ namespace ProtoMol {
     for( int i=0; i < _3N; i++)
             iPforce->c[i] *= sqrtMass[i/3];
     //c=hQ^T*M^{-1/2}*f
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'T';							// Transpose Q, LAPACK checks only first character N/V
     int m = _3N; int n = _rfM; int incxy = 1;	//sizes
-#endif
     double alpha = 1.0;	double beta = 0.0;		//multiplyers, see Blas docs.
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, (*Q), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;							//length of transA
-    dgemv_ (transA, m, n, alpha, (*Q), m, iPforce->c, incxy, beta, tmpC, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, (*Q), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
+
     //calculate f''=M^{-1/2}*f'-hQc using BLAS
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transB = 'N';
-#endif
     alpha = -1.0;	beta = 1.0;
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transB, &m, &n, &alpha, (*Q), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    dgemv_ (transB, m, n, alpha, (*Q), m, tmpC, incxy, beta, iPforce->c, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transB, &m, &n, &alpha, (*Q), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
+
     //f'''=M^{1/2}*f''
     for( int i=0; i < _3N; i++)
             iPforce->c[i] *= invSqrtMass[i/3];
@@ -241,34 +194,18 @@ namespace ProtoMol {
             iPforce->c[i] *= invSqrtMass[i/3];
     }
     //c=Q^T*M^{-1/2}*f
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'T';							// Transpose, LAPACK checks only first character N/V
     int m = _3N; int n = _rfM-(firstMode-1); int incxy = 1;	//sizes
-#endif
     double alpha = 1.0;	double beta = 0.0;
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;
-    dgemv_ (transA, m, n, alpha, &((*Q)[_3N*(firstMode-1)]), m, iPforce->c, incxy, beta, tmpC, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
+
     //f''=Qc
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transB = 'N'; /* LAPACK checks only first character N/V */
-#endif
     alpha = 1.0;	beta = 0.0;
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transB, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    dgemv_ (transB, m, n, alpha, &((*Q)[_3N*(firstMode-1)]), m, tmpC, incxy, beta, iPforce->c, incxy, len_transa);
-#endif
-#endif
+
+    Lapack::dgemv(&transB, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
+
     //f'''=M^{1/2}*f''
     for( int i=0; i < _3N; i++) {
             iPforce->c[i] *= sqrtMass[i/3];
@@ -290,34 +227,17 @@ namespace ProtoMol {
     for( int i=0; i < _3N; i++)
             iPforce->c[i] *= sqrtMass[i/3];
     //c=Q^T*M^{-1/2}*v
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'T';							//Transpose, LAPACK checks only first character N/V
     int m = _3N; int n = _rfM-(firstMode-1); int incxy = 1;	//sizes
-#endif
     double alpha = 1.0;	double beta = 0.0;
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;
-    dgemv_ (transA, m, n, alpha, &((*Q)[_3N*(firstMode-1)]), m, iPforce->c, incxy, beta, tmpC, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, iPforce->c, &incxy, &beta, tmpC, &incxy);
+
     //v''=Qc
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transB = 'N'; /* LAPACK checks only first character N/V */
-#endif
     alpha = 1.0;	beta = 0.0;
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transB, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    dgemv_ (transB, m, n, alpha, &((*Q)[_3N*(firstMode-1)]), m, tmpC, incxy, beta, iPforce->c, incxy, len_transa);
-#endif
-#endif
+
+    Lapack::dgemv(&transB, &m, &n, &alpha, &((*Q)[_3N*(firstMode-1)]), &m, tmpC, &incxy, &beta, iPforce->c, &incxy);
 
     //v'''=M^{-1/2}*v''
     for( int i=0; i < _3N; i++)
@@ -345,22 +265,12 @@ namespace ProtoMol {
 
   //Project from mode subspace to 3D space
   Vector3DBlock* NormalModeUtilities::cartSpaceProj(double *tmpC, Vector3DBlock * iPos, Vector3DBlock * ex0){
-    //
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'N';							// Transpose Q, LAPACK checks only first character N/V
     int m = _3N; int n = _rfM; int incxy = 1;	//sizes
     double alpha = 1.0;	double beta = 0.0;		//multiplyers, see Blas docs.
-#endif
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, (*Q), &m, tmpC, &incxy, &beta, iPos->c, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;							//length of transA
-    dgemv_ (transA, m, n, alpha, (*Q), m, tmpC, incxy, beta, iPos->c, incxy, len_transa);
-#endif
-#endif
-    //
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, (*Q), &m, tmpC, &incxy, &beta, iPos->c, &incxy);
+
     for( int i=0; i < _3N; i++)
             iPos->c[i] /= sqrtMass[i/3];
     //put back into vector3DBlocks
@@ -383,21 +293,12 @@ namespace ProtoMol {
     for( int i=0; i < _3N; i++)
         vPos.c[i] *= sqrtMass[i/3];
     //c=Q^T*M^{-1/2}*v
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'T';							//Transpose, LAPACK checks only first character N/V
     int m = _3N; int n = _rfM; int incxy = 1;	//sizes
     double alpha = 1.0;	double beta = 0.0;
-#endif
-    //
-#if defined(HAVE_LAPACK)
-            dgemv_ (&transA, &m, &n, &alpha, (*Q), &m, vPos.c, &incxy, &beta, cPos, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-            int len_transa = 1;
-            dgemv_ (transA, m, n, alpha, (*Q), m, vPos.c, incxy, beta, cPos, incxy, len_transa);
-#endif
-#endif
-    //
+
+	Lapack::dgemv(&transA, &m, &n, &alpha, (*Q), &m, vPos.c, &incxy, &beta, cPos, &incxy);
+
     return cPos;
   }
 
@@ -488,14 +389,13 @@ namespace ProtoMol {
 
   //Diagonalize hessian******************************************************************//
   int NormalModeUtilities::diagHessian(double *eigVecO, double *eigValO, double *hsnhessM, int dim, int &numFound){
-   double *wrkSp;
-   int *isuppz, *iwork;
+	double *wrkSp;
+	int *isuppz, *iwork;
 
-   wrkSp = new double[26*dim];
-   isuppz = new int[2*dim];
-   iwork = new int[10*dim];
-   //Diagonalize
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
+	wrkSp = new double[26*dim];
+	isuppz = new int[2*dim];
+	iwork = new int[10*dim];
+	//Diagonalize
     char jobz = 'V'; char range = 'A'; char uplo = 'U'; /* LAPACK checks only first character N/V */
     int n = dim;             /* order of coefficient matrix a  */
     int lda = dim;           /* leading dimension of a array*/
@@ -507,34 +407,23 @@ namespace ProtoMol {
     int ldz = dim; int lwork = 26*dim; /* dimension of work array*///int m;
     int liwork = 10*dim;						/* dimension of int work array*/
     
-  //Recomended abstol for max precision
+	//Recomended abstol for max precision
     char cmach = 's'; //String is actualy safe min but it is shortened to remove the warning
-#endif
     int info = 0;				/* output 0=success */
-  int m = 0;
+	int m = 0;
     //call LAPACK
-    //
-#if defined( HAVE_LAPACK )
-    abstol = dlamch_( &cmach );	//find machine safe minimum
+    abstol = Lapack::dlamch( &cmach );	//find machine safe minimum
 
-    //
-    dsyevr_( &jobz, &range, &uplo, &n, hsnhessM, &lda, &vl, &vu, &il, &iu, &abstol, &m, eigValO, eigVecO, &ldz, isuppz,
+    Lapack::dsyevr( &jobz, &range, &uplo, &n, hsnhessM, &lda, &vl, &vu, &il, &iu, &abstol, &m, eigValO, eigVecO, &ldz, isuppz,
                 wrkSp, &lwork, iwork, &liwork, &info);
-#else
-#if defined( HAVE_SIMTK_LAPACK )
-    int len_cmach = 1;
-    int len_jobz = 1; int len_range = 1; int len_uplo = 1;
-    abstol = dlamch_( cmach, len_cmach);	//find machine safe minimum
-    //
-    dsyevr_( jobz, range, uplo, n, hsnhessM, lda, &vl, &vu, &il, &iu, &abstol, m, eigValO, eigVecO, ldz, isuppz,
-                wrkSp, lwork, iwork, &liwork, info, len_jobz, len_range, len_uplo);
-#endif
-#endif
-  numFound = m;
+
+	numFound = m;
+
     //delete arrays
     delete [] iwork;
     delete [] isuppz;
     delete [] wrkSp;
+
     //return status
     return info;
   }
@@ -602,54 +491,28 @@ namespace ProtoMol {
 
   //find Hessian projected into mxm 'inner' space
   void NormalModeUtilities::getInnerHess(double *eigVec, double *hess, double *innerHess){
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'T'; char transB = 'N';
     int m = _rfM; int n = _3N; int k = _3N;
     int lda = _3N; int ldb = _3N; int ldc = _rfM;
     double alpha = 1.0;	double beta = 0.0;
-#endif
     double *tempMat = new double[_rfM*_3N];
 
-    //
-#if defined(HAVE_LAPACK)
-    dgemm_ (&transA, &transB, &m, &n, &k, &alpha, eigVec, &lda, hess, &ldb, &beta, tempMat, &ldc);
+    Lapack::dgemm(&transA, &transB, &m, &n, &k, &alpha, eigVec, &lda, hess, &ldb, &beta, tempMat, &ldc);
     n = _rfM; lda = _rfM;
-    dgemm_ (&transB, &transB, &m, &n, &k, &alpha, tempMat, &lda, eigVec, &ldb, &beta, innerHess, &ldc);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;	int len_transb = 1;
-    dgemm_ (transA, transB, m, n, k, alpha, eigVec, lda,
-                        hess, ldb, beta, tempMat, ldc, len_transa, len_transb);
-    n = _rfM; lda = _rfM;
-    dgemm_ (transB, transB, m, n, k, alpha, tempMat, lda,
-                        eigVec, ldb, beta, innerHess, ldc, len_transa, len_transb);
-#endif
-#endif
+    Lapack::dgemm(&transB, &transB, &m, &n, &k, &alpha, tempMat, &lda, eigVec, &ldb, &beta, innerHess, &ldc);
 
     delete [] tempMat;
   }
 
   //product of eigenvectors and diagonalized 'inner' hessian
   void NormalModeUtilities::getNewEigs(double *eigVec, double *origEigVec, double *innerEigVec){
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'N'; char transB = 'N';
     int m = _3N; int n = _rfM; int k = _rfM;
     int lda = _3N; int ldb = _rfM; int ldc = _3N;
     double alpha = 1.0;	double beta = 0.0;
-#endif
-    //double *tempMat = new double[_rfM*_3N];
 
-    //
-#if defined(HAVE_LAPACK)
-    //dgemm_ (transA, transB, &m, &n, &k, &alpha, eigVec, &lda, innerEigVec, &ldb, &beta, tempMat, &ldc);
-    dgemm_ (&transA, &transB, &m, &n, &k, &alpha, origEigVec, &lda, innerEigVec, &ldb, &beta, eigVec, &ldc);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;	int len_transb = 1;
-    dgemm_ (transA, transB, m, n, k, alpha, origEigVec, lda,
-                        innerEigVec, ldb, beta, eigVec, ldc, len_transa, len_transb);
-#endif
-#endif
+    Lapack::dgemm(&transA, &transB, &m, &n, &k, &alpha, origEigVec, &lda, innerEigVec, &ldb, &beta, eigVec, &ldc);
+
     //copy back to eigVec
     //for(int i=0;i<_rfM*_3N;i++) eigVec[i] = tempMat[i];
     //delete [] tempMat;
@@ -662,42 +525,28 @@ namespace ProtoMol {
     //Get current Hessian
     for(int i=0 ; i<_3N*_3N ; i++) hsnhessM[i] /= raylAverage;	//divide sum of Hessians
     //set BLAS variables
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     char transA = 'N';
     int m = _3N; int n = _3N;
     int incxy = 1;	//sizes
     double alpha = 1.0;	double beta = 0.0;
-#endif
     //calculate Rayleigh Quo/bound
     //double rQ, boundRq;
     //define temporary position/force vector
     double *tmpFX = new double[_3N];
-    //
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, hsnhessM, &m, &((*Q)[_3N*(numv)]), &incxy, &beta, tmpFX, &incxy);
-    *rQ = ddot_ (&n, &((*Q)[_3N*(numv)]), &incxy, tmpFX, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;
-    dgemv_ (transA, m, n, alpha, hsnhessM, m, &((*Q)[_3N*(numv)]), incxy, beta, tmpFX, incxy, len_transa);
-    *rQ = ddot_ (n, &((*Q)[_3N*(numv)]), incxy, tmpFX, incxy);
-#endif
-#endif
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, hsnhessM, &m, &((*Q)[_3N*(numv)]), &incxy, &beta, tmpFX, &incxy);
+    *rQ = Lapack::ddot(&n, &((*Q)[_3N*(numv)]), &incxy, tmpFX, &incxy);
+
     //bound
     for(int i=0;i<_3N;i++) hsnhessM[i+_3N*i] -= *rQ;
-#if defined(HAVE_LAPACK)
-    dgemv_ (&transA, &m, &n, &alpha, hsnhessM, &m, &((*Q)[_3N*(numv)]), &incxy, &beta, tmpFX, &incxy);
-    *boundRq = dnrm2_(&n, tmpFX, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-    dgemv_ (transA, m, n, alpha, hsnhessM, m, &((*Q)[_3N*(numv)]), incxy, beta, tmpFX, incxy, len_transa);
-    *boundRq = dnrm2_(n, tmpFX, incxy);
-#endif
-#endif
+
+    Lapack::dgemv(&transA, &m, &n, &alpha, hsnhessM, &m, &((*Q)[_3N*(numv)]), &incxy, &beta, tmpFX, &incxy);
+    *boundRq = Lapack::dnrm2(&n, tmpFX, &incxy);
+
     for(int i=0;i<_3N;i++) hsnhessM[i+_3N*i] += *rQ; //restore
-        //
+
     delete [] tmpFX;
-    //
+
     return *rQ;
   }
 

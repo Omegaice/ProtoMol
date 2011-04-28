@@ -18,13 +18,7 @@
     #include <fstream>
 #endif
 
-#if defined (HAVE_LAPACK)
-#include <protomol/integrator/hessian/LapackProtomol.h>
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#include "SimTKlapack.h"
-#endif
-#endif
+#include <protomol/base/Lapack.h>
 
 using namespace std;
 using namespace ProtoMol::Report;
@@ -129,14 +123,10 @@ void HessianInt::initialize(ProtoMolApp *app) {
     THROW("[HessianInt::initialize] Cannot output Hessian after Lapack "
           "diagonalization!");
 
-#if defined (HAVE_LAPACK)
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#else
-  if (evecfile != "" || evalfile != "")
-    THROW("Hessian diagonalization requires Lapack libraries.");
-#endif
-#endif
+	if( !Lapack::isEnabled() ){
+      THROW("Block Hessian diagonalization requires Lapack libraries.");
+	}
+
   //creat hessian arrays and initialize sz
   int _N = app->positions.size();
   sz = 3 * _N;

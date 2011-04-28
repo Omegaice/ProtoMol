@@ -8,14 +8,7 @@
 #include <protomol/base/PMConstants.h>
 #include <protomol/ProtoMolApp.h>
 
-//#include <protomol/integrator/normal/ModifierForceProjection.h>
-#if defined (HAVE_LAPACK)
-#include <protomol/integrator/hessian/LapackProtomol.h>
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#include "SimTKlapack.h"
-#endif
-#endif
+#include <protomol/base/Lapack.h>
 
 using namespace std;
 
@@ -180,21 +173,11 @@ namespace ProtoMol {
                         temp2V3DBlk.c[i] *= sqrtMass[i/3];
         }
         //c=hQ^T*M^{-1/2}*f
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
         char transA = 'T';							// Transpose Q, LAPACK checks only first character N/V
         int m = _3N; int n = _rfM; int incxy = 1;	//sizes
         double alpha = 1.0;	double beta = 0.0;		//multiplyers, see Blas docs.
-#endif
-        //
-#if defined(HAVE_LAPACK)
-        dgemv_ (&transA, &m, &n, &alpha, (*Q), &m, temp2V3DBlk.c, &incxy, &beta, tmpc, &incxy);
-#else
-#if defined(HAVE_SIMTK_LAPACK)
-        int len_transa = 1;							//length of transA
-        dgemv_ (transA, m, n, alpha, (*Q), m, temp2V3DBlk.c, incxy, beta, tmpc, incxy, len_transa);
-#endif
-#endif
-        //
+
+        Lapack::dgemv(&transA, &m, &n, &alpha, (*Q), &m, temp2V3DBlk.c, &incxy, &beta, tmpc, &incxy);
     }
 
     void NormalModeDamping::getParameters(vector<Parameter>& parameters) const {
@@ -211,11 +194,5 @@ namespace ProtoMol {
         return new NormalModeDamping(values[0],values[1],values[2],values[3],values[4],values[5],values[6],
         fg);
     }
-
-    //void NormalModeDamping::addModifierAfterInitialize(){
-    //	adoptPostForceModifier(new ModifierForceProjection(this));
-    //	STSIntegrator::addModifierAfterInitialize();
-    //}
-
 }
 

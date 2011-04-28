@@ -8,12 +8,7 @@
 #include <protomol/base/PMConstants.h>
 #include <protomol/ProtoMolApp.h>
 
-//#include "ModifierForceProjection.h"
-#if defined (HAVE_LAPACK)
-  #include <protomol/integrator/hessian/LapackProtomol.h>
-#elif defined (HAVE_SIMTK_LAPACK)
-  #include "SimTKlapack.h"
-#endif
+#include <protomol/base/Lapack.h>
 
 using namespace std;
 
@@ -176,7 +171,6 @@ namespace ProtoMol
   //Project from subspace to 3D space
   Vector3DBlock* NormalModeQuadratic::subspaceProj( double *tmpC, Vector3DBlock * iPos )
   {
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
     // Transpose Q, LAPACK checks only first character N/V
     char transA = 'N';
 
@@ -185,14 +179,8 @@ namespace ProtoMol
 
     //multiplyers, see Blas docs.
     double alpha = 1.0; double beta = 0.0;
-#endif
 
-#if defined(HAVE_LAPACK)
-    dgemv_ ( &transA, &m, &n, &alpha, ( *Q ), &m, tmpC, &incxy, &beta, iPos->c, &incxy );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_transa = 1;       //length of transA
-    dgemv_ ( transA, m, n, alpha, ( *Q ), m, tmpC, incxy, beta, iPos->c, incxy, len_transa );
-#endif
+    Lapack::dgemv( &transA, &m, &n, &alpha, ( *Q ), &m, tmpC, &incxy, &beta, iPos->c, &incxy );
 
     //add ex0
     for ( int i = 0; i < _N; i++ ) {

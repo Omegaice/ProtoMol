@@ -1,12 +1,6 @@
 #include <protomol/type/BlockMatrix.h>
 
-#if defined (HAVE_LAPACK)
-#include <protomol/integrator/hessian/LapackProtomol.h>
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#include "SimTKlapack.h"
-#endif
-#endif
+#include <protomol/base/Lapack.h>
 
 using namespace std;
 using namespace ProtoMol::Report;
@@ -153,40 +147,34 @@ namespace ProtoMol
 
     BlockMatrix om( RowStart, bm.ColumnStart, Rows, bm.Columns );
 
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
-    char *transA = ( char * )"N"; char *transB = ( char * )"N";
-    int m = Rows; int n = bm.Columns; int k = kh - kl;
-    int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
-    double alpha = 1.0; double beta = 0.0;
-#endif
+	if( Lapack::isEnabled() ){
+		char *transA = ( char * )"N"; char *transB = ( char * )"N";
+		int m = Rows; int n = bm.Columns; int k = kh - kl;
+		int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
+		double alpha = 1.0; double beta = 0.0;
 
-#if defined(HAVE_LAPACK)
-    dgemm_ ( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
+		Lapack::dgemm( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
              &ldb, &beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_trans = 1;
-    dgemm_ ( *transA, *transB, m, n, k, alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             ldb, beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], ldc, len_trans, len_trans );
-#else
-    const unsigned int rowLength = RowStart + Rows;
-    const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
+	}else{
+		const unsigned int rowLength = RowStart + Rows;
+		const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
 
-    for ( unsigned int i = RowStart; i < rowLength; ++i ) {
-      const int iThisRowStart  = i - RowStart;
-      const int iOtherRowStart = i - om.RowStart;
+		for ( unsigned int i = RowStart; i < rowLength; ++i ) {
+		  const int iThisRowStart  = i - RowStart;
+		  const int iOtherRowStart = i - om.RowStart;
 
-      for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
-        Real tempf = 0.0;
+		  for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
+			Real tempf = 0.0;
 
-        for ( unsigned int k = kl; k < kh; ++k ) {
-          tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
-                   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
-        }
+			for ( unsigned int k = kl; k < kh; ++k ) {
+			  tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
+					   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
+			}
 
-        om.MyArray[ iOtherRowStart + ( j - om.ColumnStart ) * om.Rows] = tempf; //.at( changed to [] for efficiency
-      }
-    }
-#endif
+			om.MyArray[ iOtherRowStart + ( j - om.ColumnStart ) * om.Rows] = tempf; //.at( changed to [] for efficiency
+		  }
+		}
+	}
 
     return om;
   }
@@ -201,40 +189,34 @@ namespace ProtoMol
          om.RowStart + om.Rows < RowStart + Rows || om.ColumnStart + om.Columns < bm.ColumnStart + bm.Columns )
       Report::report << Report::error << "[BlockMatrix::product] Target Block Matrix too small." << Report::endr;
 
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
-    char *transA = ( char * )"N"; char *transB = ( char * )"N";
-    int m = Rows; int n = bm.Columns; int k = kh - kl;
-    int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
-    double alpha = 1.0; double beta = 0.0;
-#endif
+	if( Lapack::isEnabled() ){
+		char *transA = ( char * )"N"; char *transB = ( char * )"N";
+		int m = Rows; int n = bm.Columns; int k = kh - kl;
+		int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
+		double alpha = 1.0; double beta = 0.0;
 
-#if defined(HAVE_LAPACK)
-    dgemm_ ( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
+		Lapack::dgemm( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
              &ldb, &beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_trans = 1;
-    dgemm_ ( *transA, *transB, m, n, k, alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             ldb, beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], ldc, len_trans, len_trans );
-#else
-    const unsigned int rowLength = RowStart + Rows;
-    const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
+	}else{
+		const unsigned int rowLength = RowStart + Rows;
+		const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
 
-    for ( unsigned int i = RowStart; i < rowLength; ++i ) {
-      const int iThisRowStart  = i - RowStart;
-      const int iOtherRowStart = i - om.RowStart;
+		for ( unsigned int i = RowStart; i < rowLength; ++i ) {
+		  const int iThisRowStart  = i - RowStart;
+		  const int iOtherRowStart = i - om.RowStart;
 
-      for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
-        Real tempf = 0.0;
+		  for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
+			Real tempf = 0.0;
 
-        for ( unsigned int k = kl; k < kh; ++k ) {
-          tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
-                   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
-        }
+			for ( unsigned int k = kl; k < kh; ++k ) {
+			  tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
+					   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
+			}
 
-        om.MyArray[ iOtherRowStart + ( j - om.ColumnStart ) * om.Rows] = tempf; //.at( changed to [] for efficiency
-      }
-    }
-#endif
+			om.MyArray[ iOtherRowStart + ( j - om.ColumnStart ) * om.Rows] = tempf; //.at( changed to [] for efficiency
+		  }
+		}
+	}
   }
 
   // Multiply 'this' with 'bm', put result in double array 'om': TEST A, B, C
@@ -249,40 +231,34 @@ namespace ProtoMol
          om_RowStart + om_Rows < RowStart + Rows || om_ColumnStart + om_Columns < bm.ColumnStart + bm.Columns )
       Report::report << Report::error << "[BlockMatrix::product] Target Block Matrix too small." << Report::endr;
 
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
-    char *transA = ( char * )"N"; char *transB = ( char * )"N";
-    int m = Rows; int n = bm.Columns; int k = kh - kl;
-    int lda = Rows; int ldb = bm.Rows; int ldc = om_Rows;
-    double alpha = 1.0; double beta = 0.0;
-#endif
+	if( Lapack::isEnabled() ){
+		char *transA = ( char * )"N"; char *transB = ( char * )"N";
+		int m = Rows; int n = bm.Columns; int k = kh - kl;
+		int lda = Rows; int ldb = bm.Rows; int ldc = om_Rows;
+		double alpha = 1.0; double beta = 0.0;
 
-#if defined(HAVE_LAPACK)
-    dgemm_ ( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
+		Lapack::dgemm( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
              &ldb, &beta, &om_MyArray[( RowStart - om_RowStart ) + ( bm.ColumnStart - om_ColumnStart ) * om_Rows], &ldc );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_trans = 1;
-    dgemm_ ( *transA, *transB, m, n, k, alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             ldb, beta, &om_MyArray[( RowStart - om_RowStart ) + ( bm.ColumnStart - om_ColumnStart ) * om_Rows], ldc, len_trans, len_trans );
-#else
-    const unsigned int rowLength = RowStart + Rows;
-    const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
+	}else{
+		const unsigned int rowLength = RowStart + Rows;
+		const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
 
-    for ( unsigned int i = RowStart; i < rowLength; ++i ) {
-      const int iThisRowStart  = i - RowStart;
-      const int iOtherRowStart = i - om_RowStart;
+		for ( unsigned int i = RowStart; i < rowLength; ++i ) {
+		  const int iThisRowStart  = i - RowStart;
+		  const int iOtherRowStart = i - om_RowStart;
 
-      for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
-        Real tempf = 0.0;
+		  for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
+			Real tempf = 0.0;
 
-        for ( unsigned int k = kl; k < kh; ++k ) {
-          tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
-                   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
-        }
+			for ( unsigned int k = kl; k < kh; ++k ) {
+			  tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
+					   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
+			}
 
-        om_MyArray[ iOtherRowStart + ( j - om_ColumnStart ) * om_Rows] = tempf; //.at( changed to [] for efficiency
-      }
-    }
-#endif
+			om_MyArray[ iOtherRowStart + ( j - om_ColumnStart ) * om_Rows] = tempf; //.at( changed to [] for efficiency
+		  }
+		}
+	}
   }
 
   // Multiply 'this' with 'bm', sum result in 'om': TEST A, B, C
@@ -295,40 +271,34 @@ namespace ProtoMol
          om.RowStart + om.Rows < RowStart + Rows || om.ColumnStart + om.Columns < bm.ColumnStart + bm.Columns )
       Report::report << Report::error << "[BlockMatrix::product] Target Block Matrix too small." << Report::endr;
 
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
-    char *transA = ( char * )"N"; char *transB = ( char * )"N";
-    int m = Rows; int n = bm.Columns; int k = kh - kl;
-    int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
-    double alpha = 1.0; double beta = 1.0;
-#endif
+	if( Lapack::isEnabled() ){
+		char *transA = ( char * )"N"; char *transB = ( char * )"N";
+		int m = Rows; int n = bm.Columns; int k = kh - kl;
+		int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
+		double alpha = 1.0; double beta = 1.0;
 
-#if defined(HAVE_LAPACK)
-    dgemm_ ( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
+		Lapack::dgemm( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
              &ldb, &beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_trans = 1;
-    dgemm_ ( *transA, *transB, m, n, k, alpha, ( double * )&MyArray[( kl-ColumnStart )*Rows], lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             ldb, beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], ldc, len_trans, len_trans );
-#else
-    const unsigned int rowLength = RowStart + Rows;
-    const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
+	}else{
+		const unsigned int rowLength = RowStart + Rows;
+		const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
 
-    for ( unsigned int i = RowStart; i < rowLength; ++i ) {
-      const int iThisRowStart  = i - RowStart;
-      const int iOtherRowStart = i - om.RowStart;
+		for ( unsigned int i = RowStart; i < rowLength; ++i ) {
+		  const int iThisRowStart  = i - RowStart;
+		  const int iOtherRowStart = i - om.RowStart;
 
-      for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
-        Real tempf = 0.0;
+		  for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
+			Real tempf = 0.0;
 
-        for ( unsigned int k = kl; k < kh; ++k ) {
-          tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
-                   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
-        }
+			for ( unsigned int k = kl; k < kh; ++k ) {
+			  tempf += MyArray[ iThisRowStart + ( k - ColumnStart ) * Rows] *
+					   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
+			}
 
-        om.MyArray[ iOtherRowStart + ( j - om.ColumnStart ) * om.Rows] += tempf; //.at( changed to [] for efficiency
-      }
-    }
-#endif
+			om.MyArray[ iOtherRowStart + ( j - om.ColumnStart ) * om.Rows] += tempf; //.at( changed to [] for efficiency
+		  }
+		}
+	}
   }
 
   // Multiply transpose of 'this' with 'bm', put result in 'om': TEST A, B, C
@@ -341,38 +311,32 @@ namespace ProtoMol
          om.RowStart + om.Rows < ColumnStart + Columns || om.ColumnStart + om.Columns < bm.ColumnStart + bm.Columns )
       Report::report << Report::error << "[BlockMatrix::transposeProduct] Target Block Matrix too small." << Report::endr;
 
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
-    char *transA = ( char * )"T"; char *transB = ( char * )"N";
-    int m = Columns; int n = bm.Columns; int k = kh - kl;//
-    int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;//
-    double alpha = 1.0; double beta = 0.0;
-#endif
+	if( Lapack::isEnabled() ){
+		char *transA = ( char * )"T"; char *transB = ( char * )"N";
+		int m = Columns; int n = bm.Columns; int k = kh - kl;//
+		int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;//
+		double alpha = 1.0; double beta = 0.0;
 
-#if defined(HAVE_LAPACK)
-    dgemm_ ( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-RowStart )], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             &ldb, &beta, &om.MyArray[( ColumnStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_trans = 1;
-    dgemm_ ( *transA, *transB, m, n, k, alpha, &MyArray[kl-RowStart], lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             ldb, beta, &om.MyArray[( ColumnStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], ldc, len_trans, len_trans );
-#else
-    const unsigned int columnLength = ColumnStart + Columns;
-    const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
+		Lapack::dgemm( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-RowStart )], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
+				 &ldb, &beta, &om.MyArray[( ColumnStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
+	}else{
+		const unsigned int columnLength = ColumnStart + Columns;
+		const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
 
-    for ( unsigned int i = ColumnStart; i < columnLength; ++i ) {
-      const int iColumnStart = i - ColumnStart;
-      const int iRowStart    = i - om.RowStart;
+		for ( unsigned int i = ColumnStart; i < columnLength; ++i ) {
+		  const int iColumnStart = i - ColumnStart;
+		  const int iRowStart    = i - om.RowStart;
 
-      for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
-        Real tempf = 0.0;
-        for ( unsigned int k = kl; k < kh; ++k ) {
-          tempf += MyArray[ iColumnStart * Rows + ( k - RowStart ) ] *
-                   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
-        }
-        om.MyArray.at( iRowStart + ( j - om.ColumnStart ) * om.Rows ) = tempf; //.at( changed to [] for efficiency
-      }
-    }
-#endif
+		  for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
+			Real tempf = 0.0;
+			for ( unsigned int k = kl; k < kh; ++k ) {
+			  tempf += MyArray[ iColumnStart * Rows + ( k - RowStart ) ] *
+					   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
+			}
+			om.MyArray.at( iRowStart + ( j - om.ColumnStart ) * om.Rows ) = tempf; //.at( changed to [] for efficiency
+		  }
+		}
+	}
   }
 
   // Multiply transpose of 'this' with 'bm', return result: TEST C
@@ -383,40 +347,34 @@ namespace ProtoMol
 
     BlockMatrix om( ColumnStart, bm.ColumnStart, Columns, bm.Columns );
 
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
-    char *transA = ( char * )"T"; char *transB = ( char * )"N";
-    int m = Columns; int n = bm.Columns; int k = kh - kl;
-    int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
-    double alpha = 1.0; double beta = 0.0;
-#endif
+	if( Lapack::isEnabled() ){
+		char *transA = ( char * )"T"; char *transB = ( char * )"N";
+		int m = Columns; int n = bm.Columns; int k = kh - kl;
+		int lda = Rows; int ldb = bm.Rows; int ldc = om.Rows;
+		double alpha = 1.0; double beta = 0.0;
 
-#if defined(HAVE_LAPACK)
-    dgemm_ ( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-RowStart )], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             &ldb, &beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
-#elif defined(HAVE_SIMTK_LAPACK)
-    int len_trans = 1;
-    dgemm_ ( *transA, *transB, m, n, k, alpha, &MyArray[kl-RowStart], lda, ( double * )&bm.MyArray[kl - bm.RowStart],
-             ldb, beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], ldc, len_trans, len_trans );
-#else
-    const unsigned int columnLength = ColumnStart + Columns;
-    const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
+		Lapack::dgemm( transA, transB, &m, &n, &k, &alpha, ( double * )&MyArray[( kl-RowStart )], &lda, ( double * )&bm.MyArray[kl - bm.RowStart],
+				 &ldb, &beta, &om.MyArray[( RowStart - om.RowStart ) + ( bm.ColumnStart - om.ColumnStart ) * om.Rows], &ldc );
+	}else{
+		const unsigned int columnLength = ColumnStart + Columns;
+		const unsigned int otherColumnLength = bm.ColumnStart + bm.Columns;
 
-    for ( unsigned int i = ColumnStart; i < columnLength; ++i ) {
-      const int iColumnStart = i - ColumnStart;
-      const int iRowStart    = i - om.RowStart;
+		for ( unsigned int i = ColumnStart; i < columnLength; ++i ) {
+		  const int iColumnStart = i - ColumnStart;
+		  const int iRowStart    = i - om.RowStart;
 
-      for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
-        Real tempf = 0.0;
+		  for ( unsigned int j = bm.ColumnStart; j < otherColumnLength; ++j ) {
+			Real tempf = 0.0;
 
-        for ( unsigned int k = kl; k < kh; ++k ) {
-          tempf += MyArray[iColumnStart * Rows + ( k - RowStart ) ] *
-                   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
-        }
+			for ( unsigned int k = kl; k < kh; ++k ) {
+			  tempf += MyArray[iColumnStart * Rows + ( k - RowStart ) ] *
+					   bm.MyArray[( k - bm.RowStart ) + ( j - bm.ColumnStart ) * bm.Rows];
+			}
 
-        om.MyArray[iRowStart + ( j - om.ColumnStart ) * om.Rows] = tempf;
-      }
-    }
-#endif
+			om.MyArray[iRowStart + ( j - om.ColumnStart ) * om.Rows] = tempf;
+		  }
+		}
+	}
 
     return om;
   }

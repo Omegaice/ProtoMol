@@ -13,13 +13,7 @@
 #include<iostream>
 #include<fstream>
 
-#if defined (HAVE_LAPACK)
-#include <protomol/integrator/hessian/LapackProtomol.h>
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#include "SimTKlapack.h"
-#endif
-#endif
+#include <protomol/base/Lapack.h>
 
 using namespace std;
 using namespace ProtoMol::Report;

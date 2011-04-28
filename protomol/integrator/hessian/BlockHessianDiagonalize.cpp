@@ -5,13 +5,7 @@
 
 #include <protomol/type/BlockMatrix.h>
 
-#if defined (HAVE_LAPACK)
-#include <protomol/integrator/hessian/LapackProtomol.h>
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#include "SimTKlapack.h"
-#endif
-#endif
+#include <protomol/base/Lapack.h>
 
 #include <iostream>
 #include <stdio.h>
@@ -51,15 +45,11 @@ namespace ProtoMol {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   void BlockHessianDiagonalize::initialize(BlockHessian * bHessIn, 
                         const int sz, StandardIntegrator *intg) {
-  this->intg = intg;
-
-#if defined (HAVE_LAPACK)
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#else
-    THROW("Block Hessian diagonalization requires Lapack libraries.");
-#endif
-#endif
+	this->intg = intg;
+	
+	if( !Lapack::isEnabled() ){
+		THROW("Block Hessian diagonalization requires Lapack libraries.");
+	}
 
     //assign pointer to BlockHessian object    
     bHess = bHessIn;  
@@ -93,14 +83,10 @@ namespace ProtoMol {
   // Initialize for Full Hessians
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   void BlockHessianDiagonalize::initialize(const int sz) {
+	if( !Lapack::isEnabled() ){
+		THROW("Block Hessian diagonalization requires Lapack libraries.");
+	}
 
-#if defined (HAVE_LAPACK)
-#else
-#if defined (HAVE_SIMTK_LAPACK)
-#else
-    THROW("Block Hessian diagonalization requires Lapack libraries.");
-#endif
-#endif
     //assign pointer to BlockHessian object    
     bHess = 0;  
     //assign arrays
@@ -701,7 +687,6 @@ namespace ProtoMol {
    isuppz = new int[2*dim];
    iwork = new int[10*dim];
    //Diagonalize
-#if defined(HAVE_LAPACK) || defined(HAVE_SIMTK_LAPACK)
 //QR?
 #if defined( HAVE_QRDIAG )    
    //copy Hessian to eig I/O space, could just copy the upper triangular part with diagonal
@@ -724,53 +709,27 @@ namespace ProtoMol {
     int liwork = 10*dim;						/* dimension of int work array*/
     //Recomended abstol for max precision
     char cmach = 's';//String should be safe min but is shortened to remove warning
-#endif
     int info = 0;				/* output 0=success */
     int m = 0;
     //call LAPACK 
     //	
-#if defined( HAVE_LAPACK )
 //QR?
 #if defined( HAVE_QRDIAG )    
     lwork = -1;
-    dsyev_(&jobz, &uplo, &n, eigVecO, &lda, eigValO, wrkSp, &lwork, &info);
+    Lapack::dsyev(&jobz, &uplo, &n, eigVecO, &lda, eigValO, wrkSp, &lwork, &info);
     if(info == 0){
       lwork = wrkSp[0];
       delete [] wrkSp;
       wrkSp = new double[lwork];
-      dsyev_(&jobz, &uplo, &n, eigVecO, &lda, eigValO, wrkSp, &lwork, &info);
+      Lapack::dsyev(&jobz, &uplo, &n, eigVecO, &lda, eigValO, wrkSp, &lwork, &info);
     }
 #else
-    abstol = dlamch_( &cmach);	//find machine safe minimum  
+    abstol = Lapack::dlamch( &cmach);	//find machine safe minimum  
     //abstol = 1e-15;	//use small value for tolerence  
     //
-    dsyevr_( &jobz, &range, &uplo, &n, hsnhessM, &lda, &vl, &vu, &il, &iu, &abstol, &m, eigValO, eigVecO, &ldz, isuppz, 
+    Lapack::dsyevr( &jobz, &range, &uplo, &n, hsnhessM, &lda, &vl, &vu, &il, &iu, &abstol, &m, eigValO, eigVecO, &ldz, isuppz, 
                 wrkSp, &lwork, iwork, &liwork, &info);
 #endif
-//
-#else
-#if defined( HAVE_SIMTK_LAPACK )
-    int len_cmach = 1;
-    int len_jobz = 1; int len_range = 1; int len_uplo = 1;
-//QR?
-#if defined( HAVE_QRDIAG )
-    lwork = -1;
-    dsyev_(jobz, uplo, n, eigVecO, lda, eigValO, wrkSp, lwork, info);
-    if(info == 0){
-      lwork = wrkSp[0];
-      delete [] wrkSp;
-      wrkSp = new double[lwork];
-      dsyev_(jobz, uplo, n, eigVecO, lda, eigValO, wrkSp, lwork, info);
-    }
-#else
-    abstol = dlamch_( cmach, len_cmach);	//find machine safe minimum  
-    //
-    dsyevr_( jobz, range, uplo, n, hsnhessM, lda, &vl, &vu, &il, &iu, &abstol, m, eigValO, eigVecO, ldz, isuppz, 
-                wrkSp, lwork, iwork, &liwork, info, len_jobz, len_range, len_uplo);
-#endif
-//
-#endif
-#endif    
 	numFound = m;
     //delete arrays
     delete [] iwork;
