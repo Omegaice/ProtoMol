@@ -8,6 +8,8 @@ protomol/base/Exception.h -text
 protomol/base/Factory.h -text
 protomol/base/FileLocation.cpp -text
 protomol/base/FileLocation.h -text
+protomol/base/Lapack.cpp -text
+protomol/base/Lapack.h -text
 protomol/base/Makeable.cpp -text
 protomol/base/Makeable.h -text
 protomol/base/MakeableDefinition.h -text
