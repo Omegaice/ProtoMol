@@ -8,7 +8,6 @@ using namespace ProtoMol;
 
 namespace ProtoMol
 {
-
   // Constructors/distructors~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   BlockMatrix::BlockMatrix() :
       RowStart ( 0 ), Rows ( 0 ), ColumnStart ( 0 ), Columns ( 0 ),
@@ -16,22 +15,16 @@ namespace ProtoMol
   {
   }
 
-  BlockMatrix::BlockMatrix( unsigned int rowStart, unsigned int columnStart, unsigned int rows, unsigned int columns )
+  BlockMatrix::BlockMatrix( const unsigned int rowStart, const unsigned int columnStart, const unsigned int rows, const unsigned int columns )
+    : RowStart( rowStart ), Rows( rows ), ColumnStart( columnStart ), Columns( columns ), arraySize( rows * columns )
   {
-    RowStart    = rowStart;
-    ColumnStart = columnStart;
-
-    Rows    = rows;
-    Columns = columns;
-
-    arraySize = Rows * Columns;
     MyArray.resize( arraySize );
   }
 
-  BlockMatrix::~BlockMatrix() {};
+  BlockMatrix::~BlockMatrix() {}
 
   // Methods~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  void BlockMatrix::initialize( unsigned int rowStart, unsigned int columnStart, unsigned int rows, unsigned int columns )
+  void BlockMatrix::initialize( const unsigned int rowStart, const unsigned int columnStart, const unsigned int rows, const unsigned int columns )
   {
     RowStart    = rowStart;
     ColumnStart = columnStart;
@@ -46,7 +39,7 @@ namespace ProtoMol
   void BlockMatrix::clear()
   {
     std::fill( MyArray.begin(), MyArray.end(), 0.0 );
-  };
+  }
 
   // Pointer to data
   double * BlockMatrix::arrayPointer()
@@ -55,14 +48,14 @@ namespace ProtoMol
   }
 
   // Move block
-  void BlockMatrix::blockMove( unsigned int newRowStart, unsigned int newColumnStart )
+  void BlockMatrix::blockMove( const unsigned int newRowStart, const unsigned int newColumnStart )
   {
     RowStart    = newRowStart;
     ColumnStart = newColumnStart;
   }
 
   // Re-size by columns
-  void BlockMatrix::columnResize( unsigned int newColumns )
+  void BlockMatrix::columnResize( const unsigned int newColumns )
   {
     Columns   = newColumns;
     arraySize = Rows * Columns;
@@ -73,10 +66,10 @@ namespace ProtoMol
   const BlockMatrix BlockMatrix::operator+( const BlockMatrix &bm ) const
   {
     //find bounds
-    unsigned int rl = max( RowStart, bm.RowStart );
-    unsigned int rh = min( RowStart + Rows, bm.RowStart + bm.Rows );
-    unsigned int cl = max( ColumnStart, bm.ColumnStart );
-    unsigned int ch = min( ColumnStart + Columns, bm.ColumnStart + bm.Columns );
+    const unsigned int rl = max( RowStart, bm.RowStart );
+    const unsigned int rh = min( RowStart + Rows, bm.RowStart + bm.Rows );
+    const unsigned int cl = max( ColumnStart, bm.ColumnStart );
+    const unsigned int ch = min( ColumnStart + Columns, bm.ColumnStart + bm.Columns );
 
     BlockMatrix om( rl, cl, rh - rl, ch - cl );
 
@@ -99,10 +92,10 @@ namespace ProtoMol
   BlockMatrix &BlockMatrix::operator+=( const BlockMatrix &bm )
   {
     //find bounds
-    unsigned int rl = max( RowStart, bm.RowStart );
-    unsigned int rh = min( RowStart + Rows, bm.RowStart + bm.Rows );
-    unsigned int cl = max( ColumnStart, bm.ColumnStart );
-    unsigned int ch = min( ColumnStart + Columns, bm.ColumnStart + bm.Columns );
+    const unsigned int rl = max( RowStart, bm.RowStart );
+    const unsigned int rh = min( RowStart + Rows, bm.RowStart + bm.Rows );
+    const unsigned int cl = max( ColumnStart, bm.ColumnStart );
+    const unsigned int ch = min( ColumnStart + Columns, bm.ColumnStart + bm.Columns );
 
     for ( unsigned int i = rl; i < rh; ++i ) {
       const int iOtherStart = i - bm.RowStart;
@@ -121,10 +114,10 @@ namespace ProtoMol
   void BlockMatrix::add( const BlockMatrix &bm, BlockMatrix &om ) const
   {
     //find bounds
-    unsigned int rl = max( max( RowStart, bm.RowStart ), om.RowStart );
-    unsigned int rh = min( min( RowStart + Rows, bm.RowStart + bm.Rows ), om.RowStart + om.Rows );
-    unsigned int cl = max( max( ColumnStart, bm.ColumnStart ), om.ColumnStart );
-    unsigned int ch = min( min( ColumnStart + Columns, bm.ColumnStart + bm.Columns ), om.ColumnStart + om.Columns );
+    const unsigned int rl = max( max( RowStart, bm.RowStart ), om.RowStart );
+    const unsigned int rh = min( min( RowStart + Rows, bm.RowStart + bm.Rows ), om.RowStart + om.Rows );
+    const unsigned int cl = max( max( ColumnStart, bm.ColumnStart ), om.ColumnStart );
+    const unsigned int ch = min( min( ColumnStart + Columns, bm.ColumnStart + bm.Columns ), om.ColumnStart + om.Columns );
 
     for ( unsigned int i = rl; i < rh; ++i ) {
       const int iTempStart  = i - om.RowStart;
@@ -142,8 +135,8 @@ namespace ProtoMol
   // Multiply 'this' with 'bm', return result: TEST A, C
   const BlockMatrix BlockMatrix::operator*( const BlockMatrix &bm ) const
   {
-    unsigned int kl = max( ColumnStart, bm.RowStart );
-    unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
+    const unsigned int kl = max( ColumnStart, bm.RowStart );
+    const unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
 
     BlockMatrix om( RowStart, bm.ColumnStart, Rows, bm.Columns );
 
@@ -182,8 +175,8 @@ namespace ProtoMol
   // Multiply 'this' with 'bm', put result in 'om': TEST A, B, C
   void BlockMatrix::product( const BlockMatrix &bm, BlockMatrix &om ) const
   {
-    unsigned int kl = max( ColumnStart, bm.RowStart );
-    unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
+    const unsigned int kl = max( ColumnStart, bm.RowStart );
+    const unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
 
     if ( om.RowStart > RowStart || om.ColumnStart > bm.ColumnStart ||
          om.RowStart + om.Rows < RowStart + Rows || om.ColumnStart + om.Columns < bm.ColumnStart + bm.Columns )
@@ -224,8 +217,8 @@ namespace ProtoMol
                                     double *om_MyArray, unsigned int om_RowStart, unsigned int om_ColumnStart,
                                     unsigned int om_Rows, unsigned int om_Columns ) const
   {
-    unsigned int kl = max( ColumnStart, bm.RowStart );
-    unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
+    const unsigned int kl = max( ColumnStart, bm.RowStart );
+    const unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
 
     if ( om_RowStart > RowStart || om_ColumnStart > bm.ColumnStart ||
          om_RowStart + om_Rows < RowStart + Rows || om_ColumnStart + om_Columns < bm.ColumnStart + bm.Columns )
@@ -264,8 +257,8 @@ namespace ProtoMol
   // Multiply 'this' with 'bm', sum result in 'om': TEST A, B, C
   void BlockMatrix::sumProduct( const BlockMatrix &bm, BlockMatrix &om ) const
   {
-    unsigned int kl = max( ColumnStart, bm.RowStart );
-    unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
+    const unsigned int kl = max( ColumnStart, bm.RowStart );
+    const unsigned int kh = min( ColumnStart + Columns, bm.RowStart + bm.Rows );
 
     if ( om.RowStart > RowStart || om.ColumnStart > bm.ColumnStart ||
          om.RowStart + om.Rows < RowStart + Rows || om.ColumnStart + om.Columns < bm.ColumnStart + bm.Columns )
@@ -304,8 +297,8 @@ namespace ProtoMol
   // Multiply transpose of 'this' with 'bm', put result in 'om': TEST A, B, C
   void BlockMatrix::transposeProduct( const BlockMatrix &bm, BlockMatrix &om ) const
   {
-    unsigned int kl = max( RowStart, bm.RowStart );
-    unsigned int kh = min( RowStart + Rows, bm.RowStart + bm.Rows );
+    const unsigned int kl = max( RowStart, bm.RowStart );
+    const unsigned int kh = min( RowStart + Rows, bm.RowStart + bm.Rows );
 
     if ( om.RowStart > ColumnStart || om.ColumnStart > bm.ColumnStart ||
          om.RowStart + om.Rows < ColumnStart + Columns || om.ColumnStart + om.Columns < bm.ColumnStart + bm.Columns )
@@ -342,8 +335,8 @@ namespace ProtoMol
   // Multiply transpose of 'this' with 'bm', return result: TEST C
   const BlockMatrix BlockMatrix::operator/( const BlockMatrix &bm ) const
   {
-    unsigned int kl = max( RowStart, bm.RowStart );
-    unsigned int kh = min( RowStart + Rows, bm.RowStart + bm.Rows );
+    const unsigned int kl = max( RowStart, bm.RowStart );
+    const unsigned int kh = min( RowStart + Rows, bm.RowStart + bm.Rows );
 
     BlockMatrix om( ColumnStart, bm.ColumnStart, Columns, bm.Columns );
 
@@ -380,8 +373,8 @@ namespace ProtoMol
   }
 
   // Get sub-matrix: TEST A
-  const BlockMatrix BlockMatrix::subMatrix( unsigned int atRow, unsigned int atColumn,
-      unsigned int getRows, unsigned int getColumns ) const
+  const BlockMatrix BlockMatrix::subMatrix( const unsigned int atRow, const unsigned int atColumn,
+      const unsigned int getRows, const unsigned int getColumns ) const
   {
     //create matrix
     BlockMatrix om( atRow, atColumn, getRows, getColumns );
@@ -409,8 +402,8 @@ namespace ProtoMol
   // Operators~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   // Double Index access
-  double & BlockMatrix::operator()(unsigned int rowIndex,
-                                   unsigned int colIndex )
+  double & BlockMatrix::operator()(const unsigned int rowIndex,
+                                   const unsigned int colIndex )
   {
     if ( rowIndex < RowStart || rowIndex > RowStart + Rows || colIndex < ColumnStart || colIndex > ColumnStart + Columns ) {
       Report::report << Report::error << "[BlockMatrix::operator(,)] Index out of range." << Report::endr;
@@ -420,7 +413,7 @@ namespace ProtoMol
   }
 
   // Index access
-  double & BlockMatrix::operator[](unsigned int index )
+  double & BlockMatrix::operator[](const unsigned int index )
   {
     if ( index > arraySize ) {
       Report::report << Report::error << "[BlockMatrix::operator[]] Index out of range." << Report::endr;

@@ -33,27 +33,27 @@ namespace ProtoMol
     public:
       BlockMatrix();
 
-      BlockMatrix( unsigned int rowStart, unsigned int columnStart, unsigned int rows, unsigned int columns );
+      BlockMatrix( const unsigned int rowStart, const unsigned int columnStart, const unsigned int rows, const unsigned int columns );
 
       ~BlockMatrix();
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // New methods of class Hessian
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      void initialize( unsigned int rowStart, unsigned int columnStart, unsigned int rows, unsigned int columns );
+      void initialize( const unsigned int rowStart, const unsigned int columnStart, const unsigned int rows, const unsigned int columns );
       void clear();
 
       // Re-size by columns
-      void columnResize( unsigned int newColumns );
+      void columnResize( const unsigned int newColumns );
 
       // Move block
-      void blockMove( unsigned int newRowStart, unsigned int newColumnStart );
+      void blockMove( const unsigned int newRowStart, const unsigned int newColumnStart );
 
       // Double Index access
-      double &operator()(unsigned int rowIndex, unsigned int colIndex );
+      double &operator()( const unsigned int rowIndex, const unsigned int colIndex );
 
       // Index access
-      double &operator[](unsigned int index );
+      double &operator[]( const unsigned int index );
 
       // Equals
       BlockMatrix &operator=( const BlockMatrix &bm );
@@ -88,7 +88,7 @@ namespace ProtoMol
       const BlockMatrix operator/( const BlockMatrix &bm ) const;
 
       // Get sub-matrix
-      const BlockMatrix subMatrix( unsigned int atRow, unsigned int atColumn, unsigned int getRows, unsigned int getColumns ) const;
+      const BlockMatrix subMatrix( const unsigned int atRow, const unsigned int atColumn, const unsigned int getRows, const unsigned int getColumns ) const;
 
       // Pointer to data
       double * arrayPointer();
