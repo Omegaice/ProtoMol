@@ -410,7 +410,7 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
 
       Real charge = app->topology->atoms[i].scaledCharge / Constant::SQRTCOULOMBCONSTANT;
       unsigned int type = app->topology->atoms[i].type;
-      Real radius = app->topology->atomTypes[type].vdwR * Constant::ANGSTROM_NM; //0.1 factor in openMM, file in A
+      Real radius = app->topology->atoms[i].myGBSA_T->vanDerWaalRadius * Constant::ANGSTROM_NM; //0.1 factor in openMM, file in A
 
 
 #ifdef DEBUG

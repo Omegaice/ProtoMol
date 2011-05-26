@@ -703,8 +703,9 @@ void ProtoMol::buildTopology(GenericTopology *topo, const PSF &psf,
          report << debug(2) <<"BuildTopology : atom_type_name "<<topo->atomTypes[i].name<<" vdwR = "<<topo->atomTypes[i].vdwR<<endr;
       }
 
-
   }
+
+
 
   // NbFix
   for (unsigned int k = 0; k < sizeNbfixs; ++k) {
@@ -869,13 +870,17 @@ void ProtoMol::buildTopology(GenericTopology *topo, const PSF &psf,
        tempatom->myGBSA_T->SetSpaceDistij(atomsSize);
     }
 
+    // Van der Waal Radii can differ for two atoms of the same type. As part
+    // of an incremental fix, we've created a new field in Atom for use with GB.
+    // We are not removing the field in AtomType until SCPISM has been fixed to
+    // use the new field. In the mean time, copy values from AtomType to Atom.
+    tempatom->myGBSA_T->vanDerWaalRadius = topo->atomTypes[type].vdwR;
+
   }
 
   }
   
   
-      
-
   
 
   // store the molecule information

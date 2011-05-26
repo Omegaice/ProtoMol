@@ -41,6 +41,12 @@ namespace ProtoMol {
     Real mass;              ///< The mass of this atom type.
     Real charge;            ///< The charge of this atom type.
     std::string symbolName; ///< The symbol untity name of this atom type.
+
+    // Van der Waal Radius, used for implicit solvents.
+    // Note: In fixing GB, we realized that the Van der Waal radius is
+    // a property of the Atom, not the AtomType, and have created a 
+    // field in the Atom type appropriately.  As SCPISM still depends
+    // on this field, we will not remove it until SCPISM is fixed.
     Real vdwR;              ///< The van del waals radius, used for implicit solvents
 
     //LJ parameters for openMM and Amber force fields.

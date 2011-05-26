@@ -75,13 +75,12 @@ namespace ProtoMol {
       topo->atoms[atom1].myGBSA_T->distij[atom2] = dist;
       topo->atoms[atom2].myGBSA_T->distij[atom1] = dist;
 
-     int type1 = topo->atoms[atom1].type;
-     int type2 = topo->atoms[atom2].type;
-
+      Real radius_i = topo->atoms[atom1].myGBSA_T->vanDerWaalRadius;
+      Real radius_j = topo->atoms[atom2].myGBSA_T->vanDerWaalRadius;
 
      //offset radii ({\tilde{\rho}_{j}}) Equation (4) in the writeup
-     Real offsetRadius_i = topo->atomTypes[type1].vdwR - topo->atoms[atom1].myGBSA_T->offsetRadius;
-     Real offsetRadius_j = topo->atomTypes[type2].vdwR - topo->atoms[atom2].myGBSA_T->offsetRadius;
+     Real offsetRadius_i = radius_i - topo->atoms[atom1].myGBSA_T->offsetRadius;
+     Real offsetRadius_j = radius_j - topo->atoms[atom2].myGBSA_T->offsetRadius;
 
      //Scaling factors
      Real S_i = topo->atoms[atom1].myGBSA_T->scalingFactor;

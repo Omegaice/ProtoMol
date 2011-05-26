@@ -43,16 +43,12 @@ namespace ProtoMol {
       //Real dist = sqrt(distSquared);
 
 
-      int type1 = topo->atoms[atom1].type;
-      int type2 = topo->atoms[atom2].type;
-
-
-      //Real radius_i = topo->atomTypes[type1].vdwR;
-      //Real radius_j = topo->atomTypes[type2].vdwR;
+      Real radius_i = topo->atoms[atom1].myGBSA_T->vanDerWaalRadius;
+      Real radius_j = topo->atoms[atom2].myGBSA_T->vanDerWaalRadius;
 
      //offset radii ({\tilde{\rho}_{j}})
-     Real offsetRadius_i = topo->atomTypes[type1].vdwR - topo->atoms[atom1].myGBSA_T->offsetRadius;
-     Real offsetRadius_j = topo->atomTypes[type2].vdwR - topo->atoms[atom2].myGBSA_T->offsetRadius;
+     Real offsetRadius_i = radius_i - topo->atoms[atom1].myGBSA_T->offsetRadius;
+     Real offsetRadius_j = radius_j - topo->atoms[atom2].myGBSA_T->offsetRadius;
 
 
      //Scaling factors
@@ -74,7 +70,7 @@ namespace ProtoMol {
         //part of Equation (1)
         tanhparam_i = topo->alphaObc*psi_i - topo->betaObc*psi_i*psi_i + topo->gammaObc*psi_i*psi_i*psi_i;
         //Second part of Equation (1)
-        Real invBornRad_i = (1/offsetRadius_i) - (1/topo->atomTypes[type1].vdwR)*tanh(tanhparam_i);
+        Real invBornRad_i = (1/offsetRadius_i) - (1/radius_i)*tanh(tanhparam_i);
         topo->atoms[atom1].myGBSA_T->bornRad = 1/invBornRad_i;
         topo->atoms[atom1].myGBSA_T->doneCalculateBornRadius = true;
 
@@ -91,7 +87,7 @@ namespace ProtoMol {
         //part of Equation (1)
         tanhparam_j = topo->alphaObc*psi_j - topo->betaObc*psi_j*psi_j + topo->gammaObc*psi_j*psi_j*psi_j;
         //Second part of Equation (1)
-         Real invBornRad_j = (1/offsetRadius_j) - (1/topo->atomTypes[type2].vdwR)*tanh(tanhparam_j);
+         Real invBornRad_j = (1/offsetRadius_j) - (1/radius_j)*tanh(tanhparam_j);
          topo->atoms[atom2].myGBSA_T->bornRad = 1/invBornRad_j;
          topo->atoms[atom2].myGBSA_T->doneCalculateBornRadius = true;
 

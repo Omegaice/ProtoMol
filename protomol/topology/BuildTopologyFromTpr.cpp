@@ -28,6 +28,11 @@ using namespace ProtoMol::Report;
 //use GROMACS exclusions?
 #define GROMACSEXCL
 
+// Switch for which Van der Waal radius table to use for GB.
+// 0 - Amber default
+// 1 - Greg Bowman's modified
+#define RADIUS_TABLE 1
+
 //fudge for NETBEANS highlighting
 //#define HAVE_GROMACS
 
@@ -293,6 +298,9 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo,
     // Get the atoms
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    // used to get atom names to look up van der waal radii for GB
+    vector<string> atomTypeNames;
+
     // loop over all atoms in the Gromacs topology
     //molecule type topology data
     for(int mt=0; mt<mtop.nmoltype; mt++) {
@@ -332,17 +340,20 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo,
                 tempatomtype->symbolName = str;
 
                 //get radius, test file version
-                if(file_version >= GB_RADII_IN_TPR ){
+                //if(file_version >= GB_RADII_IN_TPR ){
                     //version 4.5?
-                    tempatomtype->vdwR = atomtypes->gb_radius[atype];
-                }else{
+                //    tempatomtype->vdwR = atomtypes->gb_radius[atype];
+                //}else{
+		    /* Removed as part of initial GB fix. 
                     //old version, use orig. params.agb
                     tempatomtype->vdwR = atom_radius( string(*(atoms->atomtype[i])), 1 );
 
                     if( tempatomtype->vdwR < 0.0 ){
                         THROW("Atom type radius not found.");
                     }
-                }
+		    */
+                //}
+
             }else{
                 //####TODO check new data is consistent? i.e. check new atom mass is the same.
             }
@@ -350,6 +361,7 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo,
             //report types
             report << debug(810) << "Atom type " << tempatomtype->name << ", " << tempatomtype->mass << ", "
                     << tempatomtype->charge << ", " << tempatomtype->symbolName << ", " << tempatomtype->vdwR << endr;
+
 
             // First, we need to find the index. (an integer corresponding
             // to the type of the atom
@@ -361,6 +373,8 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo,
             tempatom.scaledCharge = atom[i].q  * Constant::SQRTCOULOMBCONSTANT;//tempatomtype->charge * Constant::SQRTCOULOMBCONSTANT;
             tempatom.scaledMass = tempatomtype->mass;
 
+	    atomTypeNames.push_back(string(*(atoms->atomtype[i])));
+	    
             //report atoms
             report << debug(810) << "Atom " << tempatom.name << ", " <<
                     tempatom.type << ", " << tempatom.residue_name <<
@@ -946,6 +960,15 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo,
             int type = tempatom->type;
 
             string name = topo->atomTypes[type].name;
+
+	    tempatom->myGBSA_T->vanDerWaalRadius = atom_radius( atomTypeNames[i], RADIUS_TABLE);
+
+	    if(tempatom->myGBSA_T->vanDerWaalRadius < 0.0) {
+		    stringstream ss;
+		    ss << "Radius not found for Atom type " << atomTypeNames[i];
+		    THROW(ss.str().c_str());
+	    }
+
 
             tempatom->myGBSA_T->offsetRadius = 0.09;
             //tempatom->myGBSA_T->scalingFactor

@@ -128,8 +128,12 @@ namespace ProtoMol {
     //flag for setting ACE potential
     bool doneACEPotential;
 
-    //flag for calculation of born radius first derivatives
-   
+    // Variable for storing Van der Waal radius used in GB calculations.
+    // As part of the incremental fix for GB, we realized the Van der Waal radii
+    // should be associated with the Atom, not the Atom Type. The Van der Wall radius
+    // in AtomType will not be removed until SCPISM has been updated to refer to
+    // this field for the Van der Waal Radii.
+    Real vanDerWaalRadius;
 
 
   };
@@ -188,6 +192,7 @@ namespace ProtoMol {
     SCPISMAtomParameters *mySCPISM_A;
 
     GBSAAtomParameters *myGBSA_T;
+
   };
 }
 #endif /* ATOM_H */
