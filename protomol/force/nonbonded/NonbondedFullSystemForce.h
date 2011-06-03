@@ -70,6 +70,7 @@ namespace ProtoMol {
     // From class SystemForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
+    using SystemForce::evaluate; // Avoid compiler warning/error
     virtual void evaluate(const GenericTopology *to, const Vector3DBlock *pos,
                           Vector3DBlock *f, ScalarStructure *e) {
       doEvaluate(to, pos, f, e, 0, (int)to->atoms.size(), 0,

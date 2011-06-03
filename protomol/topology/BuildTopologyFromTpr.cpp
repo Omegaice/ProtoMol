@@ -12,12 +12,10 @@
 #include <sstream>
 #include <iomanip>
 
-//GROMACS headers etc.
-#if defined (HAVE_GROMACS)
+// GROMACS headers
+#if defined(HAVE_GROMACS)
 extern "C" {
-
-#include "txtdump.h"
-
+#include <gromacs/tpxio.h>
 }
 #endif
 
@@ -43,7 +41,7 @@ bool ProtoMol::parse_iparams(function &func, void * ft, void * ip,
     //flag success default
     bool status(true);
     
-#if defined (HAVE_GROMACS)
+#if defined(HAVE_GROMACS)
 
     t_functype *ftype = (t_functype*)ft;
 
@@ -179,7 +177,7 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo,
     //Version 4.5.3 has tpx_version=73 and includes gb_radius in the tpr file
     enum{ GB_RADII_IN_TPR = 73 };
 
-#if defined (HAVE_GROMACS)
+#if defined(HAVE_GROMACS)
 
     //----------------------------------------------------------------------
     // Load tpr file

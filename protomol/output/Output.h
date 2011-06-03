@@ -70,7 +70,7 @@ namespace ProtoMol {
     virtual void doRun(int step) = 0;
 
     ///< Hook method of run, implemented in the concrete class
-    virtual void doFinalize(int step) = 0;
+    virtual void doFinalize(int step) {};
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // From class Makable

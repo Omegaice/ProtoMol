@@ -23,7 +23,9 @@ namespace ProtoMol {
       return "Configuration system.";
     }
 
+    // From Module
     void init(ProtoMolApp *app);
+    using Module::configure; // To avoid compiler warning/error
 
     int listKeywords();
     int configure(const std::vector<std::string> &args);

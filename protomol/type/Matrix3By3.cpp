@@ -615,9 +615,10 @@ ostream &ProtoMol::operator<<(ostream &os, const Matrix3By3 &tm) {
 }
 
 Vector3D ProtoMol::operator*(const Vector3D &point, const Matrix3By3 &tm) {
-  return Vector3D(tm.m00 * point.c[0] + tm.m10 * point.c[1] + tm.m20 * point.c[2],
-    tm.m01 * point.c[0] + tm.m11 * point.c[1] + tm.m21 * point.c[2],
-    tm.m02 * point.c[0] + tm.m12 * point.c[1] + tm.m22 * point.c[2]);
+  return Vector3D
+    (tm.m00 * point.c[0] + tm.m10 * point.c[1] + tm.m20 * point.c[2],
+     tm.m01 * point.c[0] + tm.m11 * point.c[1] + tm.m21 * point.c[2],
+     tm.m02 * point.c[0] + tm.m12 * point.c[1] + tm.m22 * point.c[2]);
 }
 
 void ProtoMol::convert(const Matrix3By3 &from, float to[9]) {

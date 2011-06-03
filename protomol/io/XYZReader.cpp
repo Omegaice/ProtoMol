@@ -96,14 +96,15 @@ vector<string> *XYZReader::orphanNames() {
   return tmp;
 }
 
-XYZReader &ProtoMol::operator>>(XYZReader &reader, XYZ &xyz) {
-  reader.doRead(xyz.coords, xyz.names);
-  return reader;
+namespace ProtoMol {
+  XYZReader &operator>>(XYZReader &reader, XYZ &xyz) {
+    reader.doRead(xyz.coords, xyz.names);
+    return reader;
+  }
+  
+  XYZReader &operator>>(XYZReader &reader, Vector3DBlock &coords) {
+    if (!reader.myNames) reader.myNames = new vector<string>();
+    reader.read(coords, *reader.myNames);
+    return reader;
+  }
 }
-
-XYZReader &ProtoMol::operator>>(XYZReader &reader, Vector3DBlock &coords) {
-  if (!reader.myNames) reader.myNames = new vector<string>();
-  reader.read(coords, *reader.myNames);
-  return reader;
-}
-

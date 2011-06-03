@@ -164,7 +164,9 @@ bool PDBWriter::write(const Vector3DBlock &coords,
   return !file.fail();
 }
 
-PDBWriter &ProtoMol::operator<<(PDBWriter &pdbWriter, const PDB &pdb) {
-  pdbWriter.write(pdb);
-  return pdbWriter;
+namespace ProtoMol {
+  PDBWriter &operator<<(PDBWriter &pdbWriter, const PDB &pdb) {
+    pdbWriter.write(pdb);
+    return pdbWriter;
+  }
 }

@@ -508,8 +508,10 @@ bool PARReader::isKeywordCharmm28(const string &word) {
          equalStartNocase("HBOND", word) || equalStartNocase("END", word);
 }
 
-PARReader &ProtoMol::operator>>(PARReader &parReader, PAR &par) {
-  parReader.read(par);
-  return parReader;
+namespace ProtoMol {
+  PARReader &operator>>(PARReader &parReader, PAR &par) {
+    parReader.read(par);
+    return parReader;
+  }
 }
 

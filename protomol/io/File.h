@@ -65,6 +65,7 @@ namespace ProtoMol {
     operator void*() const {return !*this ? 0 : const_cast<File *>(this);}
     bool operator!() const {return file.fail();}
 
+    void write(const char *c, std::streamsize count);
     // Redirect of fstream::read  (Sun WorkShop CC does not properly read
     // more than one char ...)
     void read(char *c, std::streamsize count);

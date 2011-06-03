@@ -51,5 +51,8 @@ public:
 private:
     static bool myIsParallel;
   };
+
+  Report::MyStreamer &operator<<(Report::MyStreamer &os,
+                                 const TimerStatistic &);
 }
 #endif /* TIMERSTATISTIC_H */

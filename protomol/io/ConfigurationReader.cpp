@@ -77,8 +77,11 @@ bool ConfigurationReader::read(Configuration &config) {
   return res;
 }
 
-ConfigurationReader &ProtoMol::operator>>(ConfigurationReader &configReader,
-                                          Configuration &config) {
-  configReader.read(config);
-  return configReader;
+namespace ProtoMol {
+
+  ConfigurationReader &operator>>(ConfigurationReader &configReader,
+                                  Configuration &config) {
+    configReader.read(config);
+    return configReader;
+  }
 }

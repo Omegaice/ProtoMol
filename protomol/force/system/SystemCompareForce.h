@@ -20,6 +20,7 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // From class SystemForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    using SystemForce::evaluate; // Avoid compiler warning/error
     virtual void evaluate(const GenericTopology *topo,
                           const Vector3DBlock *positions,
                           Vector3DBlock *forces,

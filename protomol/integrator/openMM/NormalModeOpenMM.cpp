@@ -144,7 +144,7 @@ namespace ProtoMol {
     return (STSIntegrator*)myIntegP;
   }
 
-  unsigned int NormalModeOpenMM::getParameterSize(){
+  unsigned int NormalModeOpenMM::getParameterSize() const {
     return OpenMMIntegrator::getParameterSize() + 5;
   }
 }

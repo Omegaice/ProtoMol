@@ -62,11 +62,13 @@ void PDB::clear() {
 //____  with both systems (since we never change the length, we you give us is
 //____  what we use)
 
-MyStreamer &ProtoMol::operator<<(MyStreamer &OS, const PDB::Atom &p) {
-  OS << p.elementType << "," << p.elementNum << "," << p.elementName <<
-  "," << p.altLoc << "," << p.residueName << "," << p.chainID << "," <<
-  p.residueNum << "," << p.insertionCode << "," << p.occupancy << "," <<
-  p.tempFactor << "," << p.segID << "," << p.symbol << "," << p.charge;
-  return OS;
+namespace ProtoMol {
+  MyStreamer &operator<<(MyStreamer &OS, const PDB::Atom &p) {
+    OS << p.elementType << "," << p.elementNum << "," << p.elementName <<
+      "," << p.altLoc << "," << p.residueName << "," << p.chainID << "," <<
+      p.residueNum << "," << p.insertionCode << "," << p.occupancy << "," <<
+      p.tempFactor << "," << p.segID << "," << p.symbol << "," << p.charge;
+    return OS;
+  }
 }
 

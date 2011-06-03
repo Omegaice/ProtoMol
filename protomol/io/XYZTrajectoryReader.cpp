@@ -71,8 +71,10 @@ Vector3DBlock *XYZTrajectoryReader::orphanXYZ() {
   return tmp;
 }
 
-XYZTrajectoryReader &ProtoMol::operator>>(XYZTrajectoryReader &reader,
-                                          Vector3DBlock &xyz) {
-  reader.doRead(xyz);
-  return reader;
+namespace ProtoMol {
+  XYZTrajectoryReader &operator>>(XYZTrajectoryReader &reader,
+                                  Vector3DBlock &xyz) {
+    reader.doRead(xyz);
+    return reader;
+  }
 }

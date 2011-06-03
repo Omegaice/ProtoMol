@@ -31,6 +31,7 @@ namespace ProtoMol {
   public:
     virtual std::string getIdNoAlias() const {return keyword;}
     virtual void getParameters(std::vector<Parameter> &parameters) const;
+
     virtual unsigned int getParameterSize() const{return 13;}
 
   protected:

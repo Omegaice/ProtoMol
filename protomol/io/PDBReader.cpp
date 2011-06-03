@@ -211,29 +211,31 @@ PDB PDBReader::getPDB() const {
   return res;
 }
 
-PDBReader &ProtoMol::operator>>(PDBReader &pdbReader, PDB &pdb) {
-  pdbReader.read(pdb.coords, pdb.atoms, pdb.ters);
-  return pdbReader;
-}
-
-PDBReader &ProtoMol::operator>>(PDBReader &pdbReader, Vector3DBlock &coords) {
-  if (pdbReader.myAtoms == NULL)
-    pdbReader.myAtoms = new vector<PDB::Atom>();
-  if (pdbReader.myTers == NULL)
-    pdbReader.myTers = new vector<PDB::Ter>();
-  pdbReader.read(coords, *pdbReader.myAtoms, *pdbReader.myTers);
-  return pdbReader;
-}
-
-PDBReader &ProtoMol::operator>>(PDBReader &pdbReader, XYZ &xyz) {
-  if (pdbReader.myAtoms == NULL)
-    pdbReader.myAtoms = new vector<PDB::Atom>();
-  if (pdbReader.myTers == NULL)
-    pdbReader.myTers = new vector<PDB::Ter>();
-  if (pdbReader.read(xyz.coords, *pdbReader.myAtoms, *pdbReader.myTers)) {
-    xyz.names.resize(xyz.coords.size());
-    for (unsigned int i = 0; i < xyz.coords.size(); ++i)
-      xyz.names[i] = (*pdbReader.myAtoms)[i].elementName;
+namespace ProtoMol {
+  PDBReader &operator>>(PDBReader &pdbReader, PDB &pdb) {
+    pdbReader.read(pdb.coords, pdb.atoms, pdb.ters);
+    return pdbReader;
   }
-  return pdbReader;
+  
+  PDBReader &operator>>(PDBReader &pdbReader, Vector3DBlock &coords) {
+    if (pdbReader.myAtoms == NULL)
+      pdbReader.myAtoms = new vector<PDB::Atom>();
+    if (pdbReader.myTers == NULL)
+      pdbReader.myTers = new vector<PDB::Ter>();
+    pdbReader.read(coords, *pdbReader.myAtoms, *pdbReader.myTers);
+    return pdbReader;
+  }
+
+  PDBReader &operator>>(PDBReader &pdbReader, XYZ &xyz) {
+    if (pdbReader.myAtoms == NULL)
+      pdbReader.myAtoms = new vector<PDB::Atom>();
+    if (pdbReader.myTers == NULL)
+      pdbReader.myTers = new vector<PDB::Ter>();
+    if (pdbReader.read(xyz.coords, *pdbReader.myAtoms, *pdbReader.myTers)) {
+      xyz.names.resize(xyz.coords.size());
+      for (unsigned int i = 0; i < xyz.coords.size(); ++i)
+        xyz.names[i] = (*pdbReader.myAtoms)[i].elementName;
+    }
+    return pdbReader;
+  }
 }

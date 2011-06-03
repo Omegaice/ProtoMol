@@ -124,8 +124,9 @@ private:
     TimeRep myTotalTime;
     TimeRep myLastLapTime;
     TimeRep myLapTime;
-
-private:
   };
+
+  
+  Report::MyStreamer &operator<<(Report::MyStreamer &os, const Timer &timer);
 }
 #endif // _TIMER_H

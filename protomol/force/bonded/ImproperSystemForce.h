@@ -21,6 +21,8 @@ namespace ProtoMol {
     // From class SystemForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
+    // Avoid compiler warning/error
+    using MTorsionSystemForce<TBoundaryConditions>::evaluate;
     virtual void evaluate(const GenericTopology *topo,
                           const Vector3DBlock *positions, Vector3DBlock *forces,
                           ScalarStructure *energies);

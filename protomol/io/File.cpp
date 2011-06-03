@@ -66,6 +66,10 @@ bool File::isAccessible() {
   return ProtoMol::isAccessible(filename);
 }
 
+void File::write(const char *c, streamsize count) {
+  file.write(c, count);
+}
+
 void File::read(char *c, streamsize count) {
 #ifdef __SUNPRO_CC
   //____ Sun WorkShop CC does not properly read more than one char ...
@@ -94,9 +98,7 @@ unsigned int File::getLineTokens(vector<string> &tokens) {
 
   stringstream ss(getline());
   string str;
-  while (ss >> str)
-    if (!str.empty())
-      tokens.push_back(str);
+  while (ss >> str) if (!str.empty()) tokens.push_back(str);
 
   return tokens.size();
 }

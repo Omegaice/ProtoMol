@@ -139,15 +139,12 @@ bool ProtoMolApp::configure(const vector<string> &args) {
 }
 
 void ProtoMolApp::build() {
-
-  //TPR input for topology, positions and velocities?
-  //Then check for Gromacs support
-#if defined (HAVE_GROMACS)
-#else
-  if( config.valid(InputGromacsTprFile::keyword) ){
-      THROW(string("GROMACS support not available for '") +
-          config[InputGromacsTprFile::keyword].getString() + "'.");
-  }
+  // TPR input for topology, positions and velocities?
+  // Then check for Gromacs support
+#if !defined(HAVE_GROMACS)
+  if (config.valid(InputGromacsTprFile::keyword))
+    THROWS("GROMACS support not available for '" <<
+           config[InputGromacsTprFile::keyword].getString() << "'.");
 #endif
 
   //floag for TPR

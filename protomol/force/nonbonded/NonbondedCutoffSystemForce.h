@@ -37,6 +37,11 @@ namespace ProtoMol {
     // From class SystemForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
+    typedef NonbondedCutoffForce<TCellManager, TOneAtomPair, SystemForce,
+                                 NonbondedCutoffSystemForce<TCellManager,
+                                                            TOneAtomPair> >
+    Super_T;
+    using Super_T::evaluate; // Avoid compiler warning/error
     virtual void evaluate(const GenericTopology *topo,
                           const Vector3DBlock *positions,
                           Vector3DBlock *forces, ScalarStructure *energies) {

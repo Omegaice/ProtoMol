@@ -167,16 +167,18 @@ Vector3DBlock *XYZBinReader::orphanCoords() {
   return tmp;
 }
 
-XYZBinReader &ProtoMol::operator>>(XYZBinReader &xyzbinReader, XYZ &xyz) {
-  xyzbinReader.read(xyz.coords);
-  if (xyz.coords.size() != xyz.names.size())
-    xyz.names.resize(xyz.coords.size(), "NONAME");
-  return xyzbinReader;
-}
+namespace ProtoMol {
+  XYZBinReader &operator>>(XYZBinReader &xyzbinReader, XYZ &xyz) {
+    xyzbinReader.read(xyz.coords);
+    if (xyz.coords.size() != xyz.names.size())
+      xyz.names.resize(xyz.coords.size(), "NONAME");
+    return xyzbinReader;
+  }
 
-XYZBinReader &ProtoMol::operator>>(XYZBinReader &xyzbinReader,
-                                   Vector3DBlock &coords) {
-  xyzbinReader.read(coords);
-  return xyzbinReader;
+  XYZBinReader &operator>>(XYZBinReader &xyzbinReader,
+                           Vector3DBlock &coords) {
+    xyzbinReader.read(coords);
+    return xyzbinReader;
+  }
 }
 

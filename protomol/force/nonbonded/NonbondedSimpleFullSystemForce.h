@@ -36,6 +36,7 @@ namespace ProtoMol {
     // From class SystemForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
+    using SystemForce::evaluate; // Avoid compiler warning/error
     virtual void evaluate(const GenericTopology *topo, const Vector3DBlock *pos,
                           Vector3DBlock *f, ScalarStructure *e) {
       myCached = true;

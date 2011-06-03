@@ -229,20 +229,20 @@ char *DCDTrajectoryReader::fortranReadX(char *data, unsigned int &size,
 }
 
 int DCDTrajectoryReader::readFirstStep(){
-    return header.firststep;
+  return header.firststep;
 }
 
-
-DCDTrajectoryReader &ProtoMol::
-operator>>(DCDTrajectoryReader &reader, Vector3DBlock &xyz) {
-  try {
-    reader.doRead(xyz);
-
-  } catch (const Exception &e) {
-    THROWSC("Failed to read DCD file '" << reader.getFilename() << "'", e);
+namespace ProtoMol {
+  DCDTrajectoryReader &operator>>(DCDTrajectoryReader &reader,
+                                  Vector3DBlock &xyz) {
+    try {
+      reader.doRead(xyz);
+      
+    } catch (const Exception &e) {
+      THROWSC("Failed to read DCD file '" << reader.getFilename() << "'", e);
+    }
+    
+    return reader;
   }
-
-  return reader;
 }
-
 

@@ -72,8 +72,11 @@ bool EigenvectorTextReader::read(EigenvectorInfo &ei) {
   return true;
 }
 
-EigenvectorTextReader &ProtoMol::
-operator>>(EigenvectorTextReader &eigenvectorReader, EigenvectorInfo &info) {
-  eigenvectorReader.read(info);
-  return eigenvectorReader;
+
+namespace ProtoMol {
+  EigenvectorTextReader &
+  operator>>(EigenvectorTextReader &eigenvectorReader, EigenvectorInfo &info) {
+    eigenvectorReader.read(info);
+    return eigenvectorReader;
+  }
 }

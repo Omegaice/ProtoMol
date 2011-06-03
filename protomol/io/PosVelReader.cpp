@@ -60,82 +60,83 @@ PosVelReaderType PosVelReader::getType() const {
   return myType;
 }
 
-PosVelReader &ProtoMol::operator>>(PosVelReader &posReader, PDB &pdb) {
-  posReader.myType = PosVelReaderType::UNDEFINED;
+namespace ProtoMol {
+  PosVelReader &operator>>(PosVelReader &posReader, PDB &pdb) {
+    posReader.myType = PosVelReaderType::UNDEFINED;
 
-  // PDB
-  PDBReader pdbReader(posReader.filename);
-  posReader.myOk = pdbReader.tryFormat();
-  if (posReader.myOk) {
-    posReader.myOk = (pdbReader >> pdb ? true : false);
-    posReader.myType = PosVelReaderType::PDB;
-  }
-
-  return posReader;
-}
-
-PosVelReader &ProtoMol::operator>>(PosVelReader &posReader, XYZ &xyz) {
-  posReader.myType = PosVelReaderType::UNDEFINED;
-
-  // XYZ
-  XYZReader xyzReader(posReader.filename);
-  posReader.myOk = xyzReader.tryFormat();
-  if (posReader.myOk) {
-    posReader.myOk = (xyzReader >> xyz ? true : false);
-    posReader.myType = PosVelReaderType::XYZ;
-  }
-
-  // XYZ binary
-  if (!posReader.myOk) {
-    XYZBinReader xyzBinReader(posReader.filename);
-    if (xyzBinReader.tryFormat()) {
-      posReader.myOk = (xyzBinReader >> xyz ? true : false);
-      posReader.myType = PosVelReaderType::XYZBIN;
-    }
-  }
-
-  // PDB
-  if (!posReader.myOk) {
+    // PDB
     PDBReader pdbReader(posReader.filename);
-    if (pdbReader.tryFormat()) {
-      posReader.myOk = (pdbReader >> xyz ? true : false);
+    posReader.myOk = pdbReader.tryFormat();
+    if (posReader.myOk) {
+      posReader.myOk = (pdbReader >> pdb ? true : false);
       posReader.myType = PosVelReaderType::PDB;
     }
+
+    return posReader;
   }
 
-  return posReader;
-}
+  PosVelReader &operator>>(PosVelReader &posReader, XYZ &xyz) {
+    posReader.myType = PosVelReaderType::UNDEFINED;
 
-PosVelReader &ProtoMol::operator>>(PosVelReader &posReader,
-                                   Vector3DBlock &coords) {
-  posReader.myType = PosVelReaderType::UNDEFINED;
-
-  // XYZ
-  XYZReader xyzReader(posReader.filename);
-  posReader.myOk = xyzReader.tryFormat();
-  if (posReader.myOk) {
-    posReader.myOk = (xyzReader >> coords ? true : false);
-    posReader.myType = PosVelReaderType::XYZ;
-  }
-
-  // XYZ binary
-  if (!posReader.myOk) {
-    XYZBinReader xyzBinReader(posReader.filename);
-    if (xyzBinReader.tryFormat()) {
-      posReader.myOk = (xyzBinReader >> coords ? true : false);
-      posReader.myType = PosVelReaderType::XYZBIN;
+    // XYZ
+    XYZReader xyzReader(posReader.filename);
+    posReader.myOk = xyzReader.tryFormat();
+    if (posReader.myOk) {
+      posReader.myOk = (xyzReader >> xyz ? true : false);
+      posReader.myType = PosVelReaderType::XYZ;
     }
-  }
 
-  // PDB
-  if (!posReader.myOk) {
-    PDBReader pdbReader(posReader.filename);
-    if (pdbReader.tryFormat()) {
-      posReader.myOk = (pdbReader >> coords ? true : false);
-      posReader.myType = PosVelReaderType::PDB;
+    // XYZ binary
+    if (!posReader.myOk) {
+      XYZBinReader xyzBinReader(posReader.filename);
+      if (xyzBinReader.tryFormat()) {
+        posReader.myOk = (xyzBinReader >> xyz ? true : false);
+        posReader.myType = PosVelReaderType::XYZBIN;
+      }
     }
+
+    // PDB
+    if (!posReader.myOk) {
+      PDBReader pdbReader(posReader.filename);
+      if (pdbReader.tryFormat()) {
+        posReader.myOk = (pdbReader >> xyz ? true : false);
+        posReader.myType = PosVelReaderType::PDB;
+      }
+    }
+
+    return posReader;
   }
 
-  return posReader;
+  PosVelReader &operator>>(PosVelReader &posReader, Vector3DBlock &coords) {
+    posReader.myType = PosVelReaderType::UNDEFINED;
+    
+    // XYZ
+    XYZReader xyzReader(posReader.filename);
+    posReader.myOk = xyzReader.tryFormat();
+    if (posReader.myOk) {
+      posReader.myOk = (xyzReader >> coords ? true : false);
+      posReader.myType = PosVelReaderType::XYZ;
+    }
+    
+    // XYZ binary
+    if (!posReader.myOk) {
+      XYZBinReader xyzBinReader(posReader.filename);
+      if (xyzBinReader.tryFormat()) {
+        posReader.myOk = (xyzBinReader >> coords ? true : false);
+        posReader.myType = PosVelReaderType::XYZBIN;
+      }
+    }
+    
+    // PDB
+    if (!posReader.myOk) {
+      PDBReader pdbReader(posReader.filename);
+      if (pdbReader.tryFormat()) {
+        posReader.myOk = (pdbReader >> coords ? true : false);
+        posReader.myType = PosVelReaderType::PDB;
+      }
+    }
+    
+    return posReader;
+  }
 }
 

@@ -288,8 +288,10 @@ PSF *PSFReader::orphanPSF() {
   return tmp;
 }
 
-PSFReader &ProtoMol::operator>>(PSFReader &psfReader, PSF &psf) {
-  psfReader.read(psf);
-  return psfReader;
+namespace ProtoMol {
+  PSFReader &operator>>(PSFReader &psfReader, PSF &psf) {
+    psfReader.read(psf);
+    return psfReader;
+  }
 }
 
