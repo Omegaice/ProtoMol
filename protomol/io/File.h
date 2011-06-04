@@ -7,7 +7,7 @@
 #include <protomol/base/Exception.h>
 
 #ifdef HAVE_LIBFAH
-#include <fah/io/File.h>
+#include <cbang/os/File.h>
 #else
 #include <fstream>
 #endif
@@ -33,7 +33,7 @@ namespace ProtoMol {
     std::string filename;
     std::string comment;
 #ifdef HAVE_LIBFAH
-    FAH::File file;
+    cb::File file;
 #else
     std::fstream file;
 #endif

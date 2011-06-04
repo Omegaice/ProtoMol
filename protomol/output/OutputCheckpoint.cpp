@@ -15,8 +15,8 @@
 #include <iostream>
 
 #ifdef HAVE_LIBFAH
-#include <fah/io/File.h>
-typedef FAH::File fileStream;
+#include <cbang/os/File.h>
+typedef cb::File fileStream;
 #else
 #include <fstream>
 typedef std::fstream fileStream;

@@ -8,7 +8,7 @@
 #include <protomol/base/Timer.h>
 
 #ifdef HAVE_LIBFAH
-#include <fah/io/File.h>
+#include <cbang/os/File.h>
 
 #else
 #include <fstream>
@@ -99,7 +99,7 @@ namespace ProtoMol {
     Timer myTimer;
 
 #ifdef HAVE_LIBFAH
-    FAH::File myFile;
+    cb::File myFile;
 #else
     std::ofstream myFile;
 #endif

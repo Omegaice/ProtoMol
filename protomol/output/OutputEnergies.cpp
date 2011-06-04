@@ -27,7 +27,7 @@ OutputEnergies::OutputEnergies(const string &filename, int freq,
 
 void OutputEnergies::doInitialize() {
 #ifdef HAVE_LIBFAH
-    FAH::File allEnergiesHeaderFile;
+    cb::File allEnergiesHeaderFile;
 #else
     ofstream allEnergiesHeaderFile;
 #endif
