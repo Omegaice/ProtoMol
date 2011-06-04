@@ -182,7 +182,6 @@ protomol/integrator/IntegratorDefinition.cpp -text
 protomol/integrator/IntegratorDefinition.h -text
 protomol/integrator/MTSIntegrator.cpp -text
 protomol/integrator/MTSIntegrator.h -text
-protomol/integrator/NonStandardIntegrator.cpp -text
 protomol/integrator/NonStandardIntegrator.h -text
 protomol/integrator/SConscript -text
 protomol/integrator/STSIntegrator.cpp -text
