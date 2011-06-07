@@ -10,6 +10,7 @@ namespace ProtoMol {
 
   class NonbondedFullForceModule : public Module {
   public:
+    NonbondedFullForceModule() {}
     const std::string getName() const {return "NonbondedFullForce";}
     void registerForces(ProtoMolApp *app);
   };
