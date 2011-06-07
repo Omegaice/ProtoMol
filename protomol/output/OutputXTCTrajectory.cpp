@@ -8,12 +8,10 @@
 #include <protomol/ProtoMolApp.h>
 #include <protomol/base/Exception.h>
 
-//GROMACS headers etc.
-#if defined (HAVE_GROMACS)
+// GROMACS headers
+#ifdef HAVE_GROMACS
 extern "C" {
-
-#include "xtcio.h"
-
+#include <gromacs/xtcio.h>
 }
 #endif
 
