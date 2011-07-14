@@ -450,15 +450,16 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
   mFile << std::endl;
 #endif
 
-  //openMM Initialize
-  if( myIntegratorType == 1) {
-    integrator = new OpenMM::LangevinIntegrator(myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS); //ps
-  } else {
-    //app->eigenInfo.myNumEigenvectors = app->eigenInfo.myNumUsedEigenvectors = 10;
-    //app->eigenInfo.myMaxEigenvalue = 3000.0;
-    //app->eigenInfo.myMinimumLimit = 0.1;
-    integrator = new OpenMM::NMLIntegrator(myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, &app->eigenInfo); //ps
-  }
+#ifndef HAVE_OPENMM_OLD
+	integrator = new OpenMM::LangevinIntegrator(myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS); 
+#else
+	if( myIntegratorType == 1) {
+	  integrator = new OpenMM::LangevinIntegrator(myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS);
+	} else {
+		integrator = new OpenMM::NMLIntegrator(myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, &app->eigenInfo);
+	}
+#endif
+	
   context = new OpenMM::Context(*system, *integrator);
 
   OpenMM::Vec3 openMMvecp, openMMvecv;
