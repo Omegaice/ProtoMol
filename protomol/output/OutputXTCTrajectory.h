@@ -1,59 +1,34 @@
-/*  -*- c++ -*-  */
-#ifndef OUTPUTXTCTRAJECTORY_H
-#define OUTPUTXTCTRAJECTORY_H
+#ifndef PROTOMOL_OUTPUT_XTC_TRAJECTORY_H
+#define PROTOMOL_OUTPUT_XTC_TRAJECTORY_H
 
-#include <protomol/output/Output.h>
+#include "Output.h"
 
 namespace ProtoMol {
-  class DCDTrajectoryWriter;
-
-  //____ OutputXTCTrajectory
   class OutputXTCTrajectory : public Output {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    OutputXTCTrajectory();
-    OutputXTCTrajectory(const std::string &filename, int freq,
-                            bool minimal, int frameoffs);
-    virtual ~OutputXTCTrajectory();
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class Output
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
+    void *fxtc;
+    bool minimalImage;
+    int frameOffset;
+    string filename;
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //  From class Output
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private:
-    virtual Output *doMake(const std::vector<Value> &values) const;
-    virtual void doInitialize();
-    virtual void doRun(int step);
-    virtual void doFinalize(int step);
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // From class Makeable
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    virtual std::string getIdNoAlias() const {return keyword;}
-    virtual void getParameters(std::vector<Parameter> &parameter) const;
-    virtual bool adjustWithDefaultParameters(std::vector<Value> &values,
-                                             const Configuration *config) const;
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     static const std::string keyword;
 
-  private:
+    OutputXTCTrajectory();
+    OutputXTCTrajectory(const std::string &filename, int freq, bool minimal,
+                        int frameoffs);
+    virtual ~OutputXTCTrajectory() {}
 
-    void *fxtc;//t_fileio
-    
-    bool myMinimalImage;
-    int myFrameOffset;
-    string myFilename;
-    
+    // From Output
+    Output *doMake(const std::vector<Value> &values) const;
+    void doInitialize();
+    void doRun(int step);
+    void doFinalize(int step);
+
+    // From Makeable
+    std::string getIdNoAlias() const {return keyword;}
+    void getParameters(std::vector<Parameter> &parameter) const;
+    bool adjustWithDefaultParameters(std::vector<Value> &values,
+                                     const Configuration *config) const;
   };
 }
-#endif
+#endif // PROTOMOL_OUTPUT_XTC_TRAJECTORY_H
