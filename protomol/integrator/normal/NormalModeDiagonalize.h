@@ -39,7 +39,7 @@ namespace ProtoMol
                              bool rRand,
                              Real redhy, Real eTh, int bvc, int rpb, Real dTh, 
                              bool apar, bool adts, bool pdm, Real ml, int maxit,
-                             ForceGroup *overloadedForces,
+                             bool geo, bool num, ForceGroup *overloadedForces,
                              StandardIntegrator *nextIntegrator );
       ~NormalModeDiagonalize();
 
@@ -57,7 +57,7 @@ namespace ProtoMol
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public:
       virtual std::string getIdNoAlias() const {return keyword;}
-      virtual unsigned int getParameterSize() const {return 13;}
+      virtual unsigned int getParameterSize() const {return 16;}
       virtual void getParameters( std::vector<Parameter>& parameters ) const;
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,6 +127,8 @@ namespace ProtoMol
       Real minLim;
       int maxMinSteps;
 
+      //numerical and geometric Hessian
+      bool geometricfdof, numerichessians;
 
   };
 }

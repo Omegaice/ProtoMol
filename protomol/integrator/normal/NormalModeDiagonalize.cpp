@@ -36,13 +36,15 @@ namespace ProtoMol
     blockVectorCols(0), residuesPerBlock(0), memory_Hessian(0),
     memory_eigenvector(0), checkpointUpdate(false), origCEigVal(0),
     origTimestep(0), autoParmeters(false), adaptiveTimestep(0),
-    postDiagonalizeMinimize(0), minLim(0), maxMinSteps(0) {
+    postDiagonalizeMinimize(0), minLim(0), maxMinSteps(0), 
+    geometricfdof(false), numerichessians(false) {
   }
 
   NormalModeDiagonalize::
   NormalModeDiagonalize(int cycles, int redi, bool fDiag, bool rRand,
                         Real redhy, Real eTh, int bvc, int rpb, Real dTh, 
                         bool apar, bool adts, bool pdm, Real ml, int maxit,
+                        bool geo, bool num,
                         ForceGroup *overloadedForces,
                         StandardIntegrator *nextIntegrator ) :
     MTSIntegrator( cycles, overloadedForces, nextIntegrator ),
@@ -55,7 +57,7 @@ namespace ProtoMol
     residuesPerBlock( rpb ),  memory_Hessian(0), memory_eigenvector(0),
     checkpointUpdate( false ), origCEigVal(0), origTimestep(0),
     autoParmeters(apar), adaptiveTimestep( adts ), postDiagonalizeMinimize(pdm),
-    minLim(ml), maxMinSteps(maxit) {
+    minLim(ml), maxMinSteps(maxit), geometricfdof(geo), numerichessians(num) {
 
     //find forces and parameters
     rHsn.findForces( overloadedForces );
@@ -292,7 +294,7 @@ namespace ProtoMol
           Real max_eigenvalue = blockDiag.findEigenvectors( &diagAt, app->topology,
                                 *Q , _3N, _rfM,
                                 blockCutoffDistance, eigenValueThresh, blockVectorCols,
-								false, false);
+								geometricfdof, numerichessians);
 
           //Stats/diagnostics
           rediagCounter++; hessianCounter++;
@@ -450,16 +452,23 @@ namespace ProtoMol
                                     false, 
                                     Text("Minimize after diagonalization.") ) );
 
-
     parameters.push_back( Parameter( "minimlim",
                                     Value(minLim,ConstraintValueType::NotNegative() ),
                                     0.1,
                                     Text("Minimizer target PE difference kcal mole^{-1}") ) );
 
-    parameters.push_back(Parameter("maxminsteps",
-				   Value(maxMinSteps,ConstraintValueType::Positive()),
-				   100,
-				   Text("maximum number of minimizer steps.")));
+    parameters.push_back( Parameter("maxminsteps",
+                                    Value(maxMinSteps,ConstraintValueType::Positive()),
+                                    100,
+                                    Text("maximum number of minimizer steps.")));
+      
+    parameters.push_back( Parameter("geometricfdof",
+                                    Value(geometricfdof, ConstraintValueType::NoConstraints()),
+                                    false, Text("Calculate fixed degrees of freedom geometrically.")));
+      
+    parameters.push_back( Parameter("numericHessians",
+                                    Value(numerichessians, ConstraintValueType::NoConstraints()),
+                                    false, Text("Calculate Hessians numerically.")));
 
 
     
@@ -472,7 +481,7 @@ namespace ProtoMol
                                       values[3], values[4], values[5],
                                       values[6], values[7], values[8], 
                                       values[9], values[10], values[11],
-                                      values[12], values[13], 
+                                      values[12], values[13],values[14], values[15], 
                                       fg, nextIntegrator               );
   }
 
