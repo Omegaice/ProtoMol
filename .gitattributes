@@ -196,6 +196,8 @@ protomol/integrator/base/LangevinLeapfrogIntegrator.cpp -text
 protomol/integrator/base/LangevinLeapfrogIntegrator.h -text
 protomol/integrator/base/NumericalDifferentiation.cpp -text
 protomol/integrator/base/NumericalDifferentiation.h -text
+protomol/integrator/base/NumericallyDifferentiatedHessian.cpp -text
+protomol/integrator/base/NumericallyDifferentiatedHessian.h -text
 protomol/integrator/base/RMTIntegrator.cpp -text
 protomol/integrator/base/RMTIntegrator.h -text
 protomol/integrator/base/SConscript -text
