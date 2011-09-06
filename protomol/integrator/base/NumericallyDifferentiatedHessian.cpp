@@ -13,7 +13,8 @@ using namespace ProtoMol::Report;
 using namespace ProtoMol;
 //____ NumericallyDifferentiatedHessian
 
-const string NumericallyDifferentiatedHessian::keyword("NumericallyDifferentiatedHessian");
+const string
+NumericallyDifferentiatedHessian::keyword("NumericallyDifferentiatedHessian");
 
 NumericallyDifferentiatedHessian::NumericallyDifferentiatedHessian() :
   STSIntegrator() {}
@@ -39,10 +40,9 @@ void NumericallyDifferentiatedHessian::initialize(ProtoMolApp *app) {
 
 void NumericallyDifferentiatedHessian::run(int numTimesteps) {
   double *numHess;
-  Real maxForceError = 0.0, maxHessError = 0.0;
+  Real maxHessError = 0.0;
 
-  if (numTimesteps < 1)
-    return;
+  if (numTimesteps < 1) return;
 
   preStepModify();
   calculateForces();
@@ -64,7 +64,7 @@ void NumericallyDifferentiatedHessian::run(int numTimesteps) {
     Real tempErr;
     for (unsigned int i = 0;i < _3N; i++)
       {
-	orig_pos[i] = app->positions[i / 3][i % 3];
+        orig_pos[i] = app->positions[i / 3][i % 3];
       }
     for (unsigned int i = 0; i < _3N; i++)
       {
@@ -107,7 +107,9 @@ void NumericallyDifferentiatedHessian::run(int numTimesteps) {
 	// Five-point stencil -- error is order h^4
 	for (unsigned int j = 0; j < _3N; j++)
 	  {
-	    numHess[i * _3N + j] = -1.0 * (8.0 * f_plus_h[j] - 8.0 * f_h[j] + f_2h[j] - f_plus_2h[j]) / (12.0 * epsilon);
+	    numHess[i * _3N + j] = -1.0 *
+          (8.0 * f_plus_h[j] - 8.0 * f_h[j] + f_2h[j] - f_plus_2h[j]) /
+          (12.0 * epsilon);
 	    tempErr = fabs(numHess[i * _3N + j] - hsn.hessM[i * _3N + j]);
 	    if (tempErr > maxHessError)
 	      {
@@ -128,12 +130,14 @@ void NumericallyDifferentiatedHessian::run(int numTimesteps) {
 
 
     report.precision(10);
-    report << debug(1) << "[NumericallyDifferentiatedHessian::run] Hessian error = " << maxHessError
+    report << debug(1)
+           << "[NumericallyDifferentiatedHessian::run] Hessian error = "
+           << maxHessError
            << ", epsilon = " << epsilon << endr;
   }
 
-  report << hint << "[NumericallyDifferentiatedHessian::run] Hessian error = " << maxHessError
-         << ", epsilon = " << epsilon << endr;
+  report << hint << "[NumericallyDifferentiatedHessian::run] Hessian error = "
+         << maxHessError << ", epsilon = " << epsilon << endr;
 
   //remove storage
   delete[] numHess;
@@ -142,16 +146,16 @@ void NumericallyDifferentiatedHessian::run(int numTimesteps) {
   postStepModify();
 }
 
-void NumericallyDifferentiatedHessian::getParameters(vector<Parameter> &parameters)
-const {
+void NumericallyDifferentiatedHessian::
+getParameters(vector<Parameter> &parameters) const {
   STSIntegrator::getParameters(parameters);
   parameters.push_back
     (Parameter("epsilon", Value(epsilon, ConstraintValueType::Positive()), 1.0,
                Text("epsilon")));
 }
 
-STSIntegrator *NumericallyDifferentiatedHessian::doMake(const vector<Value> &values,
-                                                ForceGroup *fg) const {
+STSIntegrator *NumericallyDifferentiatedHessian::
+doMake(const vector<Value> &values, ForceGroup *fg) const {
   return new NumericallyDifferentiatedHessian(values[0], values[1], fg);
 }
 

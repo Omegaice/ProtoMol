@@ -72,7 +72,7 @@ void OutputXTCTrajectory::doRun(int step) {
 
   // Gromacs XYZ data struct
   const unsigned possize = pos->size(); // Size
-  SmartPointer<rvec> x = new rvec[possize];
+  SmartPointer<rvec>::Array x = new rvec[possize];
 
   // Copy & convert data
   for (unsigned i = 0; i < possize; i++)
