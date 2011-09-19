@@ -141,6 +141,9 @@ namespace ProtoMol {
     iterator myBegin, myEnd;
     const_iterator myBeginConst, myEndConst;
     size_type mySize;
+	
+	bool bInit;
+	float mVolume;
   };
 }
 #endif /* ARRAYCELLSTRUCTURE_H */

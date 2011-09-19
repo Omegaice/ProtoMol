@@ -1,4 +1,5 @@
 #include <protomol/topology/ArrayCellListStructure.h>
+#include <protomol/base/Exception.h>
 #include <protomol/base/Report.h>
 #include <exception>
 
@@ -13,10 +14,27 @@ ArrayCellListStructure::ArrayCellListStructure() :
   valid(false), myArray(ArraySizes(0) (0) (0)),
   myCellSize(Vector3D(0.0, 0.0, 0.0)), myNX(0), myNY(0), myNZ(0),
   myBegin(myArray.begin()), myEnd(myArray.end()),
-  myBeginConst(myArray.begin()), myEndConst(myArray.end()), mySize(0) {}
+  myBeginConst(myArray.begin()), myEndConst(myArray.end()), mySize(0), bInit( false), mVolume( 0.0f ) {}
 
 void ArrayCellListStructure::initialize(const Vector3D &max,
                                         Vector3D cellSize) {
+	if( !bInit ){
+		bInit = true;
+		mVolume = max[0] * max[1] * max[2];
+	}else{
+		float vol = max[0] * max[1] * max[2];
+		float volDiff = std::fabs( vol / mVolume );
+
+#ifdef DEBUG_CELLVOLUME
+		std::cout << "Original: " << mVolume << " New: " << vol << " Diff: " << volDiff << std::endl;
+#endif
+
+		const int maxIncrease = 16;
+		if( volDiff > maxIncrease || volDiff < (1/maxIncrease) ){
+			THROW( "Simulation volume shrunk or grew by over 16x. Assuming simulation failure." );
+		}
+	}
+
   int nx = std::max(1, (int)floor(max.c[0] / cellSize.c[0] + Constant::EPSILON));
   int ny = std::max(1, (int)floor(max.c[1] / cellSize.c[1] + Constant::EPSILON));
   int nz = std::max(1, (int)floor(max.c[2] / cellSize.c[2] + Constant::EPSILON));
