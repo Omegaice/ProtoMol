@@ -31,7 +31,7 @@ void ArrayCellListStructure::initialize(const Vector3D &max,
 
 		const int maxIncrease = 16;
 		if( volDiff > maxIncrease || volDiff < (1/maxIncrease) ){
-			THROW( "Simulation volume shrunk or grew by over 16x. Assuming simulation failure." );
+				report << error << "Simulation volume shrunk or grew by over 16x. Assuming simulation failure." << endr;
 		}
 	}
 
