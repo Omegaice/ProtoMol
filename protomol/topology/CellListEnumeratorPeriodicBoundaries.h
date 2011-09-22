@@ -36,9 +36,9 @@ namespace ProtoMol {
       myCellListStruct = &(topo->cellLists);
 
       if (myCutoff != cutoff ||
-          topo->cellManager.getRealCellSize() != myCellSize ||
+          topo->cellManager.getCellSizeVector() != myCellSize ||
           !(myMax == topo->cellManager.findCell(topo->max - topo->min))) {
-        myCellSize = topo->cellManager.getRealCellSize();
+        myCellSize = topo->cellManager.getCellSizeVector();
         myCutoff = cutoff;
 
         myMax = topo->cellManager.findCell(topo->max - topo->min);

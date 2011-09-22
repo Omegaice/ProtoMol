@@ -1,58 +1,92 @@
 #include <protomol/topology/CubicCellManager.h>
 
+#include <protomol/base/Report.h>
 #include <protomol/base/Exception.h>
 
-using namespace std;
-using namespace ProtoMol;
+namespace ProtoMol {
+	using namespace ProtoMol::Report;
 
-//____ CubicCellManager
+	/* Local Helper Functions */
+	const Vector3D InverseOf( const Vector3D &vector ) {
+		return Vector3D( 1.0 / vector.c[0], 1.0 / vector.c[1], 1.0 / vector.c[2] );
+	}
 
-const string CubicCellManager::keyword("Cubic");
+	/* Class Static Variables */
+	const string CubicCellManager::keyword( "Cubic" );
 
-CubicCellManager::CubicCellManager(Real r) :
-  myCellSize(r), myRealCellSize(Vector3D(r, r, r)),
-  myRealRCellSize(Vector3D(1.0 / r, 1.0 / r, 1.0 / r)) {}
+	/* Class Functions */
+	CubicCellManager::CubicCellManager() : mCellSize( 0.0 ) {
 
-void CubicCellManager::setCellSize(Real newSize) {
-  myCellSize = newSize;
-  myRealCellSize = Vector3D(newSize, newSize, newSize);
-  myRealRCellSize = Vector3D(1.0 / newSize, 1.0 / newSize, 1.0 / newSize);
+	}
+
+	CubicCellManager::CubicCellManager( const Real cellSize )
+		: mCellSize( cellSize ), mCellSizeVector( Vector3D( cellSize, cellSize, cellSize ) ),
+		  mCellSizeVectorInverse( Vector3D( 1.0 / cellSize, 1.0 / cellSize, 1.0 / cellSize ) ) {
+
+	}
+
+	Real CubicCellManager::getCellSize() const {
+		return mCellSize;
+	}
+
+	Real CubicCellManager::getCellVolume() const {
+		return mCellSizeVector.c[0] * mCellSizeVector.c[1] * mCellSizeVector.c[2];
+	}
+
+	Vector3D CubicCellManager::getCellSizeVector() const {
+		return mCellSizeVector;
+	}
+
+	CubicCellManager::Cell CubicCellManager::findCell( const Vector3D &position ) const {
+		return Cell( ( int )floor( position.c[0] * mCellSizeVectorInverse.c[0] ),
+					 ( int )floor( position.c[1] * mCellSizeVectorInverse.c[1] ),
+					 ( int )floor( position.c[2] * mCellSizeVectorInverse.c[2] ) );
+	}
+
+	void CubicCellManager::initialize( CellListStructure &cellList,
+									   const Vector3D &min, const Vector3D &max,
+									   const bool pbc ) const {
+
+		const Vector3D vDiff( max - min );
+		Vector3D vResult( vDiff );
+
+		if( pbc ) {
+			const Real x = vDiff.c[0] / std::max( 1.0, floor( vDiff.c[0] / mCellSize ) );
+			const Real y = vDiff.c[1] / std::max( 1.0, floor( vDiff.c[1] / mCellSize ) );
+			const Real z = vDiff.c[2] / std::max( 1.0, floor( vDiff.c[2] / mCellSize ) );
+
+			mCellSizeVector = Vector3D( x, y, z );
+			mCellSizeVectorInverse = InverseOf( mCellSizeVector );
+		} else {
+			vResult = vResult + mCellSizeVector;
+		}
+
+		cellList.initialize( vResult, mCellSizeVector );
+	}
+
+	void CubicCellManager::updateCache( CellListStructure &cellList ) const {
+		cellList.updateCache();
+	}
+
+	const std::string &CubicCellManager::getKeyword() const {
+		return keyword;
+	}
+
+	void CubicCellManager::getParameters( std::vector<Parameter> &parameters ) const {
+		parameters.push_back
+		( Parameter( "cellSize", Value( mCellSize, ConstraintValueType::Positive() ),
+					 Text( "For Periodic BC this must be < least cell basis vector."
+						   "  Typically 1/2 of the least cutoff value" ) ) );
+	}
+
+	CubicCellManager CubicCellManager::make( const std::vector<Value>& values ) {
+		Real cellSize = 1.0;
+
+		if( !values[0].get( cellSize ) || cellSize <= 0.0 ) {
+			report	<< error << keyword
+					<< " cellmanager: cutoff > 0 (" << values[0].getString() << ")." << endr;
+		}
+
+		return CubicCellManager( cellSize );
+	}
 }
-
-void CubicCellManager::initialize(CellListStructure &cellList,
-                                  const Vector3D &min, const Vector3D &max,
-                                  bool pbc) const {
-  if (pbc) {
-    Vector3D d(max - min);
-    myRealCellSize = Vector3D(d.c[0] / std::max(1.0, floor(d.c[0] / myCellSize)),
-      d.c[1] / std::max(1.0, floor(d.c[1] / myCellSize)),
-      d.c[2] / std::max(1.0, floor(d.c[2] / myCellSize)));
-    myRealRCellSize.c[0] = 1.0 / myRealCellSize.c[0];
-    myRealRCellSize.c[1] = 1.0 / myRealCellSize.c[1];
-    myRealRCellSize.c[2] = 1.0 / myRealCellSize.c[2];
-    cellList.initialize(max - min, myRealCellSize);
-  } else
-    cellList.initialize(max - min + myRealCellSize, myRealCellSize);
-}
-
-void CubicCellManager::updateCache(CellListStructure &cellList) const {
-  cellList.updateCache();
-}
-
-void CubicCellManager::getParameters(vector<Parameter> &parameters) const {
-  parameters.push_back
-  (Parameter("cellSize", Value(myCellSize, ConstraintValueType::Positive()),
-      Text("For Periodic BC this must be < least cell basis vector."
-           "  Typically 1/2 of the least cutoff value")));
-}
-
-CubicCellManager CubicCellManager::make(vector<Value> values) {
-  Real r = 1.0;
-
-  if (!values[0].get(r) || r <= 0.0)
-    THROW(keyword + " cellmanager: cutoff > 0 (" + values[0].getString() +
-      ").");
-
-  return CubicCellManager(r);
-}
-

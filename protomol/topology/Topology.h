@@ -161,9 +161,9 @@ namespace ProtoMol {
           res += "Atom/cell            : " + toString(
             this->atoms.size() * this->cellManager.getCellVolume() / v) + "\n";
           res += "Real cell size       : (" + toString(
-            this->cellManager.getRealCellSize().c[0]) + "," + toString(
-            this->cellManager.getRealCellSize().c[1]) + "," + toString(
-            this->cellManager.getRealCellSize().c[2]) + ")\n";
+            this->cellManager.getCellSizeVector().c[0]) + "," + toString(
+            this->cellManager.getCellSizeVector().c[1]) + "," + toString(
+            this->cellManager.getCellSizeVector().c[2]) + ")\n";
           res += "Cell dimension       : (" +
                  toString(this->cellLists.getDimX()) + "," + toString(
             this->cellLists.getDimY()) + "," +
