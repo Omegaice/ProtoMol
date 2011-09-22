@@ -77,6 +77,9 @@ namespace ProtoMol {
 		( Parameter( "cellSize", Value( mCellSize, ConstraintValueType::Positive() ),
 					 Text( "For Periodic BC this must be < least cell basis vector."
 						   "  Typically 1/2 of the least cutoff value" ) ) );
+		parameters.push_back
+		( Parameter( "maxvolume", Value( 16, ConstraintValueType::Positive() ),
+					 Text( "Maximum volume change for cell" ) ) );
 	}
 
 	CubicCellManager CubicCellManager::make( const std::vector<Value>& values ) {
