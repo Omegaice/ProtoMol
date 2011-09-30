@@ -98,7 +98,10 @@ void OutputCheckpoint::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
     (Parameter(getId(), Value(name, ConstraintValueType::NotEmpty())));
 
-  Output::getParameters(parameter);
+  parameter.push_back
+    (Parameter(getId() + "Freq",
+               Value(outputFreq, ConstraintValueType::Positive()),
+               Text("output frequency")));
 
   parameter.push_back
     (Parameter(keyword + "Start",
@@ -137,7 +140,6 @@ void OutputCheckpoint::WritePositions(int step) {
   XYZWriter posWriter;
   if (!posWriter.open(posFile))
     THROWS("Can't open " << getId() << " '" << posFile + "'.");
-
 
   const Vector3DBlock *pos = &app->positions;
   posWriter.setComment("Time : " + toString(app->outputCache.getTime()) +
