@@ -394,8 +394,6 @@ protomol/output/OutputFAHFile.cpp -text
 protomol/output/OutputFAHFile.h -text
 protomol/output/OutputFAHGUI.cpp -text
 protomol/output/OutputFAHGUI.h -text
-protomol/output/OutputFile.cpp -text
-protomol/output/OutputFile.h -text
 protomol/output/OutputFinalPDBPos.cpp -text
 protomol/output/OutputFinalPDBPos.h -text
 protomol/output/OutputFinalXYZPos.cpp -text

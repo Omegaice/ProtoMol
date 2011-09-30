@@ -12,52 +12,56 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputDCDTrajectoryVel
+
 const string OutputDCDTrajectoryVel::keyword("DCDVELFile");
 
+
 OutputDCDTrajectoryVel::OutputDCDTrajectoryVel() :
-  Output(), myDCD(NULL), myMinimalImage(false) {}
+  dCD(0), minimalImage(false) {}
+
 
 OutputDCDTrajectoryVel::OutputDCDTrajectoryVel(const string &filename,
                                                int freq, bool minimal) :
-  Output(freq), myDCD(new DCDTrajectoryWriter(filename)),
-  myMinimalImage(minimal) {}
+  Output(freq), dCD(new DCDTrajectoryWriter(filename)),
+  minimalImage(minimal) {}
+
 
 OutputDCDTrajectoryVel::~OutputDCDTrajectoryVel() {
-  if (myDCD != NULL) delete myDCD;
+  if (dCD) delete dCD;
 }
 
+
 void OutputDCDTrajectoryVel::doInitialize() {
-  if (myDCD == NULL || !myDCD->open())
-    THROW(string("Can not open '") + (myDCD ? myDCD->getFilename() : "") +
-          "' for " + getId() + ".");
+  if (!dCD || !dCD->open())
+    THROWS("Can not open '" << (dCD ? dCD->getFilename() : "")
+           << "' for " << getId() << ".");
 }
 
 void OutputDCDTrajectoryVel::doRun(int) {
-  const Vector3DBlock *vel = &app->velocities;
-  if (!myDCD->write(*vel))
-    THROW(string("Could not write ") + getId() + " '" + myDCD->getFilename()  +
-          "'.");
+  if (!dCD->write(app->velocities))
+    THROWS("Could not write " << getId() << " '" << dCD->getFilename()
+           << "'.");
 }
 
+
 void OutputDCDTrajectoryVel::doFinalize(int) {
-  myDCD->close();
+  dCD->close();
 }
+
 
 Output *OutputDCDTrajectoryVel::doMake(const vector<Value> &values) const {
   return new OutputDCDTrajectoryVel(values[0], values[1], values[2]);
 }
 
+
 void OutputDCDTrajectoryVel::getParameters(vector<Parameter> &parameter)
 const {
   parameter.push_back
-    (Parameter(getId(), Value(myDCD ? myDCD->getFilename() : "",
+    (Parameter(getId(), Value(dCD ? dCD->getFilename() : "",
                               ConstraintValueType::NotEmpty())));
+  Output::getParameters(parameter);
   parameter.push_back
-    (Parameter(keyword + "OutputFreq",
-               Value(getOutputFreq(), ConstraintValueType::Positive())));
-  parameter.push_back
-    (Parameter(keyword + "MinimalImage", Value(myMinimalImage),
+    (Parameter(keyword + "MinimalImage", Value(minimalImage),
                Text("whether the coordinates should be transformed to minimal "
                     "image or not (NA for Vel)")));
 }

@@ -25,6 +25,7 @@ namespace ProtoMol {
   declareInputValue(InputDoGBSAObc, BOOL, NOCONSTRAINTS);
   declareInputValue(InputDebugLimit, INT, NOCONSTRAINTS);
 
+
   class MainModule : public Module {
   public:
     const std::string getName() const {return "Main";}

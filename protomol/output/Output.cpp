@@ -8,17 +8,18 @@
 using namespace std;
 using namespace ProtoMol;
 
-//____ Output
 const string Output::scope("Output");
+
 
 Output::Output(int freq) :
   app(0), firstStep(0), nextStep(0), lastStep(0), outputFreq(freq) {}
 
+
 void Output::initialize(const ProtoMolApp *app) {
   this->app = app;
 
-  if (outputFreq <= 0) { // used for finalize only outputs
-    if (app->config.valid(InputOutputfreq::keyword)) 
+  if (outputFreq <= 0) { //  used for finalize only output
+    if (app->config.valid(InputOutputfreq::keyword))
       outputFreq = app->config[InputOutputfreq::keyword];
     else outputFreq = 1;
   }
@@ -34,6 +35,7 @@ void Output::initialize(const ProtoMolApp *app) {
 
   doInitialize();
 }
+
 
 bool Output::run(int step) {
   if (step >= nextStep) {
@@ -52,10 +54,12 @@ void Output::finalize(int step) {
   doFinalize(step);
 }
 
+
 Output *Output::make(const vector<Value> &values) const {
   assertParameters(values);
   return adjustAlias(doMake(values));
 }
+
 
 bool Output::isIdDefined(const Configuration *config) const {
   if (!addDoKeyword()) return config->valid(getId());
@@ -66,4 +70,23 @@ bool Output::isIdDefined(const Configuration *config) const {
   if (!config->valid(str)) return true;
 
   return (bool)(*config)[str];
+}
+
+
+void Output::getParameters(vector<Parameter> &parameter) const {
+  parameter.push_back
+    (Parameter(getId() + "OutputFreq",
+               Value(outputFreq, ConstraintValueType::Positive()),
+               Text("output frequency")));
+}
+
+
+bool Output:: adjustWithDefaultParameters(std::vector<Value> &values,
+                                          const Configuration *config) const {
+  if (!checkParameterTypes(values)) return false;
+
+  if (config->valid(InputOutputfreq::keyword) && !values[1].valid())
+    values[1] = (*config)[InputOutputfreq::keyword];
+
+  return checkParameters(values);
 }

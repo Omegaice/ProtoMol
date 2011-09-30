@@ -1,53 +1,36 @@
 /*  -*- c++ -*-  */
-#ifndef OUTPUTFINALPDBPOS_H
-#define OUTPUTFINALPDBPOS_H
+#ifndef PROTOMOL_OUTPUT_FINAL_PDB_POS_H
+#define PROTOMOL_OUTPUT_FINAL_PDB_POS_H
 
-#include <protomol/output/Output.h>
+#include "Output.h"
 
 namespace ProtoMol {
   class Configuration;
 
-  //____ OutputFinalPDBPos
   class OutputFinalPDBPos : public Output {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    static const std::string keyword;
+
+  protected:
+    std::string filename;
+    bool minimalImage;
+
   public:
     OutputFinalPDBPos();
     OutputFinalPDBPos(const std::string &filename, bool minimal);
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class Output
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //  From class Output
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //   From class Output
   private:
-    virtual Output *doMake(const std::vector<Value> &values) const;
+    Output *doMake(const std::vector<Value> &values) const;
+    void doInitialize() {};
+    void doRun(int) {};
+    void doFinalize(int);
 
-    virtual void doInitialize() {};
-    virtual void doRun(int) {};
-    virtual void doFinalize(int);
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // From class Makeable
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //  From class Makeabl
   public:
-    virtual std::string getIdNoAlias() const {return keyword;}
-    virtual void getParameters(std::vector<Parameter> &parameter) const;
-    virtual bool adjustWithDefaultParameters(std::vector<Value> &values,
-                                             const Configuration *config) const;
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    static const std::string keyword;
-
-  private:
-    std::string filename;
-    bool myMinimalImage;
+    std::string getIdNoAlias() const {return keyword;}
+    void getParameters(std::vector<Parameter> &parameter) const;
+    bool adjustWithDefaultParameters(std::vector<Value> &values,
+                                     const Configuration *config) const;
   };
 }
-#endif
+#endif //  PROTOMOL_OUTPUT_FINAL_PDB_POS_H

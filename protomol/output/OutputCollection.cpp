@@ -12,20 +12,18 @@
 #include <protomol/base/Exception.h>
 
 using namespace ProtoMol;
-//____ OutputCollection
-OutputCollection::OutputCollection() {}
+
 
 OutputCollection::~OutputCollection() {
-  for (iterator i = begin(); i != end(); ++i)
-    delete (*i);
+  for (iterator i = begin(); i != end(); i++) delete (*i);
 }
+
 
 void OutputCollection::initialize(const ProtoMolApp *app) {
   this->app = app;
-
-  for (iterator i = begin(); i != end(); ++i)
-    (*i)->initialize(app);
+  for (iterator i = begin(); i != end(); i++) (*i)->initialize(app);
 }
+
 
 bool OutputCollection::run(int step) {
   bool outputRan = false;
@@ -37,20 +35,22 @@ bool OutputCollection::run(int step) {
   return outputRan;
 }
 
+
 void OutputCollection::finalize(int step) {
   app->outputCache.uncache();
-  for (iterator i = begin(); i != end(); ++i)
-    (*i)->finalize(step);
+  for (iterator i = begin(); i != end(); i++) (*i)->finalize(step);
 }
+
 
 void OutputCollection::adoptOutput(Output *output) {
   if (!output) THROW("null pointer");
-  myOutputList.push_back(output);
+  outputList.push_back(output);
 }
+
 
 int OutputCollection::getNext() const {
   int next = Constant::MAX_INT;
-  for (const_iterator i = begin(); i != end(); ++i)
+  for (const_iterator i = begin(); i != end(); i++)
     next = min((*i)->getNext(), next);
 
   return next;

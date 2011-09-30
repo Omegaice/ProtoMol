@@ -43,6 +43,7 @@ using namespace ProtoMol;
 using namespace ProtoMol::Report;
 using namespace ProtoMol::Constant;
 
+
 ProtoMolApp::ProtoMolApp(ModuleManager *modManager) :
   modManager(modManager), SCPISMParameters(0), cmdLine(&config), outputs(0),
   integrator(0), topology(0) {
@@ -55,7 +56,9 @@ ProtoMolApp::ProtoMolApp(ModuleManager *modManager) :
   outputFactory.registerAllExemplarsConfiguration(&config);
 }
 
+
 ProtoMolApp::~ProtoMolApp() {}
+
 
 void ProtoMolApp::splash(ostream &stream) {
   const int w = 16;
@@ -91,6 +94,7 @@ void ProtoMolApp::splash(ostream &stream) {
     << PROTOMOL_HR << endl;
 }
 
+
 void ProtoMolApp::load(const string &configfile) {
   vector<string> args;
 
@@ -99,9 +103,11 @@ void ProtoMolApp::load(const string &configfile) {
   load(args);
 }
 
+
 bool ProtoMolApp::load(int argc, char *argv[]) {
   return load(vector<string>(argv, argv + argc));
 }
+
 
 bool ProtoMolApp::load(const vector<string> &args) {
   // Parse command line
@@ -110,25 +116,30 @@ bool ProtoMolApp::load(const vector<string> &args) {
   return true;
 }
 
+
 void ProtoMolApp::configure() {
   // Read Config file
   if (config.valid(InputConfig::keyword))
-    changeDirectory(config[InputConfig::keyword]);
+    SystemUtilities::chdir(SystemUtilities::dirname
+                           (config[InputConfig::keyword]));
   else THROW("Configuration file not set.");
 
   modManager->configure(this);
 }
+
 
 void ProtoMolApp::configure(const string &configfile) {
   load(configfile);
   configure();
 }
 
+
 bool ProtoMolApp::configure(int argc, char *argv[]) {
   if (!load(argc, argv)) return false;
   configure();
   return true;
 }
+
 
 bool ProtoMolApp::configure(const vector<string> &args) {
   if (!load(args)) return false;
@@ -137,6 +148,7 @@ bool ProtoMolApp::configure(const vector<string> &args) {
   
   return true;
 }
+
 
 void ProtoMolApp::build() {
   // TPR input for topology, positions and velocities?
@@ -161,100 +173,98 @@ void ProtoMolApp::build() {
     topology = topologyFactory.make(&config);
   } catch (const Exception &e) {
 
-      if( !GROMACRTPR ){
-        // Try to get some defaults with the postions known ...
-        const GenericTopology *prototype =
-          topologyFactory.find(config[GenericTopology::keyword].getString());
+    if( !GROMACRTPR ){
+      // Try to get some defaults with the postions known ...
+      const GenericTopology *prototype =
+        topologyFactory.find(config[GenericTopology::keyword].getString());
 
-        if (prototype) {
-          vector<Parameter> parameters = prototype->getDefaults(positions);
+      if (prototype) {
+        vector<Parameter> parameters = prototype->getDefaults(positions);
 
-          for (unsigned int i = 0; i < parameters.size(); i++)
-            if (!config.valid(parameters[i].keyword) &&
-                parameters[i].value.valid()) {
-              config.set(parameters[i].keyword, parameters[i].value);
-              report << hint << parameters[i].keyword << " undefined, using "
-                     << parameters[i].value.getString() << "." << endr;
-            }
+        for (unsigned int i = 0; i < parameters.size(); i++)
+          if (!config.valid(parameters[i].keyword) &&
+              parameters[i].value.valid()) {
+            config.set(parameters[i].keyword, parameters[i].value);
+            report << hint << parameters[i].keyword << " undefined, using "
+                   << parameters[i].value.getString() << "." << endr;
+          }
 
-          topology = topologyFactory.make(&config);
-        }
+        topology = topologyFactory.make(&config);
       }
+    }
 
     if (!topology) throw e;
   }
 
-  if( !GROMACRTPR ){
+  if (!GROMACRTPR) {
+    // Using SCPISM parameter? Flag or filename
+    if (config[InputDoSCPISM::keyword] || SCPISMParameters) {
 
-      // Using SCPISM parameter? Flag or filename
-      if (config[InputDoSCPISM::keyword] || SCPISMParameters) {
+      if(config[InputDoSCPISM::keyword])
+        topology->doSCPISM = config[InputDoSCPISM::keyword];
 
-        if(config[InputDoSCPISM::keyword])
-           topology->doSCPISM = config[InputDoSCPISM::keyword];
+      if ((topology->doSCPISM < 1 || topology->doSCPISM > 3) &&
+          !SCPISMParameters)
+        THROW("doscpism should be between 1 and 3 or an input file should be "
+              "used.");
 
-        if ((topology->doSCPISM < 1 || topology->doSCPISM > 3) && !SCPISMParameters)
-          THROW("doscpism should be between 1 and 3 or an input file should be "
-                "used.");
-
-        if(SCPISMParameters) {
-           if(!config[InputDoSCPISM::keyword]) topology->doSCPISM = 4;
-        } else {
-          SCPISMParameters = new CoulombSCPISMParameterTable;
-          SCPISMParameters->populateTable();
-        }
-
-
-        report << "SCPISM: doSCPISM set to " << topology->doSCPISM << "." << endr;
-
-        if (topology->doSCPISM == 3) {
-          // Quartic switch parameters
-          SCPISMParameters->myData["H"].hbond_factor = 0.4695;
-          SCPISMParameters->myData["HC"].hbond_factor = 7.2560;
-        }
-
-        SCPISMParameters->displayTable();
-
+      if  (SCPISMParameters) {
+        if (!config[InputDoSCPISM::keyword]) topology->doSCPISM = 4;
+      } else {
+        SCPISMParameters = new CoulombSCPISMParameterTable;
+        SCPISMParameters->populateTable();
       }
 
-      //using GBSA with openMM
-      if (config[InputDoGBSAObc::keyword]) {
-         topology->doGBSAOpenMM = 1;
-         topology->obcType = config[InputDoGBSAObc::keyword];
+      report
+        << "SCPISM: doSCPISM set to " << topology->doSCPISM << "." << endr;
 
-         if (topology->obcType == 1) {
-           topology->alphaObc = 0.8;
-           topology->betaObc = 0;
-           topology->gammaObc = 2.91;
-
-         } else if (topology->obcType == 2) {
-           //obctype = 2
-           topology->alphaObc = 1.0;
-           topology->betaObc = 0.8;
-           topology->gammaObc = 4.85;
-         }
-         topology->dielecOffset = 0.09;
-
+      if (topology->doSCPISM == 3) {
+        // Quartic switch parameters
+        SCPISMParameters->myData["H"].hbond_factor = 0.4695;
+        SCPISMParameters->myData["HC"].hbond_factor = 7.2560;
       }
 
+      SCPISMParameters->displayTable();
 
-      //find force field type before building topology
-      if (config.valid(InputGromacsTopo::keyword) &&
+    }
+
+    // Using GBSA with openMM
+    if (config[InputDoGBSAObc::keyword]) {
+      topology->doGBSAOpenMM = 1;
+      topology->obcType = config[InputDoGBSAObc::keyword];
+
+      if (topology->obcType == 1) {
+        topology->alphaObc = 0.8;
+        topology->betaObc = 0;
+        topology->gammaObc = 2.91;
+
+      } else if (topology->obcType == 2) {
+        //obctype = 2
+        topology->alphaObc = 1.0;
+        topology->betaObc = 0.8;
+        topology->gammaObc = 4.85;
+      }
+      topology->dielecOffset = 0.09;
+
+    }
+
+    // Find force field type before building topology
+    if (config.valid(InputGromacsTopo::keyword) &&
         config.valid(InputGromacsParamPath::keyword)) {
-          topology->forceFieldFlag = GROMACS;
-      }
+      topology->forceFieldFlag = GROMACS;
+    }
 
-      // Build the topology
-      buildTopology(topology, psf, par, config[InputDihedralMultPSF::keyword],
-                    SCPISMParameters);
+    // Build the topology
+    buildTopology(topology, psf, par, config[InputDihedralMultPSF::keyword],
+                  SCPISMParameters);
 
-  }else{
+  } else {
+    //TPR/GROMACS if here
+    topology->forceFieldFlag = GROMACS;//TPR;
 
-      //TPR/GROMACS if here
-      topology->forceFieldFlag = GROMACS;//TPR;
-
-      // Build the topology from the tpr file
-      buildTopologyFromTpr( topology, positions, velocities,
-                            config[InputGromacsTprFile::keyword].getString() );
+    // Build the topology from the tpr file
+    buildTopologyFromTpr( topology, positions, velocities,
+                          config[InputGromacsTprFile::keyword].getString() );
   }
 
   // Register Forces
@@ -306,8 +316,8 @@ void ProtoMolApp::build() {
   outputCache.add(par);
 
   // Print Factories
-	if ((int)config[InputDebug::keyword] >= 5  &&
-		(int)config[InputDebugLimit::keyword] <= 5) {
+  if ((int)config[InputDebug::keyword] >= 5  &&
+      (int)config[InputDebugLimit::keyword] <= 5)
     cout
       << headerRow("Factories")     << endl
       << headerRow("Configuration") << endl << config            << endl
@@ -315,9 +325,8 @@ void ProtoMolApp::build() {
       << headerRow("Integrator")    << endl << integratorFactory << endl
       << headerRow("Force")         << endl << forceFactory      << endl
       << headerRow("Output")        << endl << outputFactory     << endl;
-  }
 
-   // Clear all factories
+  // Clear all factories
   topologyFactory.unregisterAllExemplars();
   integratorFactory.unregisterAllExemplars();
   forceFactory.unregisterAllExemplars();
@@ -329,6 +338,7 @@ void ProtoMolApp::build() {
   TimerStatistic::timer[TimerStatistic::COMMUNICATION].reset();
   TimerStatistic::timer[TimerStatistic::IDLE].reset();
 }
+
 
 bool ProtoMolApp::step(unsigned inc) {
   if (currentStep >= lastStep) return false;
@@ -359,6 +369,7 @@ bool ProtoMolApp::step(unsigned inc) {
   return true;
 }
 
+
 void ProtoMolApp::finalize() {
   outputs->finalize(currentStep);
 
@@ -373,6 +384,7 @@ void ProtoMolApp::finalize() {
   report
     << allnodesserial << plain << "Timing: " << TimerStatistic() << "." << endr;
 }
+
 
 void ProtoMolApp::print(ostream &stream) {
 

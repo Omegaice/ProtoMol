@@ -1,5 +1,5 @@
-#ifndef STDTYPES_H
-#define STDTYPES_H
+#ifndef PROTOMOL_STD_TYPES_H
+#define PROTOMOL_STD_TYPES_H
 
 #ifdef _MSC_VER
 #include <limits.h>
@@ -21,26 +21,26 @@ struct uint128_t {
   uint64_t hi;
   uint64_t lo;
 
-#ifdef __cplusplus
+#ifdef __cplusplu
   uint128_t() : hi(0), lo(0) {}
   uint128_t(const uint64_t &hi, const uint64_t &lo) : hi(hi), lo(lo) {}
   operator bool () {return !(hi || lo);}
-#endif // __cplusplus
+#endif //  __cplusplu
 };
 
-#ifdef __cplusplus
+#ifdef __cplusplu
 #include <ostream>
 #include <iomanip>
 
 inline std::ostream &operator<<(std::ostream &stream, const uint128_t &x) {
   char fill = stream.fill();
   std::ios::fmtflags flags = stream.flags();
-  
+
   stream.fill('0');
   stream.flags(std::ios::right | std::ios::hex);
 
   stream << "0x" << std::setw(16) << x.hi << std::setw(16) << x.lo;
-  
+
   stream.fill(fill);
   stream.flags(flags);
   return stream;
@@ -49,6 +49,6 @@ inline std::ostream &operator<<(std::ostream &stream, const uint128_t &x) {
 inline bool operator<(const uint128_t &i1, const uint128_t &i2) {
   return i1.hi < i2.hi || (i1.hi == i2.hi && i1.lo < i2.lo);
 }
-#endif // __cplusplus
+#endif //  __cplusplu
 
-#endif // STDTYPES_H
+#endif //  PROTOMOL_STD_TYPES_H

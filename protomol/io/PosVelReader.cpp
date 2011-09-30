@@ -15,7 +15,7 @@ PosVelReader::PosVelReader() :
   filename(""), myOk(true), myType(PosVelReaderType::UNDEFINED) {}
 
 PosVelReader::PosVelReader(const string &filename) :
-  filename(filename), myOk(isAccessible(filename)),
+  filename(filename), myOk(SystemUtilities::isAccessible(filename)),
   myType(PosVelReaderType::UNDEFINED) {}
 
 PosVelReader::operator void*() const {
@@ -33,7 +33,7 @@ void PosVelReader::setFilename(const string &filename) {
 }
 
 bool PosVelReader::open() {
-  myOk = isAccessible(filename);
+  myOk = SystemUtilities::isAccessible(filename);
   return myOk;
 }
 
@@ -53,7 +53,7 @@ bool PosVelReader::tryFormat(PosVelReaderType::Enum type) {
     XYZBinReader reader(filename);
     return reader.tryFormat();
   } else
-    return isAccessible(filename);
+    return SystemUtilities::isAccessible(filename);
 }
 
 PosVelReaderType PosVelReader::getType() const {

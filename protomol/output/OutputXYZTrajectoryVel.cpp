@@ -11,59 +11,53 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputXYZTrajectoryVel
+
 const string OutputXYZTrajectoryVel::keyword("XYZVelFile");
 
-OutputXYZTrajectoryVel::OutputXYZTrajectoryVel() :
-  Output(), myXYZ() {}
+
+OutputXYZTrajectoryVel::OutputXYZTrajectoryVel() : xYZ() {}
+
 
 OutputXYZTrajectoryVel::OutputXYZTrajectoryVel(const string &filename,
                                                int freq) :
-  Output(freq), myXYZ(new XYZTrajectoryWriter(filename)) {}
+  Output(freq), xYZ(new XYZTrajectoryWriter(filename)) {}
+
 
 OutputXYZTrajectoryVel::~OutputXYZTrajectoryVel() {
-  if (myXYZ != NULL) delete myXYZ;
+  if (xYZ) delete xYZ;
 }
+
 
 void OutputXYZTrajectoryVel::doInitialize() {
-  if (myXYZ == NULL || !myXYZ->open())
-    THROW(string(" Can not open '") + (myXYZ ? myXYZ->getFilename() : "") +
-                 "' for " + getId() + ".");
+  if (!xYZ || !xYZ->open())
+    THROWS("Can not open '" << (xYZ ? xYZ->getFilename() : "")
+           << "' for " << getId() << ".");
 }
+
 
 void OutputXYZTrajectoryVel::doRun(int) {
-  if (!myXYZ->write(*&app->velocities, app->topology->atoms,
+  if (!xYZ->write(*&app->velocities, app->topology->atoms,
                     app->topology->atomTypes))
-    THROW(string("Could not write ") + getId() + " '" +
-          myXYZ->getFilename() + "'.");
+    THROWS("Could not write " << getId() << " '" << xYZ->getFilename()
+           << "'.");
 }
 
+
 void OutputXYZTrajectoryVel::doFinalize(int) {
-  myXYZ->close();
+  xYZ->close();
 }
+
 
 Output *OutputXYZTrajectoryVel::doMake(const vector<Value> &values) const {
   return new OutputXYZTrajectoryVel(values[0], values[1]);
 }
 
+
 void OutputXYZTrajectoryVel::getParameters(vector<Parameter> &parameter)
 const {
   parameter.push_back
-    (Parameter(getId(), Value(myXYZ != NULL ? myXYZ->getFilename() : "",
+    (Parameter(getId(), Value(xYZ != NULL ? xYZ->getFilename() : "",
                               ConstraintValueType::NotEmpty())));
 
-  parameter.push_back
-    (Parameter(keyword + "OutputFreq",
-               Value(getOutputFreq(), ConstraintValueType::Positive())));
-}
-
-bool OutputXYZTrajectoryVel::adjustWithDefaultParameters(
-  vector<Value> &values, const Configuration *config) const {
-
-  if (!checkParameterTypes(values)) return false;
-
-  if (config->valid(InputOutputfreq::keyword) && !values[1].valid())
-    values[1] = (*config)[InputOutputfreq::keyword];
-
-  return checkParameters(values);
+  Output::getParameters(parameter);
 }

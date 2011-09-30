@@ -63,7 +63,7 @@ bool File::is_open() {
 }
 
 bool File::isAccessible() {
-  return ProtoMol::isAccessible(filename);
+  return SystemUtilities::isAccessible(filename);
 }
 
 void File::write(const char *c, streamsize count) {

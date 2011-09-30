@@ -1,49 +1,38 @@
 /*  -*- c++ -*-  */
-#ifndef OUTPUTXYZTRAJECTORYPOS_H
-#define OUTPUTXYZTRAJECTORYPOS_H
+#ifndef PROTOMOL_OUTPUT_XYZ_TRAJECTORY_POS_H
+#define PROTOMOL_OUTPUT_XYZ_TRAJECTORY_POS_H
 
 #include <protomol/output/Output.h>
 
 namespace ProtoMol {
   class XYZTrajectoryWriter;
 
-  //____ OutputXYZTrajectoryPos
   class OutputXYZTrajectoryPos : public Output {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  public:
+    static const std::string keyword;
+
+  private:
+    XYZTrajectoryWriter *xYZ;
+    bool minimalImage;
+
   public:
     OutputXYZTrajectoryPos();
     OutputXYZTrajectoryPos(const std::string &filename, int freq, bool minimal);
     virtual ~OutputXYZTrajectoryPos();
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //  From class Output
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //   From class Output
   private:
-    virtual Output *doMake(const std::vector<Value> &values) const;
-    virtual void doInitialize();
-    virtual void doRun(int step);
-    virtual void doFinalize(int step);
+    Output *doMake(const std::vector<Value> &values) const;
+    void doInitialize();
+    void doRun(int step);
+    void doFinalize(int step);
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // From class Makeable
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //  From class Makeabl
   public:
-    virtual std::string getIdNoAlias() const {return keyword;}
-    virtual void getParameters(std::vector<Parameter> &parameter) const;
-    virtual bool adjustWithDefaultParameters(std::vector<Value> &values,
-                                             const Configuration *config) const;
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    static const std::string keyword;
-
-  private:
-    XYZTrajectoryWriter *myXYZ;
-    bool myMinimalImage;
+    std::string getIdNoAlias() const {return keyword;}
+    void getParameters(std::vector<Parameter> &parameter) const;
+    bool adjustWithDefaultParameters(std::vector<Value> &values,
+                                     const Configuration *config) const;
   };
 }
-#endif
+#endif //  PROTOMOL_OUTPUT_XYZ_TRAJECTORY_POS_H

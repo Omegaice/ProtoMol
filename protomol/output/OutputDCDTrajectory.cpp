@@ -12,91 +12,93 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputDCDTrajectory
 const string OutputDCDTrajectory::keyword("DCDFile");
 
+
 OutputDCDTrajectory::OutputDCDTrajectory() :
-  Output(), myDCD(NULL), myMinimalImage(false), myFrameOffset(0), myFilename("") {}
+  dCD(0), minimalImage(false), frameOffset(0) {}
+
 
 OutputDCDTrajectory::OutputDCDTrajectory(const string &filename, int freq,
                                          bool minimal, int frameoffs) :
-  Output(freq), myDCD(NULL),//new DCDTrajectoryWriter(filename)),
-  myMinimalImage(minimal), myFrameOffset(frameoffs), myFilename(filename) {
+  Output(freq), dCD(0), minimalImage(minimal), frameOffset(frameoffs),
+  filename(filename) {
 
-    
-    //flag value
-    report << plain << "DCD FrameOffset parameter set to " << myFrameOffset << "." << endr;
-    
+  report << plain << "DCD FrameOffset parameter set to "
+         << frameOffset << "." << endr;
 }
+
 
 OutputDCDTrajectory::~OutputDCDTrajectory() {
-  if (myDCD != NULL) delete myDCD;
+  if (dCD) delete dCD;
 }
+
 
 void OutputDCDTrajectory::doInitialize() {
-  
-  //Get first frame (must exist or error)
+  // Get first frame (must exist or error)
   const int firstframe = toInt(app->config["firststep"]);
-  
+
   report << debug(2) << "Firstframe " << firstframe << "." << endr;
 
-  //open file
-  //if myFrameOffset is zero default to overwrite data
-  //note: now include "firstframe" data.
-  if( myFrameOffset == 0){
-    myDCD = new DCDTrajectoryWriter(myFilename, 1.0, firstframe);  //original call
-   
-  //else append to file
-  }else{
-   
-    //file mode
+  // open fil
+  // if frameOffset is zero default to overwrite dat
+  // note: now include "firstframe" data.
+  if (!frameOffset)
+    dCD = new DCDTrajectoryWriter(filename, 1.0, firstframe); // original call
+
+  else { // else append to fil
+
+    // file mod
     const std::ios::openmode mode = ios::binary | ios::ate | ios_base::in;
 
-    //open DCD for writing with flags 'mode'
-    myDCD = new DCDTrajectoryWriter(mode, myFrameOffset, myFilename);
-   
+    // open DCD for writing with flags 'mode'
+    dCD = new DCDTrajectoryWriter(mode, frameOffset, filename);
+
   }
-  
-  if (myDCD == NULL || !myDCD->open())
-    THROW(string("Can not open '") + (myDCD ? myDCD->getFilename() : "") +
-          "' for " + getId() + ".");
+
+  if (!dCD || !dCD->open())
+    THROWS("Can not open '" << (dCD ? dCD->getFilename() : "")
+           << "' for " << getId() << ".");
 }
+
 
 void OutputDCDTrajectory::doRun(int) {
   const Vector3DBlock *pos =
-    (myMinimalImage ? app->outputCache.minimalPositions() : &app->positions);
+    (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
 
-  if (!myDCD->write(*pos))
-    THROW(string("Could not write ") + getId() + " '" +
-          myDCD->getFilename() + "'.");
+  if (!dCD->write(*pos))
+    THROWS("Could not write " << getId() << " '" << dCD->getFilename() << "'.");
 }
+
 
 void OutputDCDTrajectory::doFinalize(int) {
-  myDCD->close();
+  dCD->close();
 }
+
 
 Output *OutputDCDTrajectory::doMake(const vector<Value> &values) const {
   return new OutputDCDTrajectory(values[0], values[1], values[2], values[3]);
 }
 
+
 void OutputDCDTrajectory::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
-    (Parameter(getId(), Value(myDCD ? myDCD->getFilename() : "",
+    (Parameter(getId(), Value(dCD ? dCD->getFilename() : "",
                               ConstraintValueType::NotEmpty())));
+  Output::getParameters(parameter);
   parameter.push_back
-    (Parameter(keyword + "OutputFreq",
-               Value(getOutputFreq(), ConstraintValueType::Positive()) ));
-  parameter.push_back
-    (Parameter(keyword + "MinimalImage", Value(myMinimalImage),
+    (Parameter(keyword + "MinimalImage", Value(minimalImage),
                Text("whether the coordinates should be transformed to minimal "
                     "image or not")));
   parameter.push_back
-    (Parameter(keyword + "FrameOffset", 
-                Value(myFrameOffset, ConstraintValueType::NotNegative()), 0 ));
+    (Parameter(keyword + "FrameOffset",
+                Value(frameOffset, ConstraintValueType::NotNegative()), 0 ));
 }
+
 
 bool OutputDCDTrajectory::adjustWithDefaultParameters(
   vector<Value> &values, const Configuration *config) const {
+
   if (!checkParameterTypes(values)) return false;
 
   if (config->valid(InputOutputfreq::keyword) && !values[1].valid())
@@ -104,7 +106,7 @@ bool OutputDCDTrajectory::adjustWithDefaultParameters(
 
   if (config->valid(InputMinimalImage::keyword) && !values[2].valid())
     values[2] = (*config)[InputMinimalImage::keyword];
-  
+
   return checkParameters(values);
 }
 

@@ -1,6 +1,6 @@
 /*  -*- c++ -*-  */
-#ifndef OUTPUTCOLLECTION_H
-#define OUTPUTCOLLECTION_H
+#ifndef PROTOMOL_OUTPUT_COLLECTION_H
+#define PROTOMOL_OUTPUT_COLLECTION_H
 
 #include <list>
 
@@ -8,59 +8,44 @@ namespace ProtoMol {
   class Output;
   class OutputFactory;
   class ProtoMolApp;
-  //____ OutputCollection
 
-  /**
-     Container class for Output objects invoked at application level.
-   */
+  // / Container class for Output objects invoked at application level.
   class OutputCollection  {
     friend class OutputFactory;
 
     typedef std::list<Output *> Container;
-    typedef std::list<Output *>::iterator iterator;
+    Container outputList;
+
+    const ProtoMolApp *app;
 
   public:
-    typedef std::list<Output *>::const_iterator const_iterator;
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    OutputCollection();
+    OutputCollection() : app(0) {}
     ~OutputCollection();
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class OutputCollection
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    /// Initialize all Output objects
+
+    // / Initialize all Output object
     void initialize(const ProtoMolApp *app);
 
-    /// Invoke all Output objects with run().  Returns true if an Output ran.
+    // / Invoke all Output objects with run().  Returns true if an Output ran.
     bool run(int step);
 
-    /// Finalize all Outout objects
+    // / Finalize all Outout object
     void finalize(int step);
 
-    /// Add new Output object to the collection
+    // / Add new Output object to the collection
     int getNext() const;
 
     void adoptOutput(Output *output);
 
-    /// Iterators, const
-    const_iterator begin() const {return myOutputList.begin();}
-    const_iterator end()   const {return myOutputList.end();}
+    // / Iterators, const
+    typedef Container::const_iterator const_iterator;
+    const_iterator begin() const {return outputList.begin();}
+    const_iterator end()   const {return outputList.end();}
 
   private:
-    /// Iterators
-    iterator begin()       {return myOutputList.begin();}
-    iterator end()         {return myOutputList.end();}
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private:
-    Container myOutputList;
-
-    const ProtoMolApp *app;
+    // / Iterator
+    typedef Container::iterator iterator;
+    iterator begin()       {return outputList.begin();}
+    iterator end()         {return outputList.end();}
   };
 }
-#endif
+#endif //  PROTOMOL_OUTPUT_COLLECTION_H

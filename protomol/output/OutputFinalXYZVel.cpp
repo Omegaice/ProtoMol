@@ -11,31 +11,35 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputFinalXYZVel
+
 const string OutputFinalXYZVel::keyword("finXYZVelFile");
 
-OutputFinalXYZVel::OutputFinalXYZVel() :
-  Output(-1), filename("") {}
+
+OutputFinalXYZVel::OutputFinalXYZVel() : Output(-1) {}
+
 
 OutputFinalXYZVel::OutputFinalXYZVel(const string &filename) :
   Output(-1), filename(filename) {}
 
+
 void OutputFinalXYZVel::doFinalize(int step) {
   XYZWriter writer;
   if (!writer.open(filename))
-    THROW(string("Can't open ") + getId() + " '" + filename + "'.");
+    THROWS("Can't open " << getId() << " '" << filename << "'.");
 
-  writer.setComment("Time : " + toString(app->outputCache.time()) +
+  writer.setComment("Time : " + toString(app->outputCache.getTime()) +
                     ", step : " + toString(step) + ".");
 
   if (!writer.write(*&app->velocities, app->topology->atoms,
                     app->topology->atomTypes))
-    THROW(string("Could not write ") + getId() + " '" + filename + "'.");
+    THROWS("Could not write " << getId() << " '" << filename << "'.");
 }
+
 
 Output *OutputFinalXYZVel::doMake(const vector<Value> &values) const {
   return new OutputFinalXYZVel(values[0]);
 }
+
 
 void OutputFinalXYZVel::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back

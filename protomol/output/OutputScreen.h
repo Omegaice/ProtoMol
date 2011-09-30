@@ -1,49 +1,37 @@
 /*  -*- c++ -*-  */
-#ifndef OUTPUTSCREEN_H
-#define OUTPUTSCREEN_H
+#ifndef PROTOMOL_OUTPUT_SCREEN_H
+#define PROTOMOL_OUTPUT_SCREEN_H
 
 #include <protomol/output/Output.h>
 
 namespace ProtoMol {
   class Configuration;
 
-  //____ OutputScreen
   class OutputScreen : public Output {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  public:
+    static const std::string keyword;
+
+  private:
+    std::string unit;
+    Real factor;
+
   public:
     OutputScreen();
     OutputScreen(int freq);
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //  From class Output
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //   From class Output
   private:
-    virtual Output *doMake(const std::vector<Value> &values) const;
-    virtual void doInitialize();
-    virtual void doRun(int step);
-    virtual void doFinalize(int) {}
-    virtual bool isIdDefined(const Configuration *config) const;
-    virtual bool addDoKeyword() const {return false;}
+    Output *doMake(const std::vector<Value> &values) const;
+    void doInitialize();
+    void doRun(int step);
+    void doFinalize(int) {}
+    bool isIdDefined(const Configuration *config) const;
+    bool addDoKeyword() const {return false;}
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // From class Makeable
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //  From class Makeabl
   public:
-    virtual std::string getIdNoAlias() const {return keyword;}
-    virtual void getParameters(std::vector<Parameter> &) const;
-    virtual bool adjustWithDefaultParameters(std::vector<Value> &values,
-                                             const Configuration *config) const;
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    static const std::string keyword;
-  private:
-    std::string myUnit;
-    Real myFactor;
+    std::string getIdNoAlias() const {return keyword;}
+    void getParameters(std::vector<Parameter> &) const;
   };
 }
-#endif
+#endif //  PROTOMOL_OUTPUT_SCREEN_H

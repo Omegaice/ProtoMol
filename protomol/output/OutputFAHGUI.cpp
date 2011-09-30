@@ -1,4 +1,4 @@
-// Updated for standalone GUI
+//  Updated for standalone GUI
 #if defined (HAVE_GUI) || defined (HAVE_LIBFAH)
 
 #include <protomol/output/OutputFAHGUI.h>
@@ -18,99 +18,101 @@ using namespace ProtoMol;
 using namespace FAH;
 #endif
 
-//____ OutputFAHGUI
 #ifdef HAVE_LIBFAH
 const string OutputFAHGUI::keyword("FAHGUI");
 #else
 const string OutputFAHGUI::keyword("Gui");
 #endif
 
+
 OutputFAHGUI::OutputFAHGUI() :
-  name("ProtoMol"), myPort(0), myPortRange(0), myTimeout(0), myPause(0),
+  name("ProtoMol"), port(0), portRange(0), timeout(0), pause(0),
   server(0) {}
+
 
 OutputFAHGUI::OutputFAHGUI(const string &name, int freq, int port, int prange,
                            const string &projn, double timeout, bool pause) :
-  Output(freq), name(name), myPort(port), myPortRange(prange),
-  myProjName(projn), myTimeout(timeout), myPause(pause), server(0) {
+  Output(freq), name(name), port(port), portRange(prange),
+  projName(projn), timeout(timeout), pause(pause), server(0) {
 
-  //default pause timeout to 10 seconds
-  if(myPause && !myTimeout) myTimeout = 10; 
+  // default pause timeout to 10 second
+  if (pause && !timeout) timeout = 10;
 }
+
 
 void OutputFAHGUI::doInitialize() {
 #ifdef HAVE_LIBFAH
-  server = new GUIServer(myProjName.c_str(), app->topology->atoms.size(),
+  server = new GUIServer(projName.c_str(), app->topology->atoms.size(),
                          app->topology->bonds.size());
 #else
-  server = new GUIServer(myProjName.c_str(), app->topology->atoms.size(),
-                         app->topology->bonds.size(), myPort, myPortRange);
+  server = new GUIServer(projName.c_str(), app->topology->atoms.size(),
+                         app->topology->bonds.size(), port, portRange);
   server->info.iterations = app->lastStep / 1000;
   server->info.frames = app->lastStep;
   server->current.frames_done = 0;
-  //Mode number valid?
-  if(app->eigenInfo.currentMode != -1){
+  // Mode number valid?
+  if (app->eigenInfo.currentMode != -1)
     server->current.iterations_done = app->eigenInfo.currentMode;
-  }else{
-    server->current.iterations_done = 0;
-  }
+  else server->current.iterations_done = 0;
+
   setAtoms();
   setBonds();
-  //start server now initial data set
+  // tart server now initial data set
   server->startServer();
 #endif
 
-  //timers for GuiTimeout
+  // timers for GuiTimeout
   guiTimer.reset();
   guiTimer.start();
 
 }
 
+
 void OutputFAHGUI::doRun(int step) {
   GUIServer::request_t request = server->getRequest();
 
-  //GuiPause?
-  if(myPause && request == GUIServer::GS_NO_REQUEST){
-    while((request = server->getRequest()) == GUIServer::GS_NO_REQUEST){
-      if((guiTimer.getTime()).getRealTime() > myTimeout)
+  // GuiPause?
+  if (pause && request == GUIServer::GS_NO_REQUEST){
+    while ((request = server->getRequest()) == GUIServer::GS_NO_REQUEST){
+      if ((guiTimer.getTime()).getRealTime() > timeout)
         THROW("GUI pause timed out.");
     }
   }
-    
-  switch (request) {
-    case GUIServer::GS_META_REQUEST:
-    case GUIServer::GS_COORD_REQUEST:
-      guiTimer.reset(); //restart watchdog
-      guiTimer.start();
-      server->startUpdate();
-            
-      if (request == GUIServer::GS_META_REQUEST) {
-        server->info.iterations = app->lastStep / 1000;
-        server->info.frames = app->lastStep;
-        setAtoms();
-        setBonds();
-              
-      } else {
-#ifdef HAVE_LIBFAH
-        server->current.iterations_done = app->currentStep / 1000;
-#endif
-        server->current.frames_done = app->currentStep;
-        server->current.energy = kineticEnergy(app->topology, &app->velocities);
-        server->current.temperature =
-          temperature(app->topology, &app->velocities);
-        // Mode number valid?
-        if (app->eigenInfo.currentMode != -1)
-          server->current.iterations_done = app->eigenInfo.currentMode;
-        setCoords();
-      }
 
-      server->endUpdate();
-      break;
-            
-    default: break;
+  switch (request) {
+  case GUIServer::GS_META_REQUEST:
+  case GUIServer::GS_COORD_REQUEST:
+    guiTimer.reset(); // restart watchdog
+    guiTimer.start();
+    server->startUpdate();
+
+    if (request == GUIServer::GS_META_REQUEST) {
+      server->info.iterations = app->lastStep / 1000;
+      server->info.frames = app->lastStep;
+      setAtoms();
+      setBonds();
+
+    } else {
+#ifdef HAVE_LIBFAH
+      server->current.iterations_done = app->currentStep / 1000;
+#endif
+      server->current.frames_done = app->currentStep;
+      server->current.energy = kineticEnergy(app->topology, &app->velocities);
+      server->current.temperature =
+        temperature(app->topology, &app->velocities);
+      //  Mode number valid?
+      if (app->eigenInfo.currentMode != -1)
+        server->current.iterations_done = app->eigenInfo.currentMode;
+      setCoords();
+    }
+
+    server->endUpdate();
+    break;
+
+  default: break;
   }
 
-  if (myTimeout && (guiTimer.getTime()).getRealTime() > myTimeout)
+  if (timeout && (guiTimer.getTime()).getRealTime() > timeout)
     THROW("GUI communication timeout.");
 }
 
@@ -122,47 +124,49 @@ void OutputFAHGUI::doFinalize(int step) {
   }
 }
 
+
 Output *OutputFAHGUI::doMake(const vector<Value> &values) const {
-  return new OutputFAHGUI(values[0], values[1], values[2], values[3], 
+  return new OutputFAHGUI(values[0], values[1], values[2], values[3],
                           values[4], values[5], values[6]);
 }
+
 
 bool OutputFAHGUI::isIdDefined(const Configuration *config) const {
   return config->valid(getId());
 }
 
+
 void OutputFAHGUI::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
     (Parameter(getId(), Value(name, ConstraintValueType::NotEmpty())));
+  Output::getParameters(parameter);
   parameter.push_back
-    (Parameter(keyword + "OutputFreq",
-               Value(getOutputFreq(), ConstraintValueType::Positive())));
-  parameter.push_back  
     (Parameter(keyword + "Port",
-               Value(myPort, ConstraintValueType::Positive())));
-  parameter.push_back  
+               Value(port, ConstraintValueType::Positive())));
+  parameter.push_back
     (Parameter(keyword + "PortRange",
-               Value(myPortRange, ConstraintValueType::Positive())));
-  parameter.push_back  
+               Value(portRange, ConstraintValueType::Positive())));
+  parameter.push_back
     (Parameter(keyword + "Proj",
-               Value(myProjName, ConstraintValueType::NoConstraints())));
-  parameter.push_back  
+               Value(projName, ConstraintValueType::NoConstraints())));
+  parameter.push_back
     (Parameter(keyword + "Timeout",
-               Value(myTimeout, ConstraintValueType::NotNegative())));
-  parameter.push_back  
+               Value(timeout, ConstraintValueType::NotNegative())));
+  parameter.push_back
     (Parameter(keyword + "Pause",
-               Value(myPause, ConstraintValueType::NoConstraints())));
+               Value(pause, ConstraintValueType::NoConstraints())));
 }
+
 
 bool OutputFAHGUI::adjustWithDefaultParameters(vector<Value> &values,
                                                const Configuration *config)
 const {
   if (!checkParameterTypes(values)) return false;
 
+  if (config->valid(InputOutputfreq::keyword) && !values[1].valid())
+    values[1] = (*config)[InputOutputfreq::keyword];
+
   if (!values[0].valid()) values[0] = name;
-  if (!values[1].valid()) values[1] = 1;
-  //if (config->valid(InputOutputfreq::keyword) && !values[1].valid())
-  //  values[1] = (*config)[InputOutputfreq::keyword];
   if (!values[2].valid()) values[2] = 52753;
   if (!values[3].valid()) values[3] = 1;
   if (!values[4].valid()) values[4] = "Protomol_3.0";
@@ -172,8 +176,9 @@ const {
   return checkParameters(values);
 }
 
+
 void OutputFAHGUI::setCoords() {
-  Real x, y, z, sz; 
+  Real x, y, z, sz;
   Vector3DBlock posMi;
 
   posMi.resize(app->positions.size());
@@ -195,9 +200,10 @@ void OutputFAHGUI::setCoords() {
   }
 }
 
+
 void OutputFAHGUI::setBonds() {
   for (unsigned int i = 0; i < app->topology->bonds.size(); i++ ) {
-    // FAH requires a < b
+    //  FAH requires a < b
     if (app->topology->bonds[i].atom1 < app->topology->bonds[i].atom2) {
       server->bonds[i].a = app->topology->bonds[i].atom1;
       server->bonds[i].b = app->topology->bonds[i].atom2;
@@ -209,19 +215,20 @@ void OutputFAHGUI::setBonds() {
   }
 }
 
+
 void OutputFAHGUI::setAtoms() {
   float radius = 0;
 
   for (unsigned int i = 0; i < (app->topology->atoms).size(); i++) {
-    // Determine diamiter / set name
+    //  Determine diamiter / set nam
     int atomNameLen = app->topology->atoms[i].name.length();
-    for(int j=0;j<min(atomNameLen,4);j++)
+    for (int j=0;j<min(atomNameLen,4);j++)
       server->atoms[i].type[j] = (app->topology->atoms[i].name.c_str())[j];
 
-    if(atomNameLen < 4)
-        for(int j=atomNameLen;j<4;j++) server->atoms[i].type[j] = 0;
+    if (atomNameLen < 4)
+        for (int j=atomNameLen;j<4;j++) server->atoms[i].type[j] = 0;
 
-    switch(server->atoms[i].type[0]){
+    switch (server->atoms[i].type[0]){
         case 'H':	radius = 1.2;
                     break;
         case 'C':	radius = 1.7;
@@ -238,10 +245,10 @@ void OutputFAHGUI::setAtoms() {
                     break;
     }
 
-    // add charge
+    //  add charg
     server->atoms[i].charge = app->topology->atoms[i].scaledCharge;
     server->atoms[i].radius = radius / 2.0;
   }
 }
 
-#endif // HAVE_GUI,HAVE_LIBFAH
+#endif //  HAVE_GUI,HAVE_LIBFAH

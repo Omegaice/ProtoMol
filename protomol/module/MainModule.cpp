@@ -12,6 +12,7 @@ using namespace std;
 using namespace ProtoMol;
 using namespace ProtoMol::Report;
 
+
 defineInputValue(InputSeed, "seed");
 defineInputValue(InputRandomType, "randomtype");
 defineInputValue(InputFirststep, "firststep");
@@ -36,6 +37,7 @@ defineInputValueAndText(InputMinimalImage, "minimalImage",
                         "transformed to minimal image or not");
 defineInputValue(InputDebugLimit, "debugstart");
 
+
 void MainModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;
 
@@ -57,6 +59,7 @@ void MainModule::init(ProtoMolApp *app) {
   InputDoGBSAObc::registerConfiguration(config, 0);
   InputDebugLimit::registerConfiguration(config, 0);
 }
+
 
 void MainModule::configure(ProtoMolApp *app) {
   Configuration &config = app->config;
@@ -95,6 +98,7 @@ void MainModule::configure(ProtoMolApp *app) {
   if (!config[InputNumsteps::keyword].valid())
     THROW("Numsteps undefined.");
 }
+
 
 void MainModule::postBuild(ProtoMolApp *app) {
   // Reduce image

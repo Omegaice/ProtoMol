@@ -9,16 +9,25 @@
 #include <protomol/type/Real.h>
 
 namespace ProtoMol {
-  /// Changes to the actual directory of the file name
-  bool changeDirectory(const std::string &fileName);
+  namespace SystemUtilities {
+    std::string basename(const std::string &path);
+    std::string dirname(const std::string &path);
+    bool exists(const std::string &path);
+    void mkdir(const std::string &path, bool withParents = true);
+    bool isDirectory(const std::string &path);
+    bool ensureDirectory(const std::string &dir);
 
-  /// Test if the file is accessible
-  bool isAccessible(const std::string &fileName);
+    /// Changes to the actual directory of the file name
+    bool chdir(const std::string &fileName);
 
-  void splitFileName(const std::string &filename, std::string &dirname,
+    /// Test if the file is accessible
+    bool isAccessible(const std::string &fileName);
+
+    void splitFileName(const std::string &filename, std::string &dirname,
                      std::string &basename, std::string &extension);
 
-  unsigned int getFileSize(const std::string &filename);
+    unsigned int getFileSize(const std::string &filename);
+  }
 
   /// Does an abort, calling the adequate abort system function
   void protomolAbort();

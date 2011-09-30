@@ -37,17 +37,17 @@ OutputXTCTrajectory::OutputXTCTrajectory(const string &filename, int freq,
 
 void OutputXTCTrajectory::doInitialize() {
 #ifdef HAVE_GROMACS
-  // Get first frame (must exist or error)
+  //  Get first frame (must exist or error)
   const int firstframe = toInt(app->config["firststep"]);
 
   report << debug(2) << "Firstframe " << firstframe << "." << endr;
 
-  // Open file
-  // If frameOffset is zero default to overwrite data
-  // NOTE: now include "firstframe" data.
+  //  Open fil
+  //  If frameOffset is zero default to overwrite data
+  //  NOTE: now include "firstframe" data.
   fxtc = open_xtc(filename.c_str(), frameOffset ? "a" : "w");
 
-  // Test opened
+  //  Test opened
   if (!fxtc) THROWS("Can not open '" << filename << "' for " << getId() << ".");
 
 #else
@@ -59,33 +59,33 @@ void OutputXTCTrajectory::doInitialize() {
 void OutputXTCTrajectory::doRun(int step) {
 #ifdef HAVE_GROMACS
   const Vector3DBlock *pos =
-    (minimalImage ? app->outputCache.minimalPositions() : &app->positions);
+    (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
 
-  // Bounding Box
-  // The computational box which is stored as a set of three basis vectors,
-  // to allow for triclinic PBC. For a rectangular box the box edges are
-  // stored on the diagonal of the matrix.
+  //  Bounding Box
+  //  The computational box which is stored as a set of three basis vectors,
+  //  to allow for triclinic PBC. For a rectangular box the box edges ar
+  //  stored on the diagonal of the matrix.
   Vector3D a, b;
   app->topology->getBoundingbox(*pos, a, b);
   matrix box = {{a.c[0], a.c[1], a.c[2]}, {b.c[0], b.c[1], b.c[2]},
                 {b.c[0] - a.c[0], b.c[1] - a.c[1], b.c[2] - a.c[2]}};
 
-  // Gromacs XYZ data struct
-  const unsigned possize = pos->size(); // Size
+  //  Gromacs XYZ data struct
+  const unsigned possize = pos->size(); //  Size
   SmartPointer<rvec>::Array x = new rvec[possize];
 
-  // Copy & convert data
+  //  Copy & convert dat
   for (unsigned i = 0; i < possize; i++)
     for (unsigned j = 0; j < 3; j++)
       x[i][j] = (*pos)[i][j] * Constant::ANGSTROM_NM;
 
-  // Defines precision, 1000 is the GROMACS default.
-  // Can be read from TPR file.
+  //  Defines precision, 1000 is the GROMACS default.
+  //  Can be read from TPR file.
   real prec = 1000;
-  int natoms = possize; // Number of atoms
-  real time = app->outputCache.time(); // Real time
+  int natoms = possize; //  Number of atom
+  real time = app->outputCache.getTime(); //  Real time
 
-  // Write to file
+  //  Write to fil
   if (!write_xtc((t_fileio *)fxtc, natoms, app->currentStep, time,
                  box, x.get(), prec))
     THROWS("Could not write " <<  getId() << " '" << filename << "'.");
@@ -108,9 +108,7 @@ Output *OutputXTCTrajectory::doMake(const vector<Value> &values) const {
 void OutputXTCTrajectory::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
     (Parameter(getId(), Value(filename, ConstraintValueType::NotEmpty())));
-  parameter.push_back
-    (Parameter(keyword + "OutputFreq",
-               Value(getOutputFreq(), ConstraintValueType::Positive())));
+  Output::getParameters(parameter);
   parameter.push_back
     (Parameter(keyword + "MinimalImage", Value(minimalImage),
                Text("whether the coordinates should be transformed to minimal "

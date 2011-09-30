@@ -12,47 +12,51 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputFinalPDBPos
 const string OutputFinalPDBPos::keyword("finPDBPosFile");
 
-OutputFinalPDBPos::OutputFinalPDBPos() :
-  Output(-1), filename(""), myMinimalImage(false) {}
 
-OutputFinalPDBPos::OutputFinalPDBPos(const string &filename,
-                                     bool minimal) :
-  Output(-1), filename(filename), myMinimalImage(minimal) {}
+OutputFinalPDBPos::OutputFinalPDBPos() : Output(-1), minimalImage(false) {}
+
+
+OutputFinalPDBPos::OutputFinalPDBPos(const string &filename, bool minimal) :
+  Output(-1), filename(filename), minimalImage(minimal) {}
+
 
 void OutputFinalPDBPos::doFinalize(int step) {
   PDBWriter writer;
   if (!writer.open(filename))
-    THROW(string("Can't open ") + getId() + " '" + filename + "'.");
+    THROWS("Can't open " << getId() << " '" << filename << "'.");
 
-  writer.setComment("Time : " + toString(app->outputCache.time()) +
+  writer.setComment("Time : " + toString(app->outputCache.getTime()) +
                     ", step : " + toString(step) +
-                    (myMinimalImage ? ", minimal Image" : "") + ".");
+                    (minimalImage ? ", minimal Image" : "") + ".");
 
   const Vector3DBlock *pos =
-    (myMinimalImage ? app->outputCache.minimalPositions() : &app->positions);
+    (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
 
-  if (!writer.write(*pos, app->outputCache.pdb()))
-    THROW(string("Could not write ") + getId() + " '" + filename + "'.");
+  if (!writer.write(*pos, app->outputCache.getAtoms()))
+    THROWS("Could not write " << getId() << " '" << filename << "'.");
 }
+
 
 Output *OutputFinalPDBPos::doMake(const vector<Value> &values) const {
   return new OutputFinalPDBPos(values[0], values[1]);
 }
 
+
 void OutputFinalPDBPos::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
     (Parameter(getId(), Value(filename, ConstraintValueType::NotEmpty())));
   parameter.push_back
-    (Parameter(keyword + "MinimalImage", Value(myMinimalImage),
+    (Parameter(keyword + "MinimalImage", Value(minimalImage),
                Text("whether the coordinates should be transformed to minimal "
                     "image or not")));
 }
 
+
 bool OutputFinalPDBPos::adjustWithDefaultParameters(vector<Value> &values,
                                                     const Configuration *config)
+
 const {
   if (!checkParameterTypes(values)) return false;
 

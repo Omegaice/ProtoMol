@@ -1,6 +1,6 @@
 /*  -*- c++ -*-  */
-#ifndef MAKEABLE_H
-#define MAKEABLE_H
+#ifndef PROTOMOL_MAKEABLE_H
+#define PROTOMOL_MAKEABLE_H
 
 #include <protomol/base/MakeableDefinition.h>
 
@@ -10,23 +10,16 @@ using namespace std;
 namespace ProtoMol {
   class Configuration;
 
-  //________________________________________ Makeable
-  /**
+  /***
       Base class of all object, which can be create dynamically based on a 
       prototype, normally used together with a Factory.
    */
-
   class MakeableBase {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    std::string alias;
+
   public:
     virtual ~MakeableBase() {};
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class Makeable
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
     /// retrieve all parameters
     virtual void getParameters(std::vector<Parameter> &parameters) const = 0;
     virtual MakeableDefinition getDefinition() const;
@@ -64,16 +57,9 @@ namespace ProtoMol {
   protected:
     template<typename T>
     T *adjustAlias(T *obj) const {
-      if (obj != NULL)
-        obj->setAlias(getId());
+      if (obj) obj->setAlias(getId());
       return obj;
     }
-  private:
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // private data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private:
-    std::string myAlias;
   };
 
   
@@ -86,4 +72,4 @@ namespace ProtoMol {
     virtual T *doMake(const std::vector<Value> &values) const = 0;
   };
 }
-#endif
+#endif // PROTOMOL_MAKEABLE_H

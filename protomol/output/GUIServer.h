@@ -1,11 +1,11 @@
-#ifndef GUI_SERVER_H
-#define GUI_SERVER_H
+#ifndef PROTOMOL_GUI_SERVER_H
+#define PROTOMOL_GUI_SERVER_H
 
 #define COMM_MAGIC   0xF01DBAAD
 #define COMM_VERSION 2
 #define COMM_PORT    0xCE11
 #define COMM_NNCOORD 050363
-#define NUMCONN      20 
+#define NUMCONN      20
 
 #include "stdtypes.h"
 #include <sys/types.h>
@@ -14,7 +14,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock.h>
-typedef int socklen_t;  // Unix socket length
+typedef int socklen_t;  //  Unix socket length
 
 #else
 typedef int SOCKET;
@@ -32,7 +32,7 @@ namespace ProtoMol {
 #else
   } __attribute__((packed));
 #endif
-  
+
   struct FAH_BOND {
     uint32_t a; /* rule: a < b */
     uint32_t b;
@@ -41,7 +41,7 @@ namespace ProtoMol {
 #else
   } __attribute__((packed));
 #endif
-  
+
   struct FAH_XYZ{
     float x;
     float y;
@@ -102,7 +102,7 @@ namespace ProtoMol {
     int shutdown;
     SOCKET connectlist[NUMCONN];
     bool connectlist_sent_curr[NUMCONN];
-    fd_set socks; 
+    fd_set socks;
     unsigned short com_port;
     unsigned int com_port_range;
     uint32_t no_new_coord;
@@ -138,4 +138,4 @@ namespace ProtoMol {
   };
 }
 
-#endif
+#endif //  PROTOMOL_GUI_SERVER_H

@@ -12,57 +12,52 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputXYZTrajectoryForce
+
 const string OutputXYZTrajectoryForce::keyword("XYZForceFile");
 
-OutputXYZTrajectoryForce::OutputXYZTrajectoryForce() :
-  Output(), myXYZ() {}
+
+OutputXYZTrajectoryForce::OutputXYZTrajectoryForce() : xYZ() {}
+
 
 OutputXYZTrajectoryForce::OutputXYZTrajectoryForce(const string &filename,
                                                    int freq) :
-  Output(freq), myXYZ(new XYZTrajectoryWriter(filename)) {}
+  Output(freq), xYZ(new XYZTrajectoryWriter(filename)) {}
+
 
 OutputXYZTrajectoryForce::~OutputXYZTrajectoryForce() {
-  if (myXYZ != NULL) delete myXYZ;
+  if (xYZ) delete xYZ;
 }
+
 
 void OutputXYZTrajectoryForce::doInitialize() {
-  if (myXYZ == NULL || !myXYZ->open())
-    THROW(string("Can not open '") + (myXYZ ? myXYZ->getFilename() : "") +
-          "' for " + getId() + ".");
+  if (xYZ == NULL || !xYZ->open())
+    THROWS("Can not open '" << (xYZ ? xYZ->getFilename() : "")
+           << "' for " << getId() << ".");
 }
+
 
 void OutputXYZTrajectoryForce::doRun(int) {
-  if (!myXYZ->write(*(app->integrator->getForces()), app->topology->atoms,
+  if (!xYZ->write(*(app->integrator->getForces()), app->topology->atoms,
                     app->topology->atomTypes))
-    THROW(string("Could not write ") + getId() + " '" +
-          myXYZ->getFilename() + "'.");
+    THROWS("Could not write " << getId() << " '" << xYZ->getFilename()
+           << "'.");
 }
 
+
 void OutputXYZTrajectoryForce::doFinalize(int) {
-  myXYZ->close();
+  xYZ->close();
 }
+
 
 Output *OutputXYZTrajectoryForce::doMake(const vector<Value> &values) const {
   return new OutputXYZTrajectoryForce(values[0], values[1]);
 }
 
+
 void OutputXYZTrajectoryForce::getParameters(vector<Parameter> &parameter)
 const {
   parameter.push_back
-    (Parameter(getId(), Value(myXYZ ? myXYZ->getFilename() : "",
+    (Parameter(getId(), Value(xYZ ? xYZ->getFilename() : "",
                               ConstraintValueType::NotEmpty())));
-  parameter.push_back
-    (Parameter(keyword + "OutputFreq",
-               Value(getOutputFreq(), ConstraintValueType::Positive())));
-}
-
-bool OutputXYZTrajectoryForce::adjustWithDefaultParameters(
-  vector<Value> &values, const Configuration *config) const {
-  if (!checkParameterTypes(values)) return false;
-
-  if (config->valid(InputOutputfreq::keyword) && !values[1].valid())
-    values[1] = (*config)[InputOutputfreq::keyword];
-
-  return checkParameters(values);
+  Output::getParameters(parameter);
 }

@@ -23,283 +23,310 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OutputCache
 OutputCache::OutputCache() :
-  myInitialPositions(new Vector3DBlock()),
-  myMinimalPositions(new Vector3DBlock()),
-  myDihedralPhi(Constant::REAL_NAN),
-  myDihedralPhis(new vector<Real>()),
-  myBrentMaxima(new vector<vector<Real> >()) {
+  initialPositions(new Vector3DBlock()),
+  minimalPositions(new Vector3DBlock()),
+  dihedralPhi(Constant::REAL_NAN),
+  dihedralPhis(new vector<Real>()),
+  brentMaxima(new vector<vector<Real> >()) {
   uncache();
 }
 
+
 OutputCache::~OutputCache() {
-  zap(myInitialPositions);
-  zap(myMinimalPositions);
-  zap(myDihedralPhis);
-  zap(myBrentMaxima);
+  zap(initialPositions);
+  zap(minimalPositions);
+  zap(dihedralPhis);
+  zap(brentMaxima);
 }
+
 
 void OutputCache::initialize(const ProtoMolApp *app) {
   this->app = app;
-  *myInitialPositions = app->positions;
+  *initialPositions = app->positions;
 }
 
-Real OutputCache::totalEnergy() const {
-  return potentialEnergy() + kineticEnergy();
+
+Real OutputCache::getTotalEnergy() const {
+  return getPotentialEnergy() + getKineticEnergy();
 }
 
-Real OutputCache::potentialEnergy() const {
-  if (!myCachedPE) {
-    myPE = app->energies.potentialEnergy();
-    myCachedPE = true;
+
+Real OutputCache::getPotentialEnergy() const {
+  if (!cachedPE) {
+    pE = app->energies.potentialEnergy();
+    cachedPE = true;
   }
-  return myPE;
+  return pE;
 }
 
-Real OutputCache::kineticEnergy() const {
-  if (!myCachedKE) {
-    myKE = ProtoMol::kineticEnergy(app->topology, &app->velocities);
-    myT = ProtoMol::temperature(myKE, app->topology->degreesOfFreedom);
-    myCachedKE = true;
+
+Real OutputCache::getKineticEnergy() const {
+  if (!cachedKE) {
+    kE = ProtoMol::kineticEnergy(app->topology, &app->velocities);
+    t = ProtoMol::temperature(kE, app->topology->degreesOfFreedom);
+    cachedKE = true;
   }
-  return myKE;
+  return kE;
 }
 
-Real OutputCache::temperature() const {
-  if (!myCachedKE) {
-    myKE = ProtoMol::kineticEnergy(app->topology, &app->velocities);
-    myT = ProtoMol::temperature(myKE, app->topology->degreesOfFreedom);
-    myCachedKE = true;
+
+Real OutputCache::getTemperature() const {
+  if (!cachedKE) {
+    kE = ProtoMol::kineticEnergy(app->topology, &app->velocities);
+    t = ProtoMol::temperature(kE, app->topology->degreesOfFreedom);
+    cachedKE = true;
   }
-  return myT;
+  return t;
 }
 
-Real OutputCache::molecularTemperature() const {
-  if (!myCachedMolT) {
-    myMolT = ProtoMol::temperature(
-      molecularKineticEnergy(), 3 * app->topology->molecules.size());
-    myCachedMolT = true;
+
+Real OutputCache::getMolecularTemperature() const {
+  if (!cachedMolT) {
+    molT = ProtoMol::temperature(getMolecularKineticEnergy(), 3 *
+                                 app->topology->molecules.size());
+    cachedMolT = true;
   }
-  return myMolT;
+
+  return molT;
 }
 
-Real OutputCache::molecularKineticEnergy() const {
-  if (!myCachedMolKE) {
-    myMolKE = ProtoMol::molecularKineticEnergy(app->topology, &app->velocities);
-    myCachedMolKE = true;
+
+Real OutputCache::getMolecularKineticEnergy() const {
+  if (!cachedMolKE) {
+    molKE = ProtoMol::molecularKineticEnergy(app->topology, &app->velocities);
+    cachedMolKE = true;
   }
-  return myMolKE;
+
+  return molKE;
 }
 
-Real OutputCache::pressure() const {
-  if (!myCachedP) {
+
+Real OutputCache::getPressure() const {
+  if (!cachedP) {
     if (!app->energies.virial())
-      myP = 0.0;
-    else if (volume() > 0.0)
-      myP = ProtoMol::computePressure(&app->energies, volume(),
-                                      kineticEnergy());
-    else
-      myP = Constant::REAL_INFINITY;
-    myCachedP = true;
+      p = 0.0;
+    else if (getVolume() > 0.0)
+      p = ProtoMol::computePressure(&app->energies, getVolume(),
+                                    getKineticEnergy());
+    else p = Constant::REAL_INFINITY;
+    cachedP = true;
   }
-  return myP;
+
+  return p;
 }
 
-Real OutputCache::molecularPressure() const {
-  if (!myCachedMolP) {
+
+Real OutputCache::getMolecularPressure() const {
+  if (!cachedMolP) {
     if (!app->energies.molecularVirial())
-      myMolP = 0.0;
-    else if (volume() > 0.0)
-      myMolP = ProtoMol::computeMolecularPressure(&app->energies,
-                                                  volume(),
-                                                  molecularKineticEnergy());
-    else
-      myMolP = Constant::REAL_INFINITY;
-    myCachedMolP = true;
+      molP = 0.0;
+    else if (getVolume() > 0.0)
+      molP = ProtoMol::computeMolecularPressure(&app->energies,
+                                                getVolume(),
+                                                getMolecularKineticEnergy());
+    else molP = Constant::REAL_INFINITY;
+    cachedMolP = true;
   }
-  return myMolP;
+
+  return molP;
 }
 
-Real OutputCache::volume() const {
-  if (!myCachedV) {
-    myV = app->topology->getVolume(app->positions);
-    myCachedV = true;
+
+Real OutputCache::getVolume() const {
+  if (!cachedV) {
+    v = app->topology->getVolume(app->positions);
+    cachedV = true;
   }
-  return myV;
+  return v;
 }
 
-Vector3D OutputCache::linearMomentum() const {
-  if (!myCachedLinearMomentum) {
-    myLinearMomentum =
+
+Vector3D OutputCache::getLinearMomentum() const {
+  if (!cachedLinearMomentum) {
+    linearMomentum =
       ProtoMol::linearMomentum(&app->velocities, app->topology);
-    myCachedLinearMomentum = true;
+    cachedLinearMomentum = true;
   }
-  return myLinearMomentum;
+  return linearMomentum;
 }
 
-Vector3D OutputCache::angularMomentum() const {
-  if (!myCachedAngularMomentum) {
-    myAngularMomentum =
+Vector3D OutputCache::getAngularMomentum() const {
+  if (!cachedAngularMomentum) {
+    angularMomentum =
       ProtoMol::angularMomentum(&app->positions, &app->velocities,
-                                app->topology, OutputCache::centerOfMass());
-    myCachedAngularMomentum = true;
+                                app->topology, getCenterOfMass());
+    cachedAngularMomentum = true;
   }
-  return myAngularMomentum;
+
+  return angularMomentum;
 }
 
-Vector3D OutputCache::centerOfMass() const {
-  if (!myCachedCenterOfMass) {
-    myCenterOfMass = ProtoMol::centerOfMass(&app->positions, app->topology);
-    myCachedCenterOfMass = true;
+
+Vector3D OutputCache::getCenterOfMass() const {
+  if (!cachedCenterOfMass) {
+    centerOfMass = ProtoMol::centerOfMass(&app->positions, app->topology);
+    cachedCenterOfMass = true;
   }
-  return myCenterOfMass;
+
+  return centerOfMass;
 }
 
-Real OutputCache::diffusion() const {
-  if (!myCachedDiffusion) {
-    myDiffusion = 0.0;
+
+Real OutputCache::getDiffusion() const {
+  if (!cachedDiffusion) {
+    diffusion = 0.0;
     unsigned int numberOfAtoms = app->positions.size();
     for (unsigned int i = 0; i < numberOfAtoms; i++)
-      myDiffusion +=
-        (app->positions[i] - (*myInitialPositions)[i]).normSquared();
+      diffusion +=
+        (app->positions[i] - (*initialPositions)[i]).normSquared();
 
-    myDiffusion /= (6.0 * numberOfAtoms);
-    myCachedDiffusion = true;
+    diffusion /= (6.0 * numberOfAtoms);
+    cachedDiffusion = true;
   }
-  return myDiffusion;
+
+  return diffusion;
 }
 
-Real OutputCache::density() const {
-  if (!myCachedDensity) {
-    myDensity =
-      (volume() > 0.0 ?
-       (mass() / volume() * Constant::SI::AMU *
+
+Real OutputCache::getDensity() const {
+  if (!cachedDensity) {
+    density =
+      (getVolume() > 0 ?
+       (getMass() / getVolume() * Constant::SI::AMU *
         power<3>(Constant::SI::LENGTH_AA) *
-        1e-3) :
-       Constant::REAL_NAN);
-    myCachedDensity = true;
+        1e-3) : Constant::REAL_NAN);
+
+    cachedDensity = true;
   }
-  return myDensity;
+
+  return density;
 }
 
-Real OutputCache::mass() const {
-  if (!myCachedMass) {
-    myMass = 0.0;
+
+Real OutputCache::getMass() const {
+  if (!cachedMass) {
+    mass = 0.0;
     unsigned int numberOfAtoms = app->positions.size();
     for (unsigned int i = 0; i < numberOfAtoms; i++)
-      myMass += app->topology->atoms[i].scaledMass;
+      mass += app->topology->atoms[i].scaledMass;
 
-    myCachedMass = true;
+    cachedMass = true;
   }
-  return myMass;
+
+  return mass;
 }
 
-Real OutputCache::time() const {
+
+Real OutputCache::getTime() const {
   return app->topology->time;
 }
 
-const Vector3DBlock *OutputCache::minimalPositions() const {
-  if (!myCachedMinimalPositions) {
-    *myMinimalPositions = app->positions;
+
+const Vector3DBlock *OutputCache::getMinimalPositions() const {
+  if (!cachedMinimalPositions) {
+    *minimalPositions = app->positions;
     (const_cast<GenericTopology *>(app->topology))->
-      minimalImage(*myMinimalPositions);
+      minimalImage(*minimalPositions);
   }
-  myCachedMinimalPositions = true;
-  return myMinimalPositions;
+  cachedMinimalPositions = true;
+
+  return minimalPositions;
 }
 
-Real OutputCache::dihedralPhi(int index) const {
+
+Real OutputCache::getDihedralPhi(int index) const {
   if (index < 0 || index >= static_cast<int>(app->topology->dihedrals.size()))
     index = -1;
 
   if (index < 0) {
-    myDihedralPhi = Constant::REAL_NAN;
-    myCachedDihedralPhi = index;
-    return myDihedralPhi;
+    dihedralPhi = Constant::REAL_NAN;
+    cachedDihedralPhi = index;
+    return dihedralPhi;
   }
 
-  myDihedralPhi = computePhiDihedral(app->topology, &app->positions, index);
-  return myDihedralPhi;
+  dihedralPhi = computePhiDihedral(app->topology, &app->positions, index);
+
+  return dihedralPhi;
 }
 
-vector<Real> OutputCache::dihedralPhis(vector<int> dihedralset) const {
-  if (!myCachedDihedralPhis) {
-    myDihedralPhis->resize(dihedralset.size());
+
+vector<Real> OutputCache::getDihedralPhis(vector<int> dihedralset) const {
+  if (!cachedDihedralPhis) {
+    dihedralPhis->resize(dihedralset.size());
     for (unsigned int i = 0; i < dihedralset.size(); ++i)
-      (*myDihedralPhis)[i] =
+      (*dihedralPhis)[i] =
         computePhiDihedral(app->topology, &app->positions, dihedralset[i]);
 
-    // different functions require different dihedralset
-    myCachedDihedralPhis = false;
+    //  different functions require different dihedralset
+    cachedDihedralPhis = false;
   }
-  return *myDihedralPhis;
+
+  return *dihedralPhis;
 }
 
-// Brent's Maxima function goes here to use topology for dihedral well
-// calculation
-vector<vector<Real> > OutputCache::brentMaxima(vector<int> dihedralset,
-                                               bool max) const {
-  if (!myCachedBrentMaxima) {
-    //The Brent algorithm gets the maxima if maxmin = -1
+
+//  Brent's Maxima function goes here to use topology for dihedral well
+//  calculation
+vector<vector<Real> > OutputCache::getBrentMaxima(vector<int> dihedralset,
+                                                  bool max) const {
+  if (!cachedBrentMaxima) {
+    // The Brent algorithm gets the maxima if maxmin = -1
     int maxmin = -1;
     if (!max)
       maxmin = 1;
 
-    myBrentMaxima->clear();
-    myBrentMaxima->resize(dihedralset.size());
+    brentMaxima->clear();
+    brentMaxima->resize(dihedralset.size());
 
     for (unsigned int i = 0; i < dihedralset.size(); ++i) {
-      //note the function evaluates one step past 2 pi
+      // note the function evaluates one step past 2 pi
       for (unsigned int j = 0; j <= 99; j++) {
         Real lradangle = (M_PI * 2 / 100 * j);
         Real radangle = (M_PI * 2 / 100 * (j + 1));
         Real rradangle = (M_PI * 2 / 100 * (j + 2));
 
         Real valLangle = maxmin *
-                         computePhiDihedralEnergy(app->topology, dihedralset[i],
-                                                  lradangle);
+          computePhiDihedralEnergy(app->topology, dihedralset[i], lradangle);
 
         Real valRangle = maxmin *
-                         computePhiDihedralEnergy(app->topology, dihedralset[i],
-                                                  rradangle);
+          computePhiDihedralEnergy(app->topology, dihedralset[i], rradangle);
 
         Real valAngle = maxmin *
-                        computePhiDihedralEnergy(app->topology, dihedralset[i],
-                                                 radangle);
+          computePhiDihedralEnergy(app->topology, dihedralset[i], radangle);
 
         Real xmax = 0.0;
-
         Real tol = 0.01;
         if ((valLangle > valAngle) && (valRangle > valAngle)) {
-          brent(lradangle, radangle, rradangle, tol, xmax, dihedralset[i],
-                max);
+          getBrent(lradangle, radangle, rradangle, tol, xmax, dihedralset[i],
+                   max);
 
-          ((*myBrentMaxima)[i]).push_back(xmax);
+          ((*brentMaxima)[i]).push_back(xmax);
         }
       }
 
-      // Throws Warning if no maxima were found
-      if (((*myBrentMaxima)[i]).size() == 0) {
+      //  Throws Warning if no maxima were found
+      if (((*brentMaxima)[i]).size() == 0) {
         report << warning
                << "No dihedral maxima found for dihedral index: "
                << dihedralset[i] << " Check dihedral energy equation"
                << endr;
-        ((*myBrentMaxima)[i]).push_back(0.0);
+        ((*brentMaxima)[i]).push_back(0.0);
       }
     }
 
-    //temp hack that allows multiple calls but defeats the purpose of
-    // the app.outputCache... please fix me!
-    //myCachedBrentMaxima= true;
+    // temp hack that allows multiple calls but defeats the purpose of
+    //  the app.outputCache... please fix me!
+    // hedBrentMaxima= true;
   }
-  return *myBrentMaxima;
+
+  return *brentMaxima;
 }
 
-//BRENT FUNCTION
-Real OutputCache::brent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
-                        int dihindex,
-                        bool max) const {
+
+// BRENT FUNCTION
+Real OutputCache::getBrent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
+                           int dihindex, bool max) const {
   const int ITMAX = 100;
   const Real CGOLD = 0.3819660;
   const Real ZEPS = numeric_limits<Real>::epsilon() * 1.0e-3;
@@ -307,10 +334,9 @@ Real OutputCache::brent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
   Real p, q, r, tol1, tol2, u, v, w, x, xm;
   Real e = 0.0;
 
-  //The Brent algorithm gets the maxima if maxmin = -1
+  // The Brent algorithm gets the maxima if maxmin = -1
   int maxmin = -1;
-  if (!max)
-    maxmin = 1;
+  if (!max) maxmin = 1;
 
   a = (ax < cx ? ax : cx);
   b = (ax > cx ? ax : cx);
@@ -323,6 +349,7 @@ Real OutputCache::brent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
       xmin = x;
       return fx;
     }
+
     if (fabs(e) > tol1) {
       r = (x - w) * (fx - fv);
       q = (x - v) * (fx - fw);
@@ -332,23 +359,27 @@ Real OutputCache::brent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
       q = fabs(q);
       etemp = e;
       e = d;
+
       if (fabs(p) >=
           fabs(0.5 * q * etemp) || p <= q * (a - x) || p >= q * (b - x))
         d = CGOLD * (e = (x >= xm ? a - x : b - x));
+
       else {
         d = p / q;
         u = x + d;
         if (u - a < tol2 || b - u < tol2)
           d = sign(tol1, xm - x);
       }
-    } else
-      d = CGOLD * (e = (x >= xm ? a - x : b - x));
+
+    } else d = CGOLD * (e = (x >= xm ? a - x : b - x));
     u = (fabs(d) >= tol1 ? x + d : x + sign(tol1, d));
     fu = maxmin * computePhiDihedralEnergy(app->topology, dihindex, u);
+
     if (fu <= fx) {
       if (u >= x) a = x;else b = x;
       shift(v, w, x, u);
       shift(fv, fw, fx, fu);
+
     } else {
       if (u < x) a = u;else b = u;
       if (fu <= fw || w == x) {
@@ -356,6 +387,7 @@ Real OutputCache::brent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
         w = u;
         fv = fw;
         fw = fu;
+
       } else if (fu <= fv || v == x || v == w) {
         v = u;
         fv = fu;
@@ -363,27 +395,29 @@ Real OutputCache::brent(Real ax, Real bx, Real cx, Real tol, Real &xmin,
     }
   }
 
-  //too many iterations in brent
+  // too many iterations in brent
   xmin = x;
+
   return fx;
 }
 
+
 void OutputCache::uncache() const {
-  myCachedKE = false;
-  myCachedPE = false;
-  myCachedV = false;
-  myCachedP = false;
-  myCachedMolP = false;
-  myCachedLinearMomentum = false;
-  myCachedAngularMomentum = false;
-  myCachedCenterOfMass = false;
-  myCachedDiffusion = false;
-  myCachedDensity = false;
-  myCachedMass = false;
-  myCachedDihedralPhis = false;
-  myCachedDihedralPhi = -1;
-  myCachedBrentMaxima = false;
-  myCachedMolT = false;
-  myCachedMolKE = false;
-  myCachedMinimalPositions = false;
+  cachedKE = false;
+  cachedPE = false;
+  cachedV = false;
+  cachedP = false;
+  cachedMolP = false;
+  cachedLinearMomentum = false;
+  cachedAngularMomentum = false;
+  cachedCenterOfMass = false;
+  cachedDiffusion = false;
+  cachedDensity = false;
+  cachedMass = false;
+  cachedDihedralPhis = false;
+  cachedDihedralPhi = -1;
+  cachedBrentMaxima = false;
+  cachedMolT = false;
+  cachedMolKE = false;
+  cachedMinimalPositions = false;
 }
