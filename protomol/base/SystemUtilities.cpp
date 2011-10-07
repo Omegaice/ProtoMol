@@ -3,14 +3,10 @@
 #include <protomol/base/StringUtilities.h>
 #include <protomol/base/Exception.h>
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-namespace fs = boost::filesystem;
-
 #ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h> /* for GetFullPathName */
+#include <windows.h> // for GetFullPathName
 
 //____ Define the missing symbols from <unistd.h> for M$ ....
 #include <direct.h>
@@ -79,11 +75,8 @@ namespace ProtoMol {
 
 
     bool exists(const string &path) {
-      try {
-        return fs::exists(path);
-      } catch (const exception &e) {
-        THROW(e.what());
-      }
+      struct stat buf;
+      return stat(path.c_str(), &buf) != -1;
     }
 
 
@@ -101,22 +94,15 @@ namespace ProtoMol {
         }
       }
 
-      try {
-        if (fs::create_directory(path)) return;
-      } catch (const exception &e) {
-        THROWS("Failed to create directory '" << path << "': " << e.what());
-      }
-
-      THROWS("Failed to create directory '" << path << "'");
+      if (::mkdir(path.c_str(), 0777) == -1)
+        THROWS("Failed to create directory '" << path << "'");
     }
 
 
     bool isDirectory(const string &path) {
-      try {
-        return fs::is_directory(path);
-      } catch (const exception &e) {
-        THROW(e.what());
-      }
+      struct stat buf;
+      if (stat(path.c_str(), &buf) == -1) return false;
+      return S_ISDIR(buf.st_mode);
     }
 
 
