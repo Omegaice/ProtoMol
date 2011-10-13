@@ -20,6 +20,8 @@
 #define W_OK 2
 #define R_OK 4
 
+#define S_ISDIR(x) (((x) & _S_IFDIR) != 0)
+
 #else // _WIN32
 
 #include <libgen.h>
