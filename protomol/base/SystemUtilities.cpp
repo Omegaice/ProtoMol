@@ -96,7 +96,11 @@ namespace ProtoMol {
         }
       }
 
+#ifdef _WIN32
+      if (::mkdir(path.c_str()) == -1)
+#else
       if (::mkdir(path.c_str(), 0777) == -1)
+#endif
         THROWS("Failed to create directory '" << path << "'");
     }
 
