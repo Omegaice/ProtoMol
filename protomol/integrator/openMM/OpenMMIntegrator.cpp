@@ -388,7 +388,7 @@ void OpenMMIntegrator::initialize(ProtoMolApp *app) {
 
   // Add GBSA if needed.
   
-    if (app->topology->implicitSolvent  == GBSA) {
+    if (app->topology->implicitSolvent  == GBSA && GBForce) {
 #ifdef DEBUG
     mFile << "Generalised Borne " << sz << std::endl;
 #endif
@@ -576,7 +576,7 @@ const {
   parameters.push_back(Parameter( "GBSAEpsilon", Value( myGBSAEpsilon, ConstraintValueType::NotNegative() ), 1.0 ));
   parameters.push_back(Parameter( "GBSASolvent", Value( myGBSASolvent, ConstraintValueType::NotNegative() ), 78.3 ));
   parameters.push_back(Parameter( "commonmotion", Value( myCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ));
-
+  parameters.push_back(Parameter( "GBForce", Value( GBForce, ConstraintValueType::NoConstraints() ), true));
 }
 
 STSIntegrator *OpenMMIntegrator::doMake(const vector<Value> &values,
@@ -607,7 +607,7 @@ void OpenMMIntegrator::setupValues(std::vector<Value> &values) {
   myGBSAEpsilon = values[9];
   myGBSASolvent = values[10]; 
   myCommonMotionRate = values[11]; 
-
+  GBForce = values[12];
 }
 
 /**

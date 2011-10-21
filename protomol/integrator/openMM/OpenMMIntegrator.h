@@ -91,7 +91,7 @@ namespace ProtoMol {
 #endif
 
     //OpenMM force/integrator parameters
-    bool HarmonicBondForce, HarmonicAngleForce, NonbondedForce, RBDihedralForce, PeriodicTorsion;
+    bool HarmonicBondForce, HarmonicAngleForce, NonbondedForce, RBDihedralForce, PeriodicTorsion, GBForce;
     int  myIntegratorType;
     Real myGBSAEpsilon, myGBSASolvent; 
     int myCommonMotionRate;
