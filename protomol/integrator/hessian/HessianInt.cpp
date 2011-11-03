@@ -329,17 +329,11 @@ void HessianInt::outputDiagHess(int numModes) {
     //output eigenval vector
     myFile.open(evalfile.c_str(), ofstream::out);
     myFile.precision(10);
-    //
-    int numrec;
-    numrec = numModes / 3; //sz / 3;
-    myFile << numrec << endl;
+
+    myFile << numModes << endl;
     myFile << "! eigenvalues from Protomol/Lapack " << endl;
-    for (int i = 0; i < numrec; i++) {
-      myFile << i + 1;
-      for (int j = 0; j < 3; j++){
-        myFile << " " << blockDiag.eigVal[i * 3 + j];
-      }
-      myFile << endl;
+    for (int i = 0; i < numModes; i++) {
+      myFile << i + 1 << " " << blockDiag.eigVal[i] << endl;
     }
 
     //close file
