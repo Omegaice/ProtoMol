@@ -534,7 +534,7 @@ namespace ProtoMol {
           //conserved dof, cdof, set at top of routine
 
           //loop over each vector in block
-          for( unsigned jj=0; jj<block_max - cdof; jj++ ){
+          for( unsigned jj=0; jj< 3 * block_max - cdof; jj++ ){
 
               //copy original vector
               for( unsigned ll=0; ll<block_max * 3; ll++ ){
