@@ -5,6 +5,7 @@
 
 #if defined (HAVE_OPENMM)
 #include <OpenMM.h>
+#include "LTMD/Integrator.h"
 #endif
 
 namespace ProtoMol {
@@ -93,7 +94,12 @@ namespace ProtoMol {
 			int  myIntegratorType;
 			Real myGBSAEpsilon, myGBSASolvent;
 			int myCommonMotionRate;
-
+			int resPerBlock;
+			int bdof;
+			double delta;
+			int modes;
+			int rediagFreq;
+			double minLimit;
 	};
 }
 

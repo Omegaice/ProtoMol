@@ -10,12 +10,18 @@
 #include <protomol/base/Zap.h>
 #include <protomol/topology/LennardJonesParameters.h>
 
+#ifdef HAVE_OPENMM
+#include <LTMD/Parameters.h>
+#endif
+
+
 #include <vector>
 #include <algorithm>
 
 using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
+
 //____ OpenMMIntegrator
 
 const string OpenMMIntegrator::keyword( "OpenMM" );
@@ -97,6 +103,29 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		OpenMM::Platform::getDefaultPluginsDirectory()
 	);
 
+	OpenMM::LTMD::Parameters* ltmdParams = new OpenMM::LTMD::Parameters();
+	ltmdParams->delta = delta * Constant::ANGSTROM_NM;
+	ltmdParams->bdof = bdof;
+	ltmdParams->res_per_block = resPerBlock;
+	ltmdParams->modes = modes;
+	ltmdParams->rediagFreq = rediagFreq;
+	ltmdParams->minLimit = minLimit * Constant::KCAL_KJ;
+	int current_res = app->topology->atoms[0].residue_seq;
+	int res_size = 0;
+	for(int i = 0; i < app->topology->atoms.size(); i++)
+	  {
+	    if(app->topology->atoms[i].residue_seq != current_res)
+	      {
+		ltmdParams->residue_sizes.push_back(res_size);
+		current_res = app->topology->atoms[i].residue_seq;
+		res_size = 0;
+	      }
+	    res_size++;
+	  }
+	ltmdParams->residue_sizes.push_back(res_size);
+	int forceIndex = 0;
+
+
 	//find system size
 	unsigned int sz = app->positions.size();
 
@@ -114,11 +143,13 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 	//remove common motion?
 	if( myCommonMotionRate > 0 ) {
+	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("CenterOfMass", forceIndex++));
 		system->addForce( new OpenMM::CMMotionRemover( myCommonMotionRate ) );
 	}
 
 	//openMM forces
 	if( HarmonicBondForce ) {
+	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Bond", forceIndex++));
 		unsigned int numBonds = app->topology->bonds.size();
 
 		unsigned int numConstBonds = 0;
@@ -155,6 +186,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( HarmonicAngleForce ) {
+	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Angle", forceIndex++));
 		unsigned int numAngles = app->topology->angles.size();
 
 		angles = new OpenMM::HarmonicAngleForce();
@@ -172,6 +204,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( PeriodicTorsion ) {
+	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Dihedral", forceIndex++));
 		unsigned int numPTor = app->topology->dihedrals.size();
 		unsigned int totalNumPTor = 0;
 
@@ -203,6 +236,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( RBDihedralForce ) {
+	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Improper", forceIndex++));
 		unsigned int numRBDih = app->topology->rb_dihedrals.size();
 
 		RBDihedral = new OpenMM::RBTorsionForce();
@@ -226,6 +260,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( NonbondedForce ) {
+	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Nonbonded", forceIndex++));
 
 		//get 1-4 interaction size
 		unsigned int exclSz = app->topology->exclusions.getTable().size();
@@ -309,17 +344,18 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		system->addConstraint( atom1, atom2, restLength );
 	}
 
-#ifndef HAVE_OPENMM_OLD
-	integrator = new OpenMM::LangevinIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS );
-#else
+	//#ifndef HAVE_OPENMM_OLD
+	//integrator = new OpenMM::LangevinIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS );
+	//#else
 	if( myIntegratorType == 1 ) {
 		integrator = new OpenMM::LangevinIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS );
 	} else {
-		integrator = new OpenMM::NMLIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, &app->eigenInfo );
+	  integrator = new OpenMM::LTMD::Integrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, ltmdParams);
 	}
-#endif
-
-	context = new OpenMM::Context( *system, *integrator );
+	//#endif
+	cout << "creating context" << endl;
+	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName("Reference") );
+	cout << "created context" << endl;
 
 	OpenMM::Vec3 openMMvecp, openMMvecv;
 	for( unsigned int i = 0; i < sz; ++i ) {
@@ -433,6 +469,13 @@ const {
 	parameters.push_back( Parameter( "GBSASolvent", Value( myGBSASolvent, ConstraintValueType::NotNegative() ), 78.3 ) );
 	parameters.push_back( Parameter( "commonmotion", Value( myCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ) );
 	parameters.push_back( Parameter( "GBForce", Value( GBForce, ConstraintValueType::NoConstraints() ), true ) );
+	parameters.push_back( Parameter( "resPerBlock", Value( resPerBlock, ConstraintValueType::NotNegative() ), 1 ) );
+	parameters.push_back( Parameter( "bdof", Value( bdof, ConstraintValueType::NotNegative() ), 12 ) );
+	parameters.push_back( Parameter( "epsilon", Value( delta, ConstraintValueType::NotNegative() ), 1e-3 ) );
+	parameters.push_back( Parameter( "modes", Value( modes, ConstraintValueType::NotNegative() ), 20) );
+	parameters.push_back( Parameter( "rediagFreq", Value( rediagFreq, ConstraintValueType::NotNegative() ), 1000) );
+	parameters.push_back( Parameter( "minLimit", Value (minLimit, ConstraintValueType::NotNegative() ), 0.1) );
+
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values,
@@ -464,6 +507,12 @@ void OpenMMIntegrator::setupValues( std::vector<Value> &values ) {
 	myGBSASolvent = values[10];
 	myCommonMotionRate = values[11];
 	GBForce = values[12];
+	resPerBlock = values[13];
+	bdof = values[14];
+	delta = values[15];
+	modes = values[16];
+	rediagFreq = values[17];
+	minLimit = values[18];
 }
 
 /**
