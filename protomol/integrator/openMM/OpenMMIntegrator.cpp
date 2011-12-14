@@ -12,6 +12,7 @@
 
 #ifdef HAVE_OPENMM
 #include <LTMD/Parameters.h>
+#include <openmm/LocalEnergyMinimizer.h>
 #endif
 
 
@@ -354,7 +355,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 	//#endif
 	cout << "creating context" << endl;
-	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName("Reference") );
+	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName("Cuda") );
 	cout << "created context" << endl;
 
 	OpenMM::Vec3 openMMvecp, openMMvecv;
@@ -378,6 +379,12 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 								OpenMM::State::Velocities |
 								OpenMM::State::Forces |
 								OpenMM::State::Energy );
+
+	if(minSteps > 0)
+	  {
+	    OpenMM::LocalEnergyMinimizer lem;
+	    lem.minimize(*context, tolerance, minSteps);
+	  }
 
 #else
 
@@ -475,7 +482,8 @@ const {
 	parameters.push_back( Parameter( "modes", Value( modes, ConstraintValueType::NotNegative() ), 20) );
 	parameters.push_back( Parameter( "rediagFreq", Value( rediagFreq, ConstraintValueType::NotNegative() ), 1000) );
 	parameters.push_back( Parameter( "minLimit", Value (minLimit, ConstraintValueType::NotNegative() ), 0.1) );
-
+	parameters.push_back( Parameter( "minSteps", Value( minSteps, ConstraintValueType::NotNegative() ), 0) );
+	parameters.push_back( Parameter( "tolerance", Value( tolerance, ConstraintValueType::NotNegative() ), 1.0) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values,
@@ -513,6 +521,8 @@ void OpenMMIntegrator::setupValues( std::vector<Value> &values ) {
 	modes = values[16];
 	rediagFreq = values[17];
 	minLimit = values[18];
+	minSteps = values[19];
+	tolerance = values[20];
 }
 
 /**

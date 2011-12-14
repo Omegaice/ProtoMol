@@ -29,7 +29,7 @@ using namespace ProtoMol::Report;
 // Switch for which Van der Waal radius table to use for GB.
 // 0 - Amber default
 // 1 - Greg Bowman's modified
-#define RADIUS_TABLE 1
+#define RADIUS_TABLE 0
 
 // fudge for NETBEANS highlighting
 // #define HAVE_GROMACS

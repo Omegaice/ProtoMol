@@ -100,6 +100,8 @@ namespace ProtoMol {
 			int modes;
 			int rediagFreq;
 			double minLimit;
+			int minSteps;
+			double tolerance;
 	};
 }
 
