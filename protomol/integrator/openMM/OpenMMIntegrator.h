@@ -96,12 +96,16 @@ namespace ProtoMol {
 			int myCommonMotionRate;
 			int resPerBlock;
 			int bdof;
-			double delta;
+			double blockDelta;
+			double sDelta;
 			int modes;
 			int rediagFreq;
 			double minLimit;
 			int minSteps;
 			double tolerance;
+			int blockHessianPlatform;
+			int platform;
+			bool forceRediagOnMinFail;
 	};
 }
 

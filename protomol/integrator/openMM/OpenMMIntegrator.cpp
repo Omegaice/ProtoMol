@@ -105,12 +105,42 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	);
 
 	OpenMM::LTMD::Parameters* ltmdParams = new OpenMM::LTMD::Parameters();
-	ltmdParams->delta = delta * Constant::ANGSTROM_NM;
+	ltmdParams->blockDelta = blockDelta * Constant::ANGSTROM_NM;
+	ltmdParams->sDelta = sDelta * Constant::ANGSTROM_NM;
 	ltmdParams->bdof = bdof;
 	ltmdParams->res_per_block = resPerBlock;
 	ltmdParams->modes = modes;
 	ltmdParams->rediagFreq = rediagFreq;
 	ltmdParams->minLimit = minLimit * Constant::KCAL_KJ;
+	if(forceRediagOnMinFail)
+	  {
+	    ltmdParams->ShouldForceRediagOnMinFail = true;
+	    std::cout << "forcing rediag on min fail" << std::endl;
+	  }
+	else
+	  {
+	    ltmdParams->ShouldForceRediagOnMinFail = false;
+	    std::cout << "force rediag false" << std::endl;
+	  }
+	if(blockHessianPlatform == 0)
+	  {
+	    ltmdParams->BlockDiagonalizePlatform = OpenMM::LTMD::Preference::Reference;
+	    std::cout << "block platform reference" << std::endl;
+	  }
+	else if(blockHessianPlatform == 1)
+	  {
+	    ltmdParams->BlockDiagonalizePlatform = OpenMM::LTMD::Preference::OpenCL;
+	    std::cout << "block platform OpenCL" << std::endl;
+	  }
+	else if(blockHessianPlatform == 2)
+	  {
+	    ltmdParams->BlockDiagonalizePlatform = OpenMM::LTMD::Preference::CUDA;
+	  }
+	else if(myIntegratorType == 2) // NML Integrator only
+	  {
+	    report << error << "Block Hessian Platform must be 0 (Reference), 1 (OpenCL), and 2 (CUDA)." << endr;
+	  }
+	    
 	int current_res = app->topology->atoms[0].residue_seq;
 	int res_size = 0;
 	for(int i = 0; i < app->topology->atoms.size(); i++)
@@ -351,11 +381,29 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	if( myIntegratorType == 1 ) {
 		integrator = new OpenMM::LangevinIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS );
 	} else {
-	  integrator = new OpenMM::LTMD::Integrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, ltmdParams);
+	  integrator = new OpenMM::LTMD::Integrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, *ltmdParams);
 	}
 	//#endif
 	cout << "creating context" << endl;
-	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName("Cuda") );
+	string platform_s;
+	if(platform == 0)
+	  {
+	    platform_s = "Reference";
+	  }
+	else if(platform == 1)
+	  {
+	    platform_s = "OpenCL";
+	  }
+	else if(platform == 2)
+	  {
+	    platform_s = "Cuda";
+	  }
+	else
+	  {
+	    report << error << "Platform must be one of: 0 (Reference), 1 (OpenCL), or 2 (CUDA)." << endr;
+	  }
+	std::cout << "using " << platform_s << " platform for integrator" << std::endl;
+	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName(platform_s) );
 	cout << "created context" << endl;
 
 	OpenMM::Vec3 openMMvecp, openMMvecv;
@@ -478,12 +526,16 @@ const {
 	parameters.push_back( Parameter( "GBForce", Value( GBForce, ConstraintValueType::NoConstraints() ), true ) );
 	parameters.push_back( Parameter( "resPerBlock", Value( resPerBlock, ConstraintValueType::NotNegative() ), 1 ) );
 	parameters.push_back( Parameter( "bdof", Value( bdof, ConstraintValueType::NotNegative() ), 12 ) );
-	parameters.push_back( Parameter( "epsilon", Value( delta, ConstraintValueType::NotNegative() ), 1e-3 ) );
+	parameters.push_back( Parameter( "blockEpsilon", Value( blockDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
 	parameters.push_back( Parameter( "modes", Value( modes, ConstraintValueType::NotNegative() ), 20) );
 	parameters.push_back( Parameter( "rediagFreq", Value( rediagFreq, ConstraintValueType::NotNegative() ), 1000) );
 	parameters.push_back( Parameter( "minLimit", Value (minLimit, ConstraintValueType::NotNegative() ), 0.1) );
 	parameters.push_back( Parameter( "minSteps", Value( minSteps, ConstraintValueType::NotNegative() ), 0) );
 	parameters.push_back( Parameter( "tolerance", Value( tolerance, ConstraintValueType::NotNegative() ), 1.0) );
+	parameters.push_back( Parameter( "blockHessianPlatform", Value( blockHessianPlatform, ConstraintValueType::NoConstraints() ), 0) );
+	parameters.push_back( Parameter( "platform", Value( platform, ConstraintValueType::NoConstraints() ), 2) ); // make default CUDA
+	parameters.push_back( Parameter( "forceRediagOnMinFail", Value( forceRediagOnMinFail, ConstraintValueType::NoConstraints() ), false));
+	parameters.push_back( Parameter( "sEpsilon", Value( sDelta, ConstraintValueType::NotNegative() ), 1e-3) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values,
@@ -517,12 +569,16 @@ void OpenMMIntegrator::setupValues( std::vector<Value> &values ) {
 	GBForce = values[12];
 	resPerBlock = values[13];
 	bdof = values[14];
-	delta = values[15];
+	blockDelta = values[15];
 	modes = values[16];
 	rediagFreq = values[17];
 	minLimit = values[18];
 	minSteps = values[19];
 	tolerance = values[20];
+	blockHessianPlatform = values[21];
+	platform = values[22];
+	forceRediagOnMinFail = values[23];
+	sDelta = values[24];
 }
 
 /**
