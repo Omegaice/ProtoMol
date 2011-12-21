@@ -213,6 +213,10 @@ namespace ProtoMol
           //remove last random perturbation?
           if ( removeRand ) {
             diagAt.intoSubtract( myLastNormalMode->gaussRandCoord1 );
+            //if coarse then we need to use the actual positions in case numeric S
+            if( !fullDiag ){
+                app->positions.intoSubtract( myLastNormalMode->gaussRandCoord1 );
+            }
           }
         }
 
@@ -291,7 +295,7 @@ namespace ProtoMol
           //           eigenvectors are the first 'm' columns of BQ.                                   //
           //*******************************************************************************************//
           report << debug(2) << "Start coarse diagonalization." << endr;
-          Real max_eigenvalue = blockDiag.findEigenvectors( &diagAt, app->topology,
+          Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
                                 *Q , _3N, _rfM,
                                 blockCutoffDistance, eigenValueThresh, blockVectorCols,
 								geometricfdof, numerichessians);
