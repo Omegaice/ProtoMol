@@ -112,6 +112,16 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	ltmdParams->modes = modes;
 	ltmdParams->rediagFreq = rediagFreq;
 	ltmdParams->minLimit = minLimit * Constant::KCAL_KJ;
+	
+	if( mProtomolDiagonalize ){
+		ltmdParams->ShouldProtoMolDiagonalize = true;
+		std::cout << "Using ProtoMol to Diagonalize" << std::endl;
+	}else{
+		ltmdParams->ShouldProtoMolDiagonalize = false;
+		std::cout << "Using OpenMM to Diagonalize" << std::endl;
+	}
+	
+	
 	if(forceRediagOnMinFail)
 	  {
 	    ltmdParams->ShouldForceRediagOnMinFail = true;
@@ -536,6 +546,7 @@ const {
 	parameters.push_back( Parameter( "platform", Value( platform, ConstraintValueType::NoConstraints() ), 2) ); // make default CUDA
 	parameters.push_back( Parameter( "forceRediagOnMinFail", Value( forceRediagOnMinFail, ConstraintValueType::NoConstraints() ), false));
 	parameters.push_back( Parameter( "sEpsilon", Value( sDelta, ConstraintValueType::NotNegative() ), 1e-3) );
+	parameters.push_back( Parameter( "ProtomolDiag", Value( mProtomolDiagonalize, ConstraintValueType::NoConstraints() ), false ) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values,
@@ -550,8 +561,7 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values,
 
 }
 
-void OpenMMIntegrator::setupValues( std::vector<Value> &values ) {
-
+void OpenMMIntegrator::setupValues( const std::vector<Value> &values ) {
 	//these must be in the same order as getParameters()
 	myLangevinTemperature = values[0];
 	myGamma = ( Real )values[1]; // / (1000.0 * Constant::INV_TIMEFACTOR);
@@ -579,6 +589,7 @@ void OpenMMIntegrator::setupValues( std::vector<Value> &values ) {
 	platform = values[22];
 	forceRediagOnMinFail = values[23];
 	sDelta = values[24];
+	mProtomolDiagonalize = values[25];
 }
 
 /**

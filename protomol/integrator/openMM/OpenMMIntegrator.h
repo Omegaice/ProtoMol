@@ -33,11 +33,11 @@ namespace ProtoMol {
 			virtual void getParameters( std::vector<Parameter> &parameters ) const;
 
 			virtual unsigned int getParameterSize() const {
-				return 13;
+				return 27;
 			}
 
 		protected:
-			virtual void setupValues( std::vector<Value> &params );
+			virtual void setupValues( const std::vector<Value> &params );
 
 			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			// From class Integrator
@@ -106,6 +106,8 @@ namespace ProtoMol {
 			int blockHessianPlatform;
 			int platform;
 			bool forceRediagOnMinFail;
+			
+			bool mProtomolDiagonalize;
 	};
 }
 
