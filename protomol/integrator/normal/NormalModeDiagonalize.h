@@ -39,8 +39,8 @@ namespace ProtoMol
                              bool rRand,
                              Real redhy, Real eTh, int bvc, int rpb, Real dTh, 
                              bool apar, bool adts, bool pdm, Real ml, int maxit,
-                             bool geo, bool num, ForceGroup *overloadedForces,
-                             StandardIntegrator *nextIntegrator );
+                             bool geo, bool num, bool multRediag, unsigned int maxRediags,
+														 ForceGroup *overloadedForces, StandardIntegrator *nextIntegrator );
       ~NormalModeDiagonalize();
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +57,7 @@ namespace ProtoMol
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public:
       virtual std::string getIdNoAlias() const {return keyword;}
-      virtual unsigned int getParameterSize() const {return 16;}
+      virtual unsigned int getParameterSize() const {return 18;}
       virtual void getParameters( std::vector<Parameter>& parameters ) const;
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,6 +130,9 @@ namespace ProtoMol
       //numerical and geometric Hessian
       bool geometricfdof, numerichessians;
 
+			// Repeat Diagonalize
+			bool mShouldDoMultipleRediagonalization;
+			unsigned int mMaxRediagonalizations;
   };
 }
 
