@@ -5,7 +5,8 @@
 
 #if defined (HAVE_OPENMM)
 #include <OpenMM.h>
-#include "LTMD/Integrator.h"
+#include <LTMD/Integrator.h>
+#include <LTMD/Parameters.h>
 #endif
 
 namespace ProtoMol {
@@ -14,100 +15,52 @@ namespace ProtoMol {
 	class Vector3DBlock;
 
 	class OpenMMIntegrator : public STSIntegrator {
-
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// Constructors, destructors, assignment
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		public:
 			OpenMMIntegrator();
-			OpenMMIntegrator( Real timestep, ForceGroup *overloadedForces );
+			OpenMMIntegrator( const std::vector<Value>& params, ForceGroup *overloadedForces );
 			~OpenMMIntegrator();
-
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// From class Makeable
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		public:
-			virtual std::string getIdNoAlias() const {
-				return keyword;
-			}
+			virtual std::string getIdNoAlias() const { return keyword; }
 			virtual void getParameters( std::vector<Parameter> &parameters ) const;
+			virtual unsigned int getParameterSize() const;
 
-			virtual unsigned int getParameterSize() const {
-				return 27;
-			}
-
-		protected:
-			virtual void setupValues( const std::vector<Value> &params );
-
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// From class Integrator
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		public:
 			virtual void initialize( ProtoMolApp *app );
 			virtual void run( int numTimesteps );
-			virtual void calcForces();
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// From class StandardIntegrator
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		protected:
-
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// From class STSIntegrator
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		private:
-			virtual STSIntegrator *doMake( const std::vector<Value> &values,
-										   ForceGroup *fg ) const;
-
-		protected:
-
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// New methods of class OpenMMIntegrator
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		private:
-			void getObcScaleFactors( vector<Real>& scaleFactors );
-
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			// My data members
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			virtual STSIntegrator *doMake( const std::vector<Value> &values, ForceGroup *fg ) const;
+			void getObcScaleFactors( std::vector<Real>& scaleFactors );
 		public:
 			static const std::string keyword;
 		protected:
-			Real myLangevinTemperature;
-			Real myGamma;
-			int mySeed;
-			
 #if defined (HAVE_OPENMM)
 			OpenMM::System *system;
-			OpenMM::HarmonicBondForce *bonds;
-			OpenMM::HarmonicAngleForce *angles;
-			OpenMM::RBTorsionForce *RBDihedral;
-			OpenMM::PeriodicTorsionForce *PTorsion;
-			OpenMM::NonbondedForce *nonbonded;
-			OpenMM::GBSAOBCForce *gbsa;
 			OpenMM::Integrator *integrator;
 			OpenMM::Context *context;
-			vector<OpenMM::Vec3> openMMpositions, openMMvelocities, openMMforces;
 #endif
-
-			//OpenMM force/integrator parameters
-			bool HarmonicBondForce, HarmonicAngleForce, NonbondedForce, RBDihedralForce, PeriodicTorsion, GBForce;
-			int  myIntegratorType;
-			Real myGBSAEpsilon, myGBSASolvent;
-			int myCommonMotionRate;
-			int resPerBlock;
-			int bdof;
-			double blockDelta;
-			double sDelta;
-			int modes;
-			int rediagFreq;
-			double minLimit;
-			int minSteps;
-			double tolerance;
-			int blockHessianPlatform;
-			int platform;
-			bool forceRediagOnMinFail;
+			// OpenMM Parameters
+			int mPlatform, mMinSteps;
+			double mTolerance;
 			
-			bool mProtomolDiagonalize;
+			// Integrator Parameters
+			int mSeed;
+			Real mTemperature, mGamma;
+			
+			// Solvent Parameters
+			int mCommonMotionRate;
+			Real mGBSAEpsilon, mGBSASolvent;
+			
+			// Force Switches
+			bool isUsingHarmonicBondForce;
+			bool isUsingHarmonicAngleForce;
+			bool isUsingNonBondedForce;
+			bool isUsingRBDihedralForce;
+			bool isUsingPeriodicTorsionForce;
+			bool isUsingGBForce;
+			
+			// LTMD Data
+			bool isLTMD;
+			OpenMM::LTMD::Parameters mLTMDParameters;
+			std::vector<OpenMM::LTMD::Force> mForceList;
 	};
 }
 

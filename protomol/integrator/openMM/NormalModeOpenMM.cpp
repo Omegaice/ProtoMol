@@ -10,113 +10,173 @@
 #include <LTMD/Parameters.h>
 #endif
 
-//#include "ModifierForceProjection.h"
-
 using namespace ProtoMol::Report;
 
 namespace ProtoMol {
-  //__________________________________________________ NormalModeOpenMM
+	const string NormalModeOpenMM::keyword( "NormalModeOpenMM" );
 
-  const string NormalModeOpenMM::keyword( "NormalModeOpenMM" );
-
-  NormalModeOpenMM::NormalModeOpenMM() : OpenMMIntegrator(), NormalModeUtilities()
-  {
-  }
-
-  NormalModeOpenMM::NormalModeOpenMM(Real timestep, int firstmode, int nummode, Real gamma, Real temperature,
-      Real minimlim, ForceGroup *overloadedForces)
-    : OpenMMIntegrator(timestep,overloadedForces), NormalModeUtilities( firstmode, nummode, gamma, 1234, temperature),
-      minLim(minimlim)
-  {
-  }
-
-  NormalModeOpenMM::~NormalModeOpenMM()
-  {
-
-  }
-
-  void NormalModeOpenMM::initialize(ProtoMolApp* app){
-
-    report << plain << "OpenMM NML Vector information: Vector number " << app->eigenInfo.myNumEigenvectors << ", length " << app->eigenInfo.myEigenvectorLength << "." << endr;
-    //NM initialization
-    NormalModeUtilities::initialize((int)app->positions.size(), app,
-				    myForces, NO_NM_FLAGS);
-
-    //Set up minimum limit
-    app->eigenInfo.myMinimumLimit = minLim;
-    
-    //Set number of eigenvectors in use
-    app->eigenInfo.myNumUsedEigenvectors = _rfM;
-
-    //initialize base
-    OpenMMIntegrator::initialize(app);
-    
-    initializeForces();    
-  }
-
-  typedef std::vector<OpenMM::Vec3> EigenVector;
+	NormalModeOpenMM::NormalModeOpenMM() : OpenMMIntegrator(), NormalModeUtilities() {
 	
-  void NormalModeOpenMM::run(int numTimesteps) {
-    if( numTimesteps < 1 ){
-        return;
-    }
-
-    //check valid eigenvectors
-    if(*Q == NULL){
-        report << error << "No Eigenvectors for NormalMode integrator."<<endr;
-    }
-	
-	if( mProtomolDiagonalize && app->eigenInfo.myEigVecChanged && myPreviousIntegrator != NULL ){
-		OpenMM::LTMD::Integrator *integ = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
-		if( integ ){
-			const unsigned int count = app->eigenInfo.myNumUsedEigenvectors;
-			const unsigned int length = app->eigenInfo.myEigenvectorLength * 3;
-			
-			std::vector<EigenVector> vectors( count );
-			
-			for( unsigned int i = 0; i < count; i++ ){
-				vectors[i].resize( length / 3 );
-				
-				for( unsigned int j = 0; j < length; j++ ){
-					vectors[i][j/3][j%3] = app->eigenInfo.myEigenvectors[i * length + j];
-				}
-			}
-			
-			integ->setProjectionVectors( vectors );
-		}
-		
-		app->eigenInfo.myEigVecChanged = false;
 	}
 
-    OpenMMIntegrator::run(numTimesteps);
-  }
+	NormalModeOpenMM::NormalModeOpenMM( const std::vector<Value>& base, const std::vector<Value>& params, ForceGroup *forces )
+		: OpenMMIntegrator( base, forces ), NormalModeUtilities( params[0], params[1], base[2], base[3], base[1] ) {
+		isLTMD = true;
+		
+		mModes = params[1];
+		mResiduesPerBlock = params[2];
+		mBlockDOF = params[3];
+		mBlockDelta = params[4];
+		mRediagonalizationFrequency = params[5];
+		mMinimizationLimit = params[6];
+		mBlockPlatform = params[7];
+		shoudForceRediagOnMinFail = params[8];
+		mSDelta = params[9];
+		mProtomolDiagonalize = params[10];
+	}
 
-  void NormalModeOpenMM::getParameters(vector<Parameter>& parameters) const {
-    OpenMMIntegrator::getParameters(parameters);
+	NormalModeOpenMM::~NormalModeOpenMM() {
 
-    parameters.push_back(Parameter("firstmode",Value(firstMode,ConstraintValueType::NoConstraints()),1,Text("First mode to use in set")));
-    parameters.push_back(Parameter("numbermodes",Value(numMode,ConstraintValueType::NoConstraints()),1,Text("Number of modes propagated")));
-    parameters.push_back(Parameter("gamma",Value(NormalModeUtilities::myGamma*(1000 * Constant::INV_TIMEFACTOR),ConstraintValueType::NotNegative()),80.0,Text("Langevin Gamma")));
-    parameters.push_back(Parameter("temperature",Value(myTemp,ConstraintValueType::NotNegative()),300.0,Text("Langevin temperature")));
-    parameters.push_back(Parameter("minimlim",Value(minLim,ConstraintValueType::NotNegative()),0.1,Text("Minimizer target PE difference kcal mole^{-1}")));
-  }
+	}
 
-  STSIntegrator* NormalModeOpenMM::doMake(const vector<Value>& values,ForceGroup* fg) const {
-    const unsigned int numPar = OpenMMIntegrator::getParameterSize();
+	void NormalModeOpenMM::initialize( ProtoMolApp *app ) {
+		report << plain << "OpenMM NML Vector information: Vector number " << app->eigenInfo.myNumEigenvectors << ", length " << app->eigenInfo.myEigenvectorLength << "." << endr;
+		
+		//NM initialization
+		NormalModeUtilities::initialize( ( int )app->positions.size(), app,
+										 myForces, NO_NM_FLAGS );
 
-    std::vector<Value> ommValues(values.begin() + 1, values.begin() + numPar);
+		//Set up minimum limit
+		app->eigenInfo.myMinimumLimit = mMinimizationLimit;
 
-    NormalModeOpenMM* myIntegP = new NormalModeOpenMM(
-        values[0], values[numPar+0], values[numPar+1], values[numPar+2], values[numPar+3], values[numPar+4], fg
-    );
+		//Set number of eigenvectors in use
+		app->eigenInfo.myNumUsedEigenvectors = _rfM;
 
-    myIntegP->OpenMMIntegrator::setupValues(ommValues);
+		// Setup LTMD Parameters
+		mLTMDParameters.blockDelta = mBlockDelta * Constant::ANGSTROM_NM;
+		mLTMDParameters.sDelta = mSDelta * Constant::ANGSTROM_NM;
+		mLTMDParameters.bdof = mBlockDOF;
+		mLTMDParameters.res_per_block = mResiduesPerBlock;
+		mLTMDParameters.modes = mModes;
+		mLTMDParameters.rediagFreq = mRediagonalizationFrequency;
+		mLTMDParameters.minLimit = mMinimizationLimit * Constant::KCAL_KJ;
 
-    return (STSIntegrator*)myIntegP;
-  }
+		if( mProtomolDiagonalize ) {
+			mLTMDParameters.ShouldProtoMolDiagonalize = true;
+			std::cout << "Block Diagonalization: ProtoMol" << std::endl;
+		} else {
+			mLTMDParameters.ShouldProtoMolDiagonalize = false;
+			std::cout << "Block Diagonalization: OpenMM" << std::endl;
+		}
 
-  unsigned int NormalModeOpenMM::getParameterSize() const {
-    return OpenMMIntegrator::getParameterSize() + 5;
-  }
+		if( shoudForceRediagOnMinFail ) {
+			mLTMDParameters.ShouldForceRediagOnMinFail = true;
+			std::cout << "Failure Rediagonalization: True" << std::endl;
+		} else {
+			mLTMDParameters.ShouldForceRediagOnMinFail = false;
+			std::cout << "Failure Rediagonalization: False" << std::endl;
+		}
+		
+		if( !mProtomolDiagonalize ){
+			switch( mBlockPlatform ){
+				case 0: // Reference
+					std::cout << "OpenMM Block Diagonalization Platform: Reference" << std::endl;
+					mLTMDParameters.BlockDiagonalizePlatform = OpenMM::LTMD::Preference::Reference;
+					break;
+				case 1:	// OpenCL
+					std::cout << "OpenMM Block Diagonalization Platform: OpenCL" << std::endl;
+					mLTMDParameters.BlockDiagonalizePlatform = OpenMM::LTMD::Preference::OpenCL;
+					break;
+				case 2: // CUDA
+					std::cout << "OpenMM Block Diagonalization Platform: CUDA" << std::endl;
+					mLTMDParameters.BlockDiagonalizePlatform = OpenMM::LTMD::Preference::CUDA;
+					break;
+			}
+		}
+		
+		int current_res = app->topology->atoms[0].residue_seq;
+		int res_size = 0;
+		for( int i = 0; i < app->topology->atoms.size(); i++ ) {
+			if( app->topology->atoms[i].residue_seq != current_res ) {
+				mLTMDParameters.residue_sizes.push_back( res_size );
+				current_res = app->topology->atoms[i].residue_seq;
+				res_size = 0;
+			}
+			res_size++;
+		}
+		mLTMDParameters.residue_sizes.push_back( res_size );
+	
+		//initialize base
+		OpenMMIntegrator::initialize( app );
+
+		initializeForces();
+	}
+
+	typedef std::vector<OpenMM::Vec3> EigenVector;
+
+	void NormalModeOpenMM::run( int numTimesteps ) {
+		if( numTimesteps < 1 ) {
+			return;
+		}
+
+		//check valid eigenvectors
+		if( mProtomolDiagonalize && *Q == NULL ) {
+			report << error << "No Eigenvectors for NormalMode integrator." << endr;
+		}
+
+		if( mProtomolDiagonalize && app->eigenInfo.myEigVecChanged && myPreviousIntegrator != NULL ) {
+			OpenMM::LTMD::Integrator *integ = dynamic_cast<OpenMM::LTMD::Integrator *>( integrator );
+			if( integ ) {
+				const unsigned int count = app->eigenInfo.myNumUsedEigenvectors;
+				const unsigned int length = app->eigenInfo.myEigenvectorLength * 3;
+
+				std::vector<EigenVector> vectors( count );
+
+				for( unsigned int i = 0; i < count; i++ ) {
+					vectors[i].resize( length / 3 );
+
+					for( unsigned int j = 0; j < length; j++ ) {
+						vectors[i][j / 3][j % 3] = app->eigenInfo.myEigenvectors[i * length + j];
+					}
+				}
+
+				integ->setProjectionVectors( vectors );
+			}
+
+			app->eigenInfo.myEigVecChanged = false;
+		}
+
+		OpenMMIntegrator::run( numTimesteps );
+	}
+
+	void NormalModeOpenMM::getParameters( vector<Parameter>& parameters ) const {
+		OpenMMIntegrator::getParameters( parameters );
+
+		// Normal Mode Utilities Parameters
+		parameters.push_back( Parameter( "firstmode", Value( firstMode, ConstraintValueType::NoConstraints() ), 1, Text( "First mode to use in set" ) ) );
+		parameters.push_back( Parameter( "numbermodes", Value( mModes, ConstraintValueType::NoConstraints() ), 1, Text( "Number of modes propagated" ) ) );
+
+		// LTMD OpenMM Parameters
+		parameters.push_back( Parameter( "resPerBlock", Value( mResiduesPerBlock, ConstraintValueType::NotNegative() ), 1 ) );
+		parameters.push_back( Parameter( "bdof", Value( mBlockDOF, ConstraintValueType::NotNegative() ), 12 ) );
+		parameters.push_back( Parameter( "blockEpsilon", Value( mBlockDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
+		parameters.push_back( Parameter( "rediagFreq", Value( mRediagonalizationFrequency, ConstraintValueType::NotNegative() ), 1000 ) );
+		parameters.push_back( Parameter( "minimlim", Value( mMinimizationLimit, ConstraintValueType::NotNegative() ), 0.1, Text( "Minimizer target PE difference kcal mole^{-1}" ) ) );
+		parameters.push_back( Parameter( "blockHessianPlatform", Value( mBlockPlatform, ConstraintValueType::NoConstraints() ), 0 ) );
+		parameters.push_back( Parameter( "forceRediagOnMinFail", Value( shoudForceRediagOnMinFail, ConstraintValueType::NoConstraints() ), false ) );
+		parameters.push_back( Parameter( "sEpsilon", Value( mSDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
+		parameters.push_back( Parameter( "ProtomolDiag", Value( mProtomolDiagonalize, ConstraintValueType::NoConstraints() ), false ) );
+	}
+
+	STSIntegrator *NormalModeOpenMM::doMake( const vector<Value>& values, ForceGroup *fg ) const {
+		const std::vector<Value> base( values.begin(), values.begin() + OpenMMIntegrator::getParameterSize() );
+		const std::vector<Value> params( values.begin() + OpenMMIntegrator::getParameterSize(), values.end() );
+		
+		return ( STSIntegrator * ) new NormalModeOpenMM( base, params, fg );
+	}
+
+	unsigned int NormalModeOpenMM::getParameterSize() const {
+		return OpenMMIntegrator::getParameterSize() + 11;
+	}
 }
 

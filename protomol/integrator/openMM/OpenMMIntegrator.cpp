@@ -23,30 +23,40 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-//____ OpenMMIntegrator
-
 const string OpenMMIntegrator::keyword( "OpenMM" );
 
-OpenMMIntegrator::OpenMMIntegrator() :
-	STSIntegrator() {
+OpenMMIntegrator::OpenMMIntegrator() : STSIntegrator() {
 #if defined (HAVE_OPENMM)
 	system = 0;
-	bonds = 0;
-	angles = 0;
-	nonbonded = 0;
 	integrator = 0;
 	context = 0;
 #endif
 }
 
-OpenMMIntegrator::
-OpenMMIntegrator( Real timestep, ForceGroup *overloadedForces ) :
-	STSIntegrator( timestep, overloadedForces ) {
+OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup *overloadedForces ) 
+	: STSIntegrator( params[0], overloadedForces ) {
+	
+	mTemperature = params[1];
+	mGamma = params[2];
+	mSeed = params[3];
+	
+	isUsingHarmonicBondForce = params[4];
+	isUsingHarmonicAngleForce = params[5];
+	isUsingRBDihedralForce = params[6];
+	isUsingPeriodicTorsionForce = params[7];
+	isUsingNonBondedForce = params[8];
+	isUsingGBForce = params[9];
+
+	mCommonMotionRate = params[10];
+	mGBSAEpsilon = params[11];
+	mGBSASolvent = params[12];
+	
+	mPlatform = params[13];
+	mMinSteps = params[14];
+	mTolerance = params[15];
+	
 #if defined (HAVE_OPENMM)
 	system = 0;
-	bonds = 0;
-	angles = 0;
-	nonbonded = 0;
 	integrator = 0;
 	context = 0;
 #endif
@@ -56,39 +66,22 @@ OpenMMIntegrator::~OpenMMIntegrator() {
 #if defined (HAVE_OPENMM)
 	zap( context );
 	zap( integrator );
-	//zap(nonbonded);
-	//zap(angles);
 	zap( system );
-	//zap(bonds);
 #endif
 }
 
 struct NBForce {
-	int atom1;
-	int atom2;
-	Real charge;
-	Real sigma;
-	Real epsilon;
+	int atom1, atom2;
+	Real charge, sigma, epsilon;
 
-	NBForce( int a, int b, Real c, Real s, Real e ) {
-		atom1 = a;
-		atom2 = b;
-		charge = c;
-		sigma = s;
-		epsilon = e;
+	NBForce( int a, int b, Real c, Real s, Real e )
+		: atom1( a ), atom2( b ), charge( c ), sigma( s ), epsilon( e ) {
 	}
 
 	bool operator< ( const NBForce &other ) const {
-		if( atom1 < other.atom1 ) {
-			return true;
-		}
-
-		if( atom1 == other.atom1 ) {
-			if( atom2 < other.atom2 ) {
-				return true;
-			}
-		}
-
+		if( atom1 < other.atom1 ) return true;
+		if( atom1 == other.atom1 && atom2 < other.atom2 ) return true;
+		
 		return false;
 	}
 };
@@ -97,75 +90,12 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	STSIntegrator::initialize( app );
 	initializeForces();
 
-	//openMM
-
 #if defined (HAVE_OPENMM)
 	OpenMM::Platform::loadPluginsFromDirectory(
 		OpenMM::Platform::getDefaultPluginsDirectory()
 	);
-
-	OpenMM::LTMD::Parameters* ltmdParams = new OpenMM::LTMD::Parameters();
-	ltmdParams->blockDelta = blockDelta * Constant::ANGSTROM_NM;
-	ltmdParams->sDelta = sDelta * Constant::ANGSTROM_NM;
-	ltmdParams->bdof = bdof;
-	ltmdParams->res_per_block = resPerBlock;
-	ltmdParams->modes = modes;
-	ltmdParams->rediagFreq = rediagFreq;
-	ltmdParams->minLimit = minLimit * Constant::KCAL_KJ;
 	
-	if( mProtomolDiagonalize ){
-		ltmdParams->ShouldProtoMolDiagonalize = true;
-		std::cout << "Using ProtoMol to Diagonalize" << std::endl;
-	}else{
-		ltmdParams->ShouldProtoMolDiagonalize = false;
-		std::cout << "Using OpenMM to Diagonalize" << std::endl;
-	}
-	
-	
-	if(forceRediagOnMinFail)
-	  {
-	    ltmdParams->ShouldForceRediagOnMinFail = true;
-	    std::cout << "forcing rediag on min fail" << std::endl;
-	  }
-	else
-	  {
-	    ltmdParams->ShouldForceRediagOnMinFail = false;
-	    std::cout << "force rediag false" << std::endl;
-	  }
-	if(blockHessianPlatform == 0)
-	  {
-	    ltmdParams->BlockDiagonalizePlatform = OpenMM::LTMD::Preference::Reference;
-	    std::cout << "block platform reference" << std::endl;
-	  }
-	else if(blockHessianPlatform == 1)
-	  {
-	    ltmdParams->BlockDiagonalizePlatform = OpenMM::LTMD::Preference::OpenCL;
-	    std::cout << "block platform OpenCL" << std::endl;
-	  }
-	else if(blockHessianPlatform == 2)
-	  {
-	    ltmdParams->BlockDiagonalizePlatform = OpenMM::LTMD::Preference::CUDA;
-	  }
-	else if(myIntegratorType == 2) // NML Integrator only
-	  {
-	    report << error << "Block Hessian Platform must be 0 (Reference), 1 (OpenCL), and 2 (CUDA)." << endr;
-	  }
-	    
-	int current_res = app->topology->atoms[0].residue_seq;
-	int res_size = 0;
-	for(int i = 0; i < app->topology->atoms.size(); i++)
-	  {
-	    if(app->topology->atoms[i].residue_seq != current_res)
-	      {
-		ltmdParams->residue_sizes.push_back(res_size);
-		current_res = app->topology->atoms[i].residue_seq;
-		res_size = 0;
-	      }
-	    res_size++;
-	  }
-	ltmdParams->residue_sizes.push_back(res_size);
 	int forceIndex = 0;
-
 
 	//find system size
 	unsigned int sz = app->positions.size();
@@ -183,14 +113,14 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	//remove common motion?
-	if( myCommonMotionRate > 0 ) {
-	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("CenterOfMass", forceIndex++));
-		system->addForce( new OpenMM::CMMotionRemover( myCommonMotionRate ) );
+	if( mCommonMotionRate > 0 ) {
+		mForceList.push_back( OpenMM::LTMD::Force( "CenterOfMass", forceIndex++ ) );
+		system->addForce( new OpenMM::CMMotionRemover( mCommonMotionRate ) );
 	}
 
 	//openMM forces
-	if( HarmonicBondForce ) {
-	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Bond", forceIndex++));
+	if( isUsingHarmonicBondForce ) {
+		mForceList.push_back( OpenMM::LTMD::Force( "Bond", forceIndex++ ) );
 		unsigned int numBonds = app->topology->bonds.size();
 
 		unsigned int numConstBonds = 0;
@@ -204,33 +134,28 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			}
 		}
 
-		bonds = new OpenMM::HarmonicBondForce();
+		OpenMM::HarmonicBondForce *bonds = new OpenMM::HarmonicBondForce();
 		system->addForce( bonds );
 
-		unsigned int bondsIndex = 0;
-
 		for( unsigned int i = 0; i < numBonds; ++i ) {
-			unsigned int a1 = app->topology->bonds[i].atom1; unsigned int a2 = app->topology->bonds[i].atom2;
+			unsigned int a1 = app->topology->bonds[i].atom1, a2 = app->topology->bonds[i].atom2;
+			
 			Real r_0 = app->topology->bonds[i].restLength  * Constant::ANGSTROM_NM;
 			Real k = app->topology->bonds[i].springConstant
 					 * Constant::KCAL_KJ * Constant::INV_ANGSTROM_NM * Constant::INV_ANGSTROM_NM * 2.0; //times 2 as Amber is 1/2 k(b-b_0)^2
 			if( numConstraints ) {
-				if( ( app->topology->atoms[ app->topology->bonds[i].atom1 ].name[0] != 'H' ) &&
-						( app->topology->atoms[ app->topology->bonds[i].atom2 ].name[0] != 'H' ) ) {
-
-					//bonds->setBondParameters(bondsIndex++, a1, a2, r_0, k);
-				}
+				
 			} else {
 				bonds->addBond( a1, a2, r_0, k );
 			}
 		}
 	}
 
-	if( HarmonicAngleForce ) {
-	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Angle", forceIndex++));
+	if( isUsingHarmonicAngleForce ) {
+		mForceList.push_back( OpenMM::LTMD::Force( "Angle", forceIndex++ ) );
 		unsigned int numAngles = app->topology->angles.size();
 
-		angles = new OpenMM::HarmonicAngleForce();
+		OpenMM::HarmonicAngleForce *angles = new OpenMM::HarmonicAngleForce();
 		system->addForce( angles );
 		for( unsigned int i = 0; i < numAngles; i++ ) {
 			unsigned int a1 = app->topology->angles[i].atom1;
@@ -238,22 +163,16 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			unsigned int a3 = app->topology->angles[i].atom3;
 			Real theta0 = acos( cos( app->topology->angles[i].restAngle ) );
 			Real k_t = app->topology->angles[i].forceConstant * Constant::KCAL_KJ * 2.0; //times 2 as Amber is 1/2 k(a-a_0)^2
-			//report << hint << "rest angle " << theta0 << " k " << k_t << " ang size " << numAngles << endr;
 
 			angles->addAngle( a1, a2, a3, theta0, k_t );
 		}
 	}
 
-	if( PeriodicTorsion ) {
-	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Dihedral", forceIndex++));
+	if( isUsingPeriodicTorsionForce ) {
+		mForceList.push_back( OpenMM::LTMD::Force( "Dihedral", forceIndex++ ) );
 		unsigned int numPTor = app->topology->dihedrals.size();
-		unsigned int totalNumPTor = 0;
-
-		//currently openMM cannot do mutilicity > 1
-		//for (unsigned int i = 0; i < numPTor; i++)
-		//  totalNumPTor += app->topology->dihedrals[i].multiplicity;
-
-		PTorsion = new OpenMM::PeriodicTorsionForce();//totalNumPTor);
+		
+		OpenMM::PeriodicTorsionForce *PTorsion = new OpenMM::PeriodicTorsionForce();
 		system->addForce( PTorsion );
 		for( unsigned int i = 0; i < numPTor; i++ ) {
 			unsigned int a1 = app->topology->dihedrals[i].atom1;
@@ -261,26 +180,21 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			unsigned int a3 = app->topology->dihedrals[i].atom3;
 			unsigned int a4 = app->topology->dihedrals[i].atom4;
 
-			//unsigned int multiplicity = app->topology->dihedrals[i].multiplicity;
-
-			for( unsigned int j = 0; j < 1/*multiplicity*/; j++ ) {
-
+			for( unsigned int j = 0; j < 1; j++ ) {
 				unsigned int mult = app->topology->dihedrals[i].periodicity[j];
 				Real phiA = app->topology->dihedrals[i].phaseShift[j];
 				Real cpA = app->topology->dihedrals[i].forceConstant[j] * Constant::KCAL_KJ;
-
-				//idef.iparams[type].pdihs.mult, idef.iparams[type].pdihs.phiA*M_PI/180.0, idef.iparams[type].pdihs.cpA
-
+				
 				PTorsion->addTorsion( a1, a2, a3, a4, mult, phiA, cpA );
 			}
 		}
 	}
 
-	if( RBDihedralForce ) {
-	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Improper", forceIndex++));
+	if( isUsingRBDihedralForce ) {
+		mForceList.push_back( OpenMM::LTMD::Force( "Improper", forceIndex++ ) );
 		unsigned int numRBDih = app->topology->rb_dihedrals.size();
 
-		RBDihedral = new OpenMM::RBTorsionForce();
+		OpenMM::RBTorsionForce *RBDihedral = new OpenMM::RBTorsionForce();
 
 		system->addForce( RBDihedral );
 		for( unsigned int i = 0; i < numRBDih; i++ ) {
@@ -300,27 +214,23 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		}
 	}
 
-	if( NonbondedForce ) {
-	  ltmdParams->forces.push_back(OpenMM::LTMD::Force("Nonbonded", forceIndex++));
+	if( isUsingNonBondedForce ) {
+		mForceList.push_back( OpenMM::LTMD::Force( "Nonbonded", forceIndex++ ) );
 
 		//get 1-4 interaction size
 		unsigned int exclSz = app->topology->exclusions.getTable().size();
 
-		nonbonded = new OpenMM::NonbondedForce();//0);
+		OpenMM::NonbondedForce *nonbonded = new OpenMM::NonbondedForce();//0);
 		system->addForce( nonbonded );
 
 		//normal interactions
 		for( unsigned int i = 0; i < sz; i++ ) {
 			int type1 = app->topology->atoms[i].type;
 			Real sigma = app->topology->atomTypes[type1].sigma;
-			//topo->atomTypes[i].sigma14 = par.nonbondeds[bi].sigma14;
 			Real epsilon = app->topology->atomTypes[type1].epsilon;
-			//topo->atomTypes[i].epsilon14 = par.nonbondeds[bi].epsilon14;
 			Real charge = app->topology->atoms[i].scaledCharge / Constant::SQRTCOULOMBCONSTANT;
-			Real mass = app->topology->atoms[i].scaledMass;
 
 			nonbonded->addParticle( charge, sigma * Constant::ANGSTROM_NM , epsilon * Constant::KCAL_KJ );
-
 		}
 
 		//1-4 interactions, note fudgeQQ set to 0.6059 and fudgeLJ set to 0.33333.
@@ -355,23 +265,21 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	// Add GBSA if needed.
-	if( app->topology->implicitSolvent  == GBSA && GBForce ) {
-		gbsa = new OpenMM::GBSAOBCForce();
+	if( app->topology->implicitSolvent  == GBSA && isUsingGBForce ) {
+		OpenMM::GBSAOBCForce *gbsa = new OpenMM::GBSAOBCForce();
 		system->addForce( gbsa );
 
-		gbsa->setSoluteDielectric( myGBSAEpsilon ); //ir->epsilon_r);
-		gbsa->setSolventDielectric( myGBSASolvent ); //ir->gb_epsilon_solvent);
+		gbsa->setSoluteDielectric( mGBSAEpsilon );
+		gbsa->setSolventDielectric( mGBSASolvent );
 
 		vector<Real> scaleFactors;
 		getObcScaleFactors( scaleFactors );
 
 		for( unsigned int i = 0; i < sz; ++i ) {
 			Real charge = app->topology->atoms[i].scaledCharge / Constant::SQRTCOULOMBCONSTANT;
-			unsigned int type = app->topology->atoms[i].type;
 			Real radius = app->topology->atoms[i].myGBSA_T->vanDerWaalRadius * Constant::ANGSTROM_NM; //0.1 factor in openMM, file in A
 
 			gbsa->addParticle( charge, radius, scaleFactors[i] );
-
 		}
 	}
 
@@ -384,38 +292,36 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 		system->addConstraint( atom1, atom2, restLength );
 	}
+	
+	mLTMDParameters.forces = mForceList;
 
-	//#ifndef HAVE_OPENMM_OLD
-	//integrator = new OpenMM::LangevinIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS );
-	//#else
-	if( myIntegratorType == 1 ) {
-		integrator = new OpenMM::LangevinIntegrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS );
-	} else {
-	  integrator = new OpenMM::LTMD::Integrator( myLangevinTemperature, myGamma, getTimestep() * Constant::FS_PS, *ltmdParams);
+	if( isLTMD ){
+		integrator = new OpenMM::LTMD::Integrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS, mLTMDParameters );
+	}else{
+		integrator = new OpenMM::LangevinIntegrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS );
 	}
-	//#endif
-	cout << "creating context" << endl;
-	string platform_s;
-	if(platform == 0)
-	  {
-	    platform_s = "Reference";
-	  }
-	else if(platform == 1)
-	  {
-	    platform_s = "OpenCL";
-	  }
-	else if(platform == 2)
-	  {
-	    platform_s = "Cuda";
-	  }
-	else
-	  {
-	    report << error << "Platform must be one of: 0 (Reference), 1 (OpenCL), or 2 (CUDA)." << endr;
-	  }
-	std::cout << "using " << platform_s << " platform for integrator" << std::endl;
-	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName(platform_s) );
-	cout << "created context" << endl;
+	
+	std::string sPlatform = "Reference";
+	
+	switch( mPlatform ){
+		case 0:
+			sPlatform = "Reference";
+			break;
+		case 1:
+			sPlatform = "OpenCL";
+			break;
+		case 2:
+			sPlatform = "CUDA";
+			break;
+	}
+	
+	std::cout << "OpenMM Propagation Platform: " << sPlatform << std::endl;
+	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName( sPlatform ) );
 
+	std::vector<OpenMM::Vec3> positions, velocities;
+	positions.reserve( sz );
+	velocities.reserve( sz );
+	
 	OpenMM::Vec3 openMMvecp, openMMvecv;
 	for( unsigned int i = 0; i < sz; ++i ) {
 		for( int j = 0; j < 3; j++ ) {
@@ -423,44 +329,33 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			openMMvecv[j] = app->velocities[i].c[j] * Constant::ANGSTROM_NM
 							* Constant::INV_TIMEFACTOR * Constant::PS_FS;
 		}
-		openMMpositions.push_back( openMMvecp );
-		openMMvelocities.push_back( openMMvecv );
+		positions.push_back( openMMvecp );
+		velocities.push_back( openMMvecv );
 	}
 
-	context->setPositions( openMMpositions );
-	context->setVelocities( openMMvelocities );
+	context->setPositions( positions );
+	context->setVelocities( velocities );
 
 	//print platform
 	report << plain << "OpenMM platform is: '" << context->getPlatform().getName()
-		   << "' Integrator " << myIntegratorType << "." << endr;
+		   << "' Integrator " << (int)isLTMD << "." << endr;
 	const OpenMM::State state = context->getState( OpenMM::State::Positions |
 								OpenMM::State::Velocities |
 								OpenMM::State::Forces |
 								OpenMM::State::Energy );
 
-	if(minSteps > 0)
-	  {
-	    OpenMM::LocalEnergyMinimizer lem;
-	    lem.minimize(*context, tolerance, minSteps);
-	  }
-
+	if( mMinSteps > 0 ) {
+		OpenMM::LocalEnergyMinimizer lem;
+		lem.minimize( *context, mTolerance, mMinSteps );
+	}
 #else
-
-	//print platform
 	report << plain << "OpenMM platform is not available." << endr;
-
 #endif
-
 }
 
 void OpenMMIntegrator::run( int numTimesteps ) {
-
 	preStepModify();
-
 #if defined (HAVE_OPENMM)
-	unsigned int sz = app->positions.size();
-
-	// do integration
 	integrator->step( numTimesteps );
 
 	// Retrive data
@@ -468,26 +363,23 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 								OpenMM::State::Velocities |
 								OpenMM::State::Forces |
 								OpenMM::State::Energy );
-	openMMpositions = state.getPositions();
-	openMMvelocities = state.getVelocities();
-	openMMforces = state.getForces();
-	report.precision( 5 );
-	//report << plain << "x1 " << openMMpositions[0][0] << ",y1 " << openMMpositions[0][1] << ",z1 " << openMMpositions[0][2] << endr;
-	//report << plain << "vx1 " << openMMvelocities[0][0] << ",vy1 " << openMMvelocities[0][1] << ",vz1 " << openMMvelocities[0][2] << endr;
-
+								
+	const std::vector<OpenMM::Vec3> positions( state.getPositions() );
+	const std::vector<OpenMM::Vec3> velocities( state.getVelocities() );
+	const std::vector<OpenMM::Vec3> forces( state.getForces() );
+	
+	const unsigned int sz = app->positions.size();
 	for( unsigned int i = 0; i < sz; ++i ) {
 		for( int j = 0; j < 3; j++ ) {
-			app->positions[i].c[j] = openMMpositions[i][j] * Constant::NM_ANGSTROM; //nm to A
-			app->velocities[i].c[j] = openMMvelocities[i][j] * Constant::NM_ANGSTROM *
+			app->positions[i].c[j] = positions[i][j] * Constant::NM_ANGSTROM; //nm to A
+			app->velocities[i].c[j] = velocities[i][j] * Constant::NM_ANGSTROM *
 									  Constant::TIMEFACTOR * Constant::FS_PS; //nm/ps to A/fs?
-			( *myForces )[i].c[j] = openMMforces[i][j] * Constant::INV_NM_ANGSTROM * Constant::KJ_KCAL; //KJ/nm to Kcal/A
+			( *myForces )[i].c[j] = forces[i][j] * Constant::INV_NM_ANGSTROM * Constant::KJ_KCAL; //KJ/nm to Kcal/A
 		}
 	}
 
 	app->energies.clear();
-	//calculateForces();
-
-	//std::cout << "Forces " << (*myForces)[0].c[0] << std::endl;
+	
 	//clear old energies
 	app->energies[ScalarStructure::COULOMB] =
 		app->energies[ScalarStructure::LENNARDJONES] =
@@ -499,110 +391,51 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 	//save total potential energy
 	app->energies[ScalarStructure::OTHER] = state.getPotentialEnergy() * Constant::KJ_KCAL;
 
-	//std::cout << "Temp " << temperature(app->topology, &app->velocities) << std::endl;
-
-	//state.getKineticEnergy();
-
 	//fix time as no forces calculated
 	app->topology->time += numTimesteps * getTimestep();
 #endif
-
 	postStepModify();
 }
 
-void OpenMMIntegrator::calcForces() {
-#if defined (HAVE_OPENMM)
-	const OpenMM::State state = context->getState( OpenMM::State::Forces );
-#endif
-}
-
-void OpenMMIntegrator::getParameters( vector<Parameter> &parameters )
-const {
+void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	STSIntegrator::getParameters( parameters );
-	parameters.push_back( Parameter( "temperature", Value( myLangevinTemperature, ConstraintValueType::NotNegative() ) ) );
-	parameters.push_back( Parameter( "gamma", Value( myGamma, ConstraintValueType::NotNegative() ) ) ); // * (1000 * Constant::INV_TIMEFACTOR)
-	parameters.push_back( Parameter( "seed", Value( mySeed, ConstraintValueType::NotNegative() ), 1234 ) );
-	//OpenMM forces
-	parameters.push_back( Parameter( "HarmonicBondForce", Value( HarmonicBondForce, ConstraintValueType::NoConstraints() ), false ) );
-	parameters.push_back( Parameter( "HarmonicAngleForce", Value( HarmonicAngleForce, ConstraintValueType::NoConstraints() ), false ) );
-	parameters.push_back( Parameter( "RBDihedralForce", Value( RBDihedralForce, ConstraintValueType::NoConstraints() ), false ) );
-	parameters.push_back( Parameter( "PeriodicTorsion", Value( PeriodicTorsion, ConstraintValueType::NoConstraints() ), false ) );
-	parameters.push_back( Parameter( "NonbondedForce", Value( NonbondedForce, ConstraintValueType::NoConstraints() ), false ) );
-	parameters.push_back( Parameter( "IntegratorType", Value( myIntegratorType, ConstraintValueType::NotNegative() ), 1 ) );
+	parameters.push_back( Parameter( "temperature", Value( mTemperature, ConstraintValueType::NotNegative() ) ) );
+	parameters.push_back( Parameter( "gamma", Value( mGamma, ConstraintValueType::NotNegative() ) ) );
+	parameters.push_back( Parameter( "seed", Value( mSeed, ConstraintValueType::NotNegative() ), 1234 ) );
+	
+	//Force Switches
+	parameters.push_back( Parameter( "HarmonicBondForce", Value( isUsingHarmonicBondForce, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "HarmonicAngleForce", Value( isUsingHarmonicAngleForce, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "RBDihedralForce", Value( isUsingRBDihedralForce, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "PeriodicTorsion", Value( isUsingPeriodicTorsionForce, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "NonbondedForce", Value( isUsingNonBondedForce, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "GBForce", Value( isUsingGBForce, ConstraintValueType::NoConstraints() ), false ) );
+	
 	//Implicit solvent parameters
-	parameters.push_back( Parameter( "GBSAEpsilon", Value( myGBSAEpsilon, ConstraintValueType::NotNegative() ), 1.0 ) );
-	parameters.push_back( Parameter( "GBSASolvent", Value( myGBSASolvent, ConstraintValueType::NotNegative() ), 78.3 ) );
-	parameters.push_back( Parameter( "commonmotion", Value( myCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ) );
-	parameters.push_back( Parameter( "GBForce", Value( GBForce, ConstraintValueType::NoConstraints() ), true ) );
-	parameters.push_back( Parameter( "resPerBlock", Value( resPerBlock, ConstraintValueType::NotNegative() ), 1 ) );
-	parameters.push_back( Parameter( "bdof", Value( bdof, ConstraintValueType::NotNegative() ), 12 ) );
-	parameters.push_back( Parameter( "blockEpsilon", Value( blockDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
-	parameters.push_back( Parameter( "modes", Value( modes, ConstraintValueType::NotNegative() ), 20) );
-	parameters.push_back( Parameter( "rediagFreq", Value( rediagFreq, ConstraintValueType::NotNegative() ), 1000) );
-	parameters.push_back( Parameter( "minLimit", Value (minLimit, ConstraintValueType::NotNegative() ), 0.1) );
-	parameters.push_back( Parameter( "minSteps", Value( minSteps, ConstraintValueType::NotNegative() ), 0) );
-	parameters.push_back( Parameter( "tolerance", Value( tolerance, ConstraintValueType::NotNegative() ), 1.0) );
-	parameters.push_back( Parameter( "blockHessianPlatform", Value( blockHessianPlatform, ConstraintValueType::NoConstraints() ), 0) );
-	parameters.push_back( Parameter( "platform", Value( platform, ConstraintValueType::NoConstraints() ), 2) ); // make default CUDA
-	parameters.push_back( Parameter( "forceRediagOnMinFail", Value( forceRediagOnMinFail, ConstraintValueType::NoConstraints() ), false));
-	parameters.push_back( Parameter( "sEpsilon", Value( sDelta, ConstraintValueType::NotNegative() ), 1e-3) );
-	parameters.push_back( Parameter( "ProtomolDiag", Value( mProtomolDiagonalize, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "commonmotion", Value( mCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ) );
+	parameters.push_back( Parameter( "GBSAEpsilon", Value( mGBSAEpsilon, ConstraintValueType::NotNegative() ), 1.0 ) );
+	parameters.push_back( Parameter( "GBSASolvent", Value( mGBSASolvent, ConstraintValueType::NotNegative() ), 78.3 ) );
+		
+	// OpenMM Parameters
+	parameters.push_back( Parameter( "platform", Value( mPlatform, ConstraintValueType::NoConstraints() ), 2 ) );
+	parameters.push_back( Parameter( "minSteps", Value( mMinSteps, ConstraintValueType::NotNegative() ), 0 ) );
+	parameters.push_back( Parameter( "tolerance", Value( mTolerance, ConstraintValueType::NotNegative() ), 1.0 ) );
 }
 
-STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values,
-		ForceGroup *fg ) const {
-	OpenMMIntegrator *myIntegP = new OpenMMIntegrator( values[0], fg );
-
-	std::vector<Value> myValues( values.begin() + 1, values.end() );
-
-	myIntegP->setupValues( myValues );
-
-	return ( STSIntegrator * )myIntegP;
-
+STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup *fg ) const {
+	return ( STSIntegrator * ) new OpenMMIntegrator( values, fg );
 }
 
-void OpenMMIntegrator::setupValues( const std::vector<Value> &values ) {
-	//these must be in the same order as getParameters()
-	myLangevinTemperature = values[0];
-	myGamma = ( Real )values[1]; // / (1000.0 * Constant::INV_TIMEFACTOR);
-	// gamma is in Kcal/ps, myGamma is in Kcal/(fs*INV_TIMEFACTOR)
-	mySeed = values[2];
-	HarmonicBondForce = values[3];
-	HarmonicAngleForce = values[4];
-	RBDihedralForce = values[5];
-	PeriodicTorsion = values[6];
-	NonbondedForce = values[7];
-	myIntegratorType = values[8];
-	myGBSAEpsilon = values[9];
-	myGBSASolvent = values[10];
-	myCommonMotionRate = values[11];
-	GBForce = values[12];
-	resPerBlock = values[13];
-	bdof = values[14];
-	blockDelta = values[15];
-	modes = values[16];
-	rediagFreq = values[17];
-	minLimit = values[18];
-	minSteps = values[19];
-	tolerance = values[20];
-	blockHessianPlatform = values[21];
-	platform = values[22];
-	forceRediagOnMinFail = values[23];
-	sDelta = values[24];
-	mProtomolDiagonalize = values[25];
+unsigned int OpenMMIntegrator::getParameterSize() const {
+	return 16;
 }
 
-/**
- * Figure out OBC scale factors based on the atomic masses.
- */
-
-void OpenMMIntegrator::getObcScaleFactors( vector<Real>& scaleFactors ) {
-
+// Figure out OBC scale factors based on the atomic masses.
+void OpenMMIntegrator::getObcScaleFactors( std::vector<Real>& scaleFactors ) {
 	unsigned int numAtoms = app->positions.size();
 
 	scaleFactors.resize( numAtoms );
 	for( unsigned int atomI = 0; atomI < numAtoms; atomI++ ) {
-
 		Real scaleFactor = 0.8;
 		Real mass        = app->topology->atoms[atomI].scaledMass;
 
