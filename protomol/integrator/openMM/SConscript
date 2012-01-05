@@ -9,6 +9,4 @@ for item in env.get('CPPDEFINES'):
 	if 'HAVE_OPENMM_LTMD' in item:
 		src.append( "NormalModeOpenMM.cpp" )
 
-print src
-
 Return('src')
