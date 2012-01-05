@@ -26,7 +26,7 @@ namespace ProtoMol {
     HessianInt(Real timestep, std::string evec_s, std::string eval_s,
                std::string hess_s, bool sorta, int fm, bool tef, 
                bool fdi, Real evt, int bvc, int rpb, Real bcd, bool masswt,
-               bool bnm, bool aparm, bool geo, bool num,
+               bool bnm, bool aparm, bool geo, bool num, Real eps,
                ForceGroup *overloadedForces);
     ~HessianInt();
 
@@ -36,6 +36,7 @@ namespace ProtoMol {
   private:
     void outputDiagHess(int numModes);
     Real calcQ();
+    void numericalHessian();
 
   protected:
     void doKickdoDrift();
@@ -84,6 +85,7 @@ namespace ProtoMol {
     Real eigenValueThresh, blockCutoffDistance;
     int blockVectorCols, residuesPerBlock, residues_total_eigs;
     Real max_eigenvalue;
+    Real epsilon;
 
   };
 }

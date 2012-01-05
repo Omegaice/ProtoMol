@@ -874,4 +874,29 @@ void Hessian::clear() {
     for (unsigned int i = 0; i < sz * sz; i++) hessM[i] = 0.0;
 
 }
+    //set Hessian column
+    bool Hessian::setHessianColumn( const Vector3DBlock &hescol, const unsigned int columnNumber, 
+                                    const GenericTopology *myTopo, const bool massWeight ){
+        //get size
+        sz = 3 * hescol.size();
+
+        //loop over column elements
+        if (hessM != 0 && columnNumber < sz){Hessian
+            for (unsigned int i = 0; i < sz; i++){
+                
+                Real factor = 1.0;
+                
+                if(massWeight) factor /= sqrt(myTopo->atoms[i/3].scaledMass);
+                
+                hessM[columnNumber * sz + i] += hescol[i/3][i%3] * factor;
+            }
+            
+            return true;
+            
+        }else{
+            return false;
+        }
+        
+    }
+    
 }

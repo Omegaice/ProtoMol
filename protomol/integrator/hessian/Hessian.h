@@ -55,6 +55,9 @@ namespace ProtoMol {
 
     void evaluateBornRadii(const Vector3DBlock *myPositions, GenericTopology *myTopo);
 
+    bool setHessianColumn( const Vector3DBlock &hescol, const unsigned int columnNumber, 
+                            const GenericTopology *myTopo, const bool massWeight );
+
     //GB specific code
     void evaluateGBBornBurialTerm(const Vector3DBlock *myPositions, GenericTopology *myTopo);
     void evaluateGBBornRadii(const Vector3DBlock *myPositions, GenericTopology *myTopo);

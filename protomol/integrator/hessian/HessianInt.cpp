@@ -36,7 +36,7 @@ HessianInt::HessianInt() :
 HessianInt::HessianInt(Real timestep, string evec_s, string eval_s,
                        string hess_s, bool sorta, int fm, bool tef,
                        bool fdi, Real evt, int bvc, int rpb, Real bct,
-                       bool masswt, bool bnm, bool aparm, bool geo, bool num,
+                       bool masswt, bool bnm, bool aparm, bool geo, bool num, Real eps,
                        ForceGroup *overloadedForces) :
   STSIntegrator(timestep, overloadedForces), evecfile(evec_s),
   evalfile(eval_s), hessfile(hess_s), sortOnAbs(sorta), numberOfModes(fm),
@@ -44,7 +44,7 @@ HessianInt::HessianInt(Real timestep, string evec_s, string eval_s,
   massWeight(masswt), noseMass(bnm), autoParmeters(aparm),
   geometricfdof(geo), numerichessians(num),
   eigenValueThresh(evt), blockCutoffDistance(bct),
-  blockVectorCols(bvc), residuesPerBlock(rpb) {
+  blockVectorCols(bvc), residuesPerBlock(rpb), epsilon(eps) {
   eigVec = 0;
   //
   hsn.findForces(overloadedForces);         //find forces and parameters
@@ -188,7 +188,11 @@ void HessianInt::run(int numTimesteps) {
         //true for mass re-weight;
         if(fullDiag){
           blockDiag.hessianTime.start();	//time Hessian
-          hsn.evaluate(&app->positions, app->topology, massWeight);
+            if(numerichessians){
+                numericalHessian();
+            }else{
+                hsn.evaluate(&app->positions, app->topology, massWeight);
+            }
           blockDiag.hessianTime.stop();	//stop timer
           totStep++;
         }
@@ -199,7 +203,11 @@ void HessianInt::run(int numTimesteps) {
       //true for mass re-weight;
       if(fullDiag){
         blockDiag.hessianTime.start();	//time Hessian
-        hsn.evaluate(&app->positions, app->topology, massWeight);
+          if(numerichessians){
+              numericalHessian();
+          }else{
+              hsn.evaluate(&app->positions, app->topology, massWeight);
+          }
         blockDiag.hessianTime.stop();	//stop timer
         totStep++;
       }
@@ -213,7 +221,11 @@ void HessianInt::run(int numTimesteps) {
     //true for mass re-weight;
     if(fullDiag){ //Full diagonalize
       blockDiag.hessianTime.start();	//time Hessian
-      hsn.evaluate(&app->positions, app->topology, massWeight);
+        if(numerichessians){
+            numericalHessian();
+        }else{
+            hsn.evaluate(&app->positions, app->topology, massWeight);
+        }
       blockDiag.hessianTime.stop();	//stop timer
     }else{        //coarse diagonalize
       max_eigenvalue = blockDiag.findEigenvectors(&app->positions, app->topology,
@@ -387,6 +399,53 @@ void HessianInt::doKickdoDrift() {
   }
 }
 
+void HessianInt::numericalHessian() {
+    
+    //set epsilon now a parameter
+    //const Real epsilon = 1e-6;
+    
+    //get current position forces
+    calculateForces();
+    
+    Vector3DBlock orgForce = *myForces;
+    
+    report << hint << "[HessianInt::numericalHessian] Numerical Hessian calculation." << endr;
+    
+    //find each column
+    for(unsigned int i=0; i<sz; i++){
+        
+        //perturb
+        (app->positions)[i/3][i%3] += epsilon;
+        
+        calculateForces();
+        
+        //Vector3DBlock firstForce = *myForces;
+        
+        //reset positions
+        (app->positions)[i/3][i%3] -= epsilon;
+
+        //calculateForces();
+
+        //reset positions
+        //(app->positions)[i/3][i%3] += epsilon;
+
+        Real divconst = 1.0 / epsilon;
+        
+        if(massWeight){
+            divconst /= sqrt(app->topology->atoms[i/3].scaledMass);
+        }
+
+        //calculate finite difference
+        Vector3DBlock col = (orgForce - *myForces) * divconst;
+
+        //set column
+        bool colset = hsn.setHessianColumn( col, i, app->topology, massWeight );
+        
+        if(!colset) std::cout << "Column " << i << " not set!" << std::endl;
+    }
+
+}
+
 void HessianInt::getParameters(vector<Parameter> &parameters) const {
   STSIntegrator::getParameters(parameters);
   parameters.push_back
@@ -453,6 +512,10 @@ void HessianInt::getParameters(vector<Parameter> &parameters) const {
     (Parameter("numericHessians",
                Value(numerichessians, ConstraintValueType::NoConstraints()),
                false, Text("Calculate Hessians numerically.")));
+  parameters.push_back
+    (Parameter("Epsilon",
+               Value(epsilon, ConstraintValueType::NotNegative()),
+               1e-6, Text("Epsilon for numerical Hessian.")));
 }
 
 STSIntegrator *HessianInt::doMake(const vector<Value> &values,
@@ -460,6 +523,6 @@ STSIntegrator *HessianInt::doMake(const vector<Value> &values,
   return new HessianInt(values[0], values[1], values[2], values[3], values[4],
                         values[5], values[6], values[7], values[8], values[9],
                         values[10], values[11], values[12], values[13], 
-                        values[14], values[15], values[16], fg);
+                        values[14], values[15], values[16], values[17], fg);
 }
 
