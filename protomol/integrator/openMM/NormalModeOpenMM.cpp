@@ -52,6 +52,7 @@ namespace ProtoMol {
 		//Set number of eigenvectors in use
 		app->eigenInfo.myNumUsedEigenvectors = _rfM;
 
+#ifdef HAVE_OPENMM_LTMD
 		// Setup LTMD Parameters
 		mLTMDParameters.blockDelta = mBlockDelta * Constant::ANGSTROM_NM;
 		mLTMDParameters.sDelta = mSDelta * Constant::ANGSTROM_NM;
@@ -105,14 +106,16 @@ namespace ProtoMol {
 			res_size++;
 		}
 		mLTMDParameters.residue_sizes.push_back( res_size );
-	
+#endif
 		//initialize base
 		OpenMMIntegrator::initialize( app );
 
 		initializeForces();
 	}
 
+#ifdef HAVE_OPENMM
 	typedef std::vector<OpenMM::Vec3> EigenVector;
+#endif
 
 	void NormalModeOpenMM::run( int numTimesteps ) {
 		if( numTimesteps < 1 ) {
@@ -124,6 +127,7 @@ namespace ProtoMol {
 			report << error << "No Eigenvectors for NormalMode integrator." << endr;
 		}
 
+#ifdef HAVE_OPENMM_LTMD
 		if( mProtomolDiagonalize && app->eigenInfo.myEigVecChanged && myPreviousIntegrator != NULL ) {
 			OpenMM::LTMD::Integrator *integ = dynamic_cast<OpenMM::LTMD::Integrator *>( integrator );
 			if( integ ) {
@@ -145,6 +149,7 @@ namespace ProtoMol {
 
 			app->eigenInfo.myEigVecChanged = false;
 		}
+#endif
 
 		OpenMMIntegrator::run( numTimesteps );
 	}

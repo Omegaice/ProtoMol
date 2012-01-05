@@ -32,7 +32,7 @@ namespace ProtoMol {
 		public:
 			static const std::string keyword;
 		protected:
-#if defined (HAVE_OPENMM)
+#ifdef HAVE_OPENMM
 			OpenMM::System *system;
 			OpenMM::Integrator *integrator;
 			OpenMM::Context *context;
@@ -59,8 +59,10 @@ namespace ProtoMol {
 			
 			// LTMD Data
 			bool isLTMD;
+#ifdef HAVE_OPENMM_LTMD
 			OpenMM::LTMD::Parameters mLTMDParameters;
 			std::vector<OpenMM::LTMD::Force> mForceList;
+#endif
 	};
 }
 
