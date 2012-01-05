@@ -10,11 +10,7 @@
 #include <protomol/base/Zap.h>
 #include <protomol/topology/LennardJonesParameters.h>
 
-#ifdef HAVE_OPENMM
-#include <LTMD/Parameters.h>
 #include <openmm/LocalEnergyMinimizer.h>
-#endif
-
 
 #include <vector>
 #include <algorithm>
@@ -26,11 +22,9 @@ using namespace ProtoMol;
 const string OpenMMIntegrator::keyword( "OpenMM" );
 
 OpenMMIntegrator::OpenMMIntegrator() : STSIntegrator() {
-#if defined (HAVE_OPENMM)
 	system = 0;
 	integrator = 0;
 	context = 0;
-#endif
 }
 
 OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup *overloadedForces ) 
@@ -55,19 +49,15 @@ OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup
 	mMinSteps = params[14];
 	mTolerance = params[15];
 	
-#if defined (HAVE_OPENMM)
 	system = 0;
 	integrator = 0;
 	context = 0;
-#endif
 }
 
 OpenMMIntegrator::~OpenMMIntegrator() {
-#if defined (HAVE_OPENMM)
 	zap( context );
 	zap( integrator );
 	zap( system );
-#endif
 }
 
 struct NBForce {
@@ -90,7 +80,6 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	STSIntegrator::initialize( app );
 	initializeForces();
 
-#if defined (HAVE_OPENMM)
 	OpenMM::Platform::loadPluginsFromDirectory(
 		OpenMM::Platform::getDefaultPluginsDirectory()
 	);
@@ -114,13 +103,13 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 	//remove common motion?
 	if( mCommonMotionRate > 0 ) {
-		mForceList.push_back( OpenMM::LTMD::Force( "CenterOfMass", forceIndex++ ) );
+		mForceList.push_back( "CenterOfMass" );
 		system->addForce( new OpenMM::CMMotionRemover( mCommonMotionRate ) );
 	}
 
 	//openMM forces
 	if( isUsingHarmonicBondForce ) {
-		mForceList.push_back( OpenMM::LTMD::Force( "Bond", forceIndex++ ) );
+		mForceList.push_back( "Bond" );
 		unsigned int numBonds = app->topology->bonds.size();
 
 		unsigned int numConstBonds = 0;
@@ -152,7 +141,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( isUsingHarmonicAngleForce ) {
-		mForceList.push_back( OpenMM::LTMD::Force( "Angle", forceIndex++ ) );
+		mForceList.push_back( "Angle" );
 		unsigned int numAngles = app->topology->angles.size();
 
 		OpenMM::HarmonicAngleForce *angles = new OpenMM::HarmonicAngleForce();
@@ -169,7 +158,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( isUsingPeriodicTorsionForce ) {
-		mForceList.push_back( OpenMM::LTMD::Force( "Dihedral", forceIndex++ ) );
+		mForceList.push_back( "Dihedral" );
 		unsigned int numPTor = app->topology->dihedrals.size();
 		
 		OpenMM::PeriodicTorsionForce *PTorsion = new OpenMM::PeriodicTorsionForce();
@@ -191,7 +180,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( isUsingRBDihedralForce ) {
-		mForceList.push_back( OpenMM::LTMD::Force( "Improper", forceIndex++ ) );
+		mForceList.push_back( "Improper" );
 		unsigned int numRBDih = app->topology->rb_dihedrals.size();
 
 		OpenMM::RBTorsionForce *RBDihedral = new OpenMM::RBTorsionForce();
@@ -215,7 +204,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	if( isUsingNonBondedForce ) {
-		mForceList.push_back( OpenMM::LTMD::Force( "Nonbonded", forceIndex++ ) );
+		mForceList.push_back( "Nonbonded" );
 
 		//get 1-4 interaction size
 		unsigned int exclSz = app->topology->exclusions.getTable().size();
@@ -293,10 +282,14 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		system->addConstraint( atom1, atom2, restLength );
 	}
 	
-	mLTMDParameters.forces = mForceList;
-
 	if( isLTMD ){
+#ifdef HAVE_OPENMM_LTMD
+		for( unsigned int i = 0; i < mForceList.size(); i++ ){
+			mLTMDParameters.forces.push_back( OpenMM::LTMD::Force( mForceList[i], i ) );
+		}
+	
 		integrator = new OpenMM::LTMD::Integrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS, mLTMDParameters );
+#endif
 	}else{
 		integrator = new OpenMM::LangevinIntegrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS );
 	}
@@ -348,14 +341,11 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		OpenMM::LocalEnergyMinimizer lem;
 		lem.minimize( *context, mTolerance, mMinSteps );
 	}
-#else
-	report << plain << "OpenMM platform is not available." << endr;
-#endif
 }
 
 void OpenMMIntegrator::run( int numTimesteps ) {
 	preStepModify();
-#if defined (HAVE_OPENMM)
+	
 	integrator->step( numTimesteps );
 
 	// Retrive data
@@ -393,7 +383,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 
 	//fix time as no forces calculated
 	app->topology->time += numTimesteps * getTimestep();
-#endif
+	
 	postStepModify();
 }
 

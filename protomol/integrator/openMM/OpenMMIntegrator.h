@@ -3,8 +3,9 @@
 
 #include <protomol/integrator/STSIntegrator.h>
 
-#if defined (HAVE_OPENMM)
 #include <OpenMM.h>
+
+#ifdef HAVE_OPENMM_LTMD
 #include <LTMD/Integrator.h>
 #include <LTMD/Parameters.h>
 #endif
@@ -32,14 +33,13 @@ namespace ProtoMol {
 		public:
 			static const std::string keyword;
 		protected:
-#ifdef HAVE_OPENMM
-			OpenMM::System *system;
-			OpenMM::Integrator *integrator;
-			OpenMM::Context *context;
-#endif
 			// OpenMM Parameters
 			int mPlatform, mMinSteps;
 			double mTolerance;
+			
+			OpenMM::System *system;
+			OpenMM::Context *context;
+			OpenMM::Integrator *integrator;
 			
 			// Integrator Parameters
 			int mSeed;
@@ -59,9 +59,10 @@ namespace ProtoMol {
 			
 			// LTMD Data
 			bool isLTMD;
+			std::vector<std::string> mForceList;
+			
 #ifdef HAVE_OPENMM_LTMD
 			OpenMM::LTMD::Parameters mLTMDParameters;
-			std::vector<OpenMM::LTMD::Force> mForceList;
 #endif
 	};
 }
