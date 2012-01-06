@@ -881,7 +881,7 @@ void Hessian::clear() {
         sz = 3 * hescol.size();
 
         //loop over column elements
-        if (hessM != 0 && columnNumber < sz){Hessian
+        if (hessM != 0 && columnNumber < sz){
             for (unsigned int i = 0; i < sz; i++){
                 
                 Real factor = 1.0;
