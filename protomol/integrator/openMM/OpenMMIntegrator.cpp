@@ -288,10 +288,16 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			mLTMDParameters.forces.push_back( OpenMM::LTMD::Force( mForceList[i], i ) );
 		}
 	
-		integrator = new OpenMM::LTMD::Integrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS, mLTMDParameters );
+		OpenMM::LTMD::Integrator *ltmd = new OpenMM::LTMD::Integrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS, mLTMDParameters );
+		ltmd->setRandomNumberSeed( mSeed );
+		
+		integrator = ltmd;
 #endif
 	}else{
-		integrator = new OpenMM::LangevinIntegrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS );
+		OpenMM::LangevinIntegrator *langevin = new OpenMM::LangevinIntegrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS );
+		langevin->setRandomNumberSeed( mSeed );
+		
+		integrator = langevin;
 	}
 	
 	std::string sPlatform = "Reference";
