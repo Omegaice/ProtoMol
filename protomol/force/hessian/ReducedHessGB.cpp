@@ -35,15 +35,12 @@ Matrix3By3 ReducedHessGB::operator()( Real a,
 
    //cout << setprecision(10) <<"HessGBACE : Atom "<<atom1<<", Atom2 "<<atom2<<", bornRadiusDerivative_ij "<<bornRadiusDerivative_ij<<", bornRadiusDerivative_ji "<<bornRadiusDerivative_ji<<endl;
 
-   int type1 = topo->atoms[atom1].type;
-   int type2 = topo->atoms[atom2].type;
-
-   Real radius_i = topo->atomTypes[type1].vdwR;
-   Real radius_j = topo->atomTypes[type2].vdwR;
+   Real radius_i = topo->atoms[atom1].myGBSA_T->vanDerWaalRadius;
+   Real radius_j = topo->atoms[atom2].myGBSA_T->vanDerWaalRadius;
 
    //offset radii ({\tilde{\rho}_{j}})
-   Real offsetRadius_i = topo->atomTypes[type1].vdwR - topo->atoms[atom1].myGBSA_T->offsetRadius;
-   Real offsetRadius_j = topo->atomTypes[type2].vdwR - topo->atoms[atom2].myGBSA_T->offsetRadius;
+   Real offsetRadius_i = radius_i - topo->atoms[atom1].myGBSA_T->offsetRadius;
+   Real offsetRadius_j = radius_j - topo->atoms[atom2].myGBSA_T->offsetRadius;
 
    Real psi_i = topo->atoms[atom1].myGBSA_T->PsiValue;
 
@@ -198,7 +195,7 @@ Matrix3By3 ReducedHessGB::operator()( Real a,
      d2Gjkterm += SecondDerivativeFGB(topo, atom2, k, d2Rjdrij2, bornRadiusDerivative_ji);
 
      dGikterm += FirstDerivativeFGB(topo, atom1, k, bornRadiusDerivative_ij);
-     dGjkterm += FirstDerivativeFGB(topo, atom1, k, bornRadiusDerivative_ji); 
+     dGjkterm += FirstDerivativeFGB(topo, atom2, k, bornRadiusDerivative_ji); 
    }
 
    second_derivative_born += d2Gikterm + d2Gjkterm;
@@ -206,8 +203,7 @@ Matrix3By3 ReducedHessGB::operator()( Real a,
 
    first_derivative_born += dGikterm + dGjkterm;
    first_derivative_born *= ((1/soluteDielec) - (1/solventDielec))*(1/dist);
-
-
+   
    Matrix3By3 I(1, 0 ,0 , 0 , 1, 0, 0 , 0, 1);
    Matrix3By3 vec_rij_ij(rij, rij);
 
