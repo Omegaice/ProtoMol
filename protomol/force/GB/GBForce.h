@@ -93,7 +93,7 @@ namespace ProtoMol {
 
 
       //It would be nice if we can precalculate this terms.
-      Real Lij, Uij, Cij;
+      Real Lij, Uij;
 
      if (offsetRadius_i >=  dist + S_j*offsetRadius_j) {
         Lij = 1;
@@ -101,11 +101,6 @@ namespace ProtoMol {
      }else {
         Lij =(offsetRadius_i > fabs(dist - S_j*offsetRadius_j)) ? offsetRadius_i : fabs(dist - S_j*offsetRadius_j);
         Uij = dist + S_j*offsetRadius_j;
-     }
-
-     if (offsetRadius_i < offsetRadius_j*S_j - dist) {
-       Cij = 2*(1/offsetRadius_i - 1/Lij);
-
      }
 
      Real invLij = 1/Lij;

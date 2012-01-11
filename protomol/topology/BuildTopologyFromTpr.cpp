@@ -755,19 +755,13 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
     for (unsigned j = i + 1; j < sizeAtomTypes; j++) {
       double sigma_i = topo->atomTypes[i].sigma;
       double sigma_j = topo->atomTypes[j].sigma;
-      double sigma14_i = topo->atomTypes[i].sigma14;
-      double sigma14_j = topo->atomTypes[j].sigma14;
 
       double epsilon_i = topo->atomTypes[i].epsilon;
       double epsilon_j = topo->atomTypes[j].epsilon;
-      double epsilon14_i = topo->atomTypes[i].epsilon14;
-      double epsilon14_j = topo->atomTypes[j].epsilon14;
 
-      double r_ij, e_ij, r14_ij, e14_ij;
+      double r_ij, e_ij;
       r_ij = 0.5 * (sigma_i + sigma_j);
       e_ij = sqrt(epsilon_i * epsilon_j);
-      r14_ij = 0.5 * sigma14_i + sigma14_j;
-      e14_ij = sqrt(epsilon14_i * epsilon14_j);
 
       const LennardJonesParameters paramsij = topo->lennardJonesParameters(i,j);
 

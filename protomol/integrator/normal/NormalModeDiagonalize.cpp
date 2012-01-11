@@ -230,7 +230,7 @@ namespace ProtoMol
 						
 					int loops = 1;
 					if(app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) loops = mMaxRediagonalizations; 
-					for( unsigned int iteration = 0; iteration < loops; iteration++ ){
+					for( int iteration = 0; iteration < loops; iteration++ ){
 						//Find Hessians
 						blockDiag.hessianTime.start(); //time Hessian
 						rHsn.clear();
@@ -315,7 +315,7 @@ namespace ProtoMol
 					
 					int loops = 1;
 					if(app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) loops = mMaxRediagonalizations; 
-					for( unsigned int iteration = 0; iteration < loops; iteration++ ){
+					for( int iteration = 0; iteration < loops; iteration++ ){
 						Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
 																	*Q , _3N, _rfM,
 																	blockCutoffDistance, eigenValueThresh, blockVectorCols,
