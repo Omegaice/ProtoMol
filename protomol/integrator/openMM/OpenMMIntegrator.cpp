@@ -80,11 +80,13 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	STSIntegrator::initialize( app );
 	initializeForces();
 
-	OpenMM::Platform::loadPluginsFromDirectory(
-		OpenMM::Platform::getDefaultPluginsDirectory()
-	);
-	
-	int forceIndex = 0;
+	std::string sDirectory;
+	std::stringstream stream( OpenMM::Platform::getDefaultPluginsDirectory() );
+
+	while( getline( stream, sDirectory, ':' ) ){
+		std::cout << "Loading OpenMM plugins from directory: " << sDirectory << std::endl;
+		OpenMM::Platform::loadPluginsFromDirectory( sDirectory );
+	}
 
 	//find system size
 	unsigned int sz = app->positions.size();
