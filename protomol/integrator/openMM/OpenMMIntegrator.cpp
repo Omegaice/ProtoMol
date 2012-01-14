@@ -312,7 +312,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			sPlatform = "OpenCL";
 			break;
 		case 2:
-			sPlatform = "CUDA";
+			sPlatform = "Cuda";
 			break;
 	}
 	
