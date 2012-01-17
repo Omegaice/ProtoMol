@@ -22,17 +22,27 @@ namespace ProtoMol {
                           ExclusionClass excl) const;
 
   private:
+    struct secondDerivativeRawTerms{
+      Real term1;
+      Real term2;
+      
+    };
+    
     Real FirstDerivativeFGB(
                           const GenericTopology *topo,
-                          const int atom1, const int atom2,
-                          const Real bderv_ij) const;
+                          const int atom1) const;
 
+    Real FirstDerivativeFGBSumError(
+                            const GenericTopology *topo,
+                            const int atom1, const int atom2) const;
 
-     Real SecondDerivativeFGB(
+    secondDerivativeRawTerms SecondDerivativeFGB(
                           const GenericTopology *topo,
-                          int atom1, int atom2,
-                          Real d2Ridrij2, Real bderv_ij) const;
-
+                          const int atom1) const;
+    
+    secondDerivativeRawTerms SecondDerivativeFGBSumError(
+                                                         const GenericTopology *topo,
+                                                         const int atom1, const int atom2) const;
 
   };
 

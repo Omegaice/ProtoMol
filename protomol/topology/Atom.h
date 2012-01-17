@@ -86,6 +86,7 @@ namespace ProtoMol {
       doSelfForceTerm = false;
       doneACEPotential = false;
       havePartialGBForceTerms = false;
+      havePartialGBHessianTerms = false;
     }
 
     Real bornRad, burialTerm;
@@ -124,6 +125,11 @@ namespace ProtoMol {
     // force needs to be computed.
     bool havePartialGBForceTerms;
     Real partialGBForceTerms;
+    
+    //the same for the Hessian calculations
+    bool havePartialGBHessianTerms;
+    Real partialGBHessianTerms_term1;
+    Real partialGBHessianTerms_term2;
 
     //flag for setting ACE potential
     bool doneACEPotential;
