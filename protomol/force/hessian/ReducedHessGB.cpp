@@ -169,7 +169,7 @@ Matrix3By3 ReducedHessGB::operator()( Real a,
    Real charge_i = topo->atoms[atom1].scaledCharge;
    Real charge_j = topo->atoms[atom2].scaledCharge;
 
-   Real second_derivative_born = charge_i*charge_j*(1/power(fGB_ij,2))*d2fGBdrij2 - (2/power(fGB_ij,3))*dfGBdrij*dfGBdrij;
+   Real second_derivative_born = charge_i*charge_j*( (1/power(fGB_ij,2))*d2fGBdrij2 - (2/power(fGB_ij,3))*dfGBdrij*dfGBdrij );
 
    // self terms
    second_derivative_born += power(charge_i, 2) / power(bornRad_i, 2) * (d2Ridrij2 / 2 - power( bornRadiusDerivative_ij, 2) / bornRad_i);
@@ -269,7 +269,7 @@ Real ReducedHessGB::SecondDerivativeFGB(
    Real charge_i = topo->atoms[atom1].scaledCharge;
    Real charge_k = topo->atoms[atom2].scaledCharge;
 
-   Real d2GBik = (charge_i*charge_k)*d2fGBikdrij2 - (2/power(fGBik,3))*dfGBikdrij*dfGBikdrij;
+   Real d2GBik = (charge_i*charge_k)*( (1/power(fGBik,2))*d2fGBikdrij2 - (2/power(fGBik,3))*dfGBikdrij*dfGBikdrij );
 
    return d2GBik;
 
