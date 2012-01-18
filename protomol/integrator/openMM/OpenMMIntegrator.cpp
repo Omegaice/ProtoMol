@@ -21,14 +21,14 @@ using namespace ProtoMol;
 
 const string OpenMMIntegrator::keyword( "OpenMM" );
 
-OpenMMIntegrator::OpenMMIntegrator() : STSIntegrator() {
+OpenMMIntegrator::OpenMMIntegrator() : STSIntegrator(), isLTMD( false ) {
 	system = 0;
 	integrator = 0;
 	context = 0;
 }
 
 OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup *overloadedForces ) 
-	: STSIntegrator( params[0], overloadedForces ) {
+	: STSIntegrator( params[0], overloadedForces ), isLTMD( false ) {
 	
 	mTemperature = params[1];
 	mGamma = params[2];
