@@ -267,7 +267,7 @@ Real ReducedHessGB::FirstDerivativeFGB(
    
   unsigned int sz = topo->atoms.size();
 
-  for(unsigned int k=0; k<sz; k++){
+  for(int k=0; k<sz; k++){
     
     if( k == atom1 ) continue;
       
