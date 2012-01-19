@@ -358,6 +358,20 @@ namespace ProtoMol
 						}
 
 						report << debug(2) << "Coarse diagonalization complete. Maximum eigenvalue = " << max_eigenvalue << "." << endr;
+            
+            //post diag minimize?
+            if( loops > 1 || postDiagonalizeMinimize){
+              Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+              
+              //do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
+              int itrs = minimizer(minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology);
+              
+              report << debug(2) << "[NormalModeDiagonalize::run] iterations = "<< itrs << " force calcs = " << forceCalc << endr;
+              
+              // Break if termination condition is met
+              if( itrs <= 2 ) break;
+            }
+
 					}
 
 					//adaptive timestep?
@@ -386,18 +400,6 @@ namespace ProtoMol
 					//clear re-diag flag
 					app->eigenInfo.reDiagonalize = false;
 					
-					//post diag minimize?
-					if( loops > 1 || postDiagonalizeMinimize){
-						Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-
-						//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-						int itrs = minimizer(minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology);
-						
-						report << debug(2) << "[NormalModeDiagonalize::run] iterations = "<< itrs << " force calcs = " << forceCalc << endr;
-						
-						// Break if termination condition is met
-						if( itrs <= 2 ) break;
-					}
 				}
       }
 
