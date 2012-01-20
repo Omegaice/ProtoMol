@@ -1,4 +1,4 @@
-#include <protomol/integrator/openMM/OpenMMIntegrator.h>
+1;2c#include <protomol/integrator/openMM/OpenMMIntegrator.h>
 #include <protomol/base/Report.h>
 #include <protomol/type/ScalarStructure.h>
 #include <protomol/type/Vector3DBlock.h>
@@ -354,7 +354,17 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 void OpenMMIntegrator::run( int numTimesteps ) {
 	preStepModify();
 	
+	unsigned int completed = numTimesteps;
 	integrator->step( numTimesteps );
+
+#ifdef HAVE_OPENMM_LTMD
+	OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
+	completed = ltmd->CompletedSteps();
+	if( completed != numTimesteps ) {
+		app->eigenInfo.reDiagonalize = true;
+		std::cout << "OpenMM Failed Minimization" << std::endl;
+	}
+#endif	
 
 	// Retrive data
 	const OpenMM::State state = context->getState( OpenMM::State::Positions |
@@ -390,7 +400,10 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 	app->energies[ScalarStructure::OTHER] = state.getPotentialEnergy() * Constant::KJ_KCAL;
 
 	//fix time as no forces calculated
-	app->topology->time += numTimesteps * getTimestep();
+	app->topology->time += completed * getTimestep();
+
+	//Fix steps
+	//app->currentStep = app->currentStep - ( numTimesteps - completed );
 	
 	postStepModify();
 }
