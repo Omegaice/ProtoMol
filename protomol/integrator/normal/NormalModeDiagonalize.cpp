@@ -234,7 +234,7 @@ namespace ProtoMol
 						//Find Hessians
 						blockDiag.hessianTime.start(); //time Hessian
 						rHsn.clear();
-						rHsn.evaluate( &diagAt, app->topology, true ); //mass re-weighted hessian
+						rHsn.evaluate( &app->positions, app->topology, true ); //mass re-weighted hessian, used to pass diagAt, but this defeats the multiple diagonalize
 						report << debug(2) << "Hessian found." << endr;
 
 						//stop timer
