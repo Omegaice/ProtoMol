@@ -592,23 +592,32 @@ namespace ProtoMol {
       }
       //~~~~End geometric~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      //find number of eigs required, by the eigenvalue threshold
-      for(int jj=0;jj<bHess->blocks_max[ii] * 3;jj++){
-        Real currEig = fabs(rE[bHess->hess_eig_point[ii] * 3 + jj]);
-        if(currEig >= eigenValueThresh){
-          blocks_num_eigs[ii] = jj;
-          residues_total_eigs += jj;
-          break;
+      //find number of eigs required, by the eigenvalue threshold, if block vector number not set
+      //fix for no block vectors and eig_thresh greater than max_eig
+      const unsigned int blockiisize = bHess->blocks_max[ii] * 3;
+      blocks_num_eigs[ii] = blockiisize;
+      
+      for(int jj=0;jj<blockiisize;jj++){
+        
+        const Real currEig = fabs(rE[bHess->hess_eig_point[ii] * 3 + jj]);
+        
+        if( !blockVprec ){
+          if( currEig >= eigenValueThresh ){
+            blocks_num_eigs[ii] = jj;
+            break;
+          }
+        }else{
+          blocVectCol.push_back(currEig);
         }
-        if(blockVprec) blocVectCol.push_back(currEig);
       }
+      
+      //fix residues_total_eigs
+      residues_total_eigs += blocks_num_eigs[ii];
 
       //find maximum eigenvalue
       Real tempf = rE[(bHess->hess_eig_point[ii] + bHess->blocks_max[ii] - 1) * 3];
       if(max_eigenvalue < tempf) max_eigenvalue = tempf;
       //
-      //####for(int jj=0;jj<bHess->blocks_max[ii] * 3;jj++)
-      //####  report << hint << "Loop "<<ii<<", Eig "<<jj<<", value "<<rE[bHess->hess_eig_point[ii]*3+jj]<<", index "<<eigIndx[jj]<<" eigs "<<blocks_num_eigs[ii]<<" tot "<<residues_total_eigs<<" Thresh "<<eigenValueThresh<<endr;
     }
 
     //use target number of block eigenvectors?
@@ -617,7 +626,9 @@ namespace ProtoMol {
       sort( blocVectCol.begin(), blocVectCol.end() ); //sort
       Real newEigThr = blocVectCol[bHess_num_blks * blockVectorCols];
       residues_total_eigs = 0;
+      
       for(int ii=0;ii<bHess_num_blks;ii++){
+        
         //find number of eigs for new thresh
         for(int jj=0;jj<bHess->blocks_max[ii] * 3;jj++){
           Real currEig = fabs(rE[bHess->hess_eig_point[ii] * 3 + jj]);
@@ -627,7 +638,9 @@ namespace ProtoMol {
             break;
           }
         }
+        
       }
+      
     }
 
 
