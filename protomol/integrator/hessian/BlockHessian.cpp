@@ -271,6 +271,66 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
   //
   for(int i=0;i<num_blocks;i++)
     blocks[i].clear();  //clear blocks
+  
+  //RBDihedrals
+  if (myRBDihedral){
+    
+    HessDihedral hd;        //create dihedral hessian
+    //loop over all
+    for (unsigned int i = 0; i < myTopo->rb_dihedrals.size(); i++) {
+      RBTorsion rbt = myTopo->rb_dihedrals[i];
+      bool nonZForce = false;       //test for force constants
+      
+      if (rbt.C0 || rbt.C1 || rbt.C2 || rbt.C3 || rbt.C4 || rbt.C5) nonZForce = true;
+      
+      if (nonZForce) {
+        int aout[4];
+        aout[0] = rbt.atom1; aout[1] = rbt.atom2;
+        aout[2] = rbt.atom3; aout[3] = rbt.atom4;
+        
+        //test all in same block
+        int ar0 = atom_block[aout[0]];
+        if(atom_block[aout[1]] == ar0 && atom_block[aout[2]] == ar0 && atom_block[aout[3]] == ar0){
+          //pseudo minimum?
+          if(simuMin){
+            const Real phi = dihedralAngle(aout, *myPositions);
+            //
+            RBTorsion currRBTorsion = myTopo->rb_dihedrals[i];
+            
+            currRBTorsion.Offset = phi;
+            
+
+            //
+            hd.evaluate(currRBTorsion, (*myPositions)[aout[0]],
+                        (*myPositions)[aout[1]], (*myPositions)[aout[2]],
+                        (*myPositions)[aout[3]]);
+            
+          //else normal
+          }else{
+            //
+            hd.evaluate(rbt, (*myPositions)[aout[0]],
+                        (*myPositions)[aout[1]], (*myPositions)[aout[2]],
+                        (*myPositions)[aout[3]]);
+          }
+          
+          //output sparse matrix
+          for (int ii = 0; ii < 4; ii++){
+            for (int kk = 0; kk < 4; kk++) {
+              Matrix3By3 rhd = hd(ii, kk);
+              outputMatrix(atom_block_num[aout[ii]], atom_block_num[aout[kk]], sqrtMass[aout[ii]],
+                             sqrtMass[aout[kk]], rhd, blocks[ar0].Rows, blocks[ar0].arrayPointer());
+            
+            }
+          }
+                      
+        }
+        
+      }
+      
+    }
+    
+  }
+  
   //Impropers
   if (myImproper) {
     HessDihedral hi;        //create improper hessian    

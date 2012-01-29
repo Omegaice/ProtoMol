@@ -87,6 +87,10 @@ void HessDihedral::evaluate(const RBTorsion &currRBTorsion, const Vector3D &a1,
   //find angle
   if(rotateAndCalcPhi(a1, a2, a3, a4,
     x21, x43, y43, z21, z43, r23, aRot, phi)) {
+    
+    //Remove offset
+    phi -= currRBTorsion.Offset;
+    
     //Find dF/dphi and d^2F/dphi^2
     double fact1 = 0.0;
     double fact2 = 0.0;
