@@ -121,7 +121,7 @@ namespace ProtoMol {
 
     //evaluate numerically?
     if( !numeric ){
-        bHess->evaluateResidues(myPositions, myTopo, true); //true for quasi-munimum
+        bHess->evaluateResidues(myPositions, myTopo, false); //true for quasi-munimum, now using false as improved results
     }else{
         bHess->evaluateNumericalResidues(myPositions, myTopo);
     }

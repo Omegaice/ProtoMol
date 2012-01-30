@@ -261,13 +261,13 @@ void BlockHessian::initialResidueData(const GenericTopology *myTopo, int res_per
 // Evaluate course high frequency Hessians
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
-                       const GenericTopology *myTopo,
-                       bool simuMin) {
+                                      GenericTopology *myTopo,
+                                        bool simuMin) {
   int a1, a2, a3;
   unsigned int i;
   ReducedHessAngle rh;
   Matrix3By3 rha;
-
+  
   //
   for(int i=0;i<num_blocks;i++)
     blocks[i].clear();  //clear blocks
@@ -378,6 +378,7 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
       }
     }
   }
+  
   //Dihedrals
   if (myDihedral) {
     HessDihedral hd;        //create dihedral hessian    
@@ -397,29 +398,12 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
         int ar0 = atom_block[aout[0]];
         if(atom_block[aout[1]] == ar0 && atom_block[aout[2]] == ar0 && atom_block[aout[3]] == ar0){
           if(simuMin){
-#if 0
-            bool Phib = false; bool Psib = false;
-            for(int ii=0;ii<4;ii++){
-              int ab = atom_block[aout[ii]];
-              if(aout[ii] == residues_psi_c[ab]){
-                Psib = true;
-              }
-              if(aout[ii] == residues_phi_n[ab]){
-                Phib = true;
-              }
-            }
-            if(Phib && ar0 == 47) report << hint << " Phi i " << i << " block " << ar0 << " a1 " << 
-                aout[0] << " a2 " << aout[1] << " a3 " << aout[2] << " a4 " << aout[3] << endr;
-            if(Psib && ar0 == 47) report << hint << " Psi i " << i << " block " << ar0 << " a1 " << 
-                aout[0] << " a2 " << aout[1] << " a3 " << aout[2] << " a4 " << aout[3] << endr;
-#endif
             Real phi = dihedralAngle(aout, *myPositions);
             //
             Torsion currTorsion = myTopo->dihedrals[i];
-            //report << hint << " CT mult "<<currTorsion.multiplicity <<" ang "<<phi<< " period "<<currTorsion.periodicity[0]<<" phase "<<currTorsion.phaseShift[0]<<" mpi "<<M_PI<<endr;
+            
             for (int j = 0; j < currTorsion.multiplicity; j++){
                 currTorsion.phaseShift[j] = M_PI - currTorsion.periodicity[j] * phi;
-                //if(Phib && ar0 == 47 && (i == 2036 || i == 2037 || i == 2038) ) currTorsion.forceConstant[j] /= 1000;
             }
             hd.evaluate(currTorsion, (*myPositions)[aout[0]],
                         (*myPositions)[aout[1]], (*myPositions)[aout[2]],
@@ -453,9 +437,9 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
       int ar1 = atom_block[a1];
       if(atom_block[a1] == atom_block[a2]){
         Real r_0 = myTopo->bonds[i].restLength;
-        //####
+        //
         if(simuMin) r_0 = ((*myPositions)[a2] - (*myPositions)[a1]).norm();
-        //####
+        //
         Real k = myTopo->bonds[i].springConstant;
 
         Matrix3By3 bondHess12 =
@@ -493,25 +477,14 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
         Real k_t = myTopo->angles[i].forceConstant;
         Real ubConst = myTopo->angles[i].ureyBradleyConstant;
         Real ubRestL = myTopo->angles[i].ureyBradleyRestLength;
-        //####
+        //
         if(simuMin){
-#if 0
-            bool phiPsi = false;
-            for(int ii=0;ii<3;ii++){
-              int ab = atom_block[aout[ii]];
-              if(aout[ii] == residues_psi_c[ab] || aout[ii] == residues_phi_n[ab])
-                phiPsi = true;
-            }
-#endif
             Vector3D rij((*myPositions)[a2] - (*myPositions)[a1]);
             Vector3D rkj((*myPositions)[a2] - (*myPositions)[a3]);
             theta0 = atan2((rij.cross(rkj)).norm(), rij.dot(rkj));
             ubRestL = ((*myPositions)[a3] - (*myPositions)[a1]).norm();
-            //if(phiPsi && ar1 == 47) report << hint << " Ang i " << i << " block " << ar1 << " a1 " << 
-            //    aout[0] << " a2 " << aout[1] << " a3 " << aout[2] << endr;
-            //if(phiPsi && ar1 == 47 &&  (i == 1377 || i == 1378)) k_t /= 1000;
         }
-        //####
+        //
         // ReducedHessAngle for atoms a1, a2 and a3
         rh.evaluate((*myPositions)[a1], (*myPositions)[a2], (*myPositions)[a3],
                     k_t,
@@ -539,6 +512,81 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
 
     }
   }
+  
+#ifdef BLOCKPAIRWISEINTERACTION
+  
+  unsigned int _N = myTopo->atoms.size();
+  //Pairwise intra block or adjacent
+  
+#ifdef ADDSCPISM
+  //SCPISM
+  //Pre-calculate Born radii if Self energy Hessian required
+  if(myBornRadii && myBornSelf && myTopo->doSCPISM)
+    evaluateBornRadii(myPositions, myTopo);
+#endif
+  
+#ifdef ADDGB
+  //Pre calculate Born radii for GB if required
+  if (myGBBornBurialTerm && myTopo->doGBSAOpenMM) {
+    evaluateGBBornBurialTerm(myPositions, myTopo);
+  }
+  
+  if (myGBBornRadii && myTopo->doGBSAOpenMM) {
+    evaluateGBBornRadii(myPositions, myTopo);
+  }
+#endif
+  
+  for (unsigned int i = 0; i < _N; i++){
+    for (unsigned int j = i + 1; j < _N; j++){             
+      if(atom_block[i] == atom_block[j]){  //same block}
+        
+        int ar1 = atom_block[i];
+        
+        Matrix3By3 rhp(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
+        //Accumulate pairwise
+        if (myLennardJones)   //Lennard jones
+          rhp += evaluatePairsMatrix(i, j, LENNARDJONES, myPositions, myTopo, true);
+        if (myCoulomb)        //Coulombic
+          rhp += evaluatePairsMatrix(i, j, COULOMB, myPositions, myTopo, true);
+        
+#ifdef ADDSCPISM
+        if (myCoulombDielec)  //Coulombic Implicit solvent
+          rhp += evaluatePairsMatrix(i, j, COULOMBDIELEC, myPositions, myTopo, true);
+        if (myCoulombSCPISM)  //SCP
+          rhp += evaluatePairsMatrix(i, j, COULOMBSCPISM, myPositions, myTopo, true);
+        
+        if (myBornRadii && myBornSelf && myTopo->doSCPISM)  //Bourn radii         
+          rhp += evaluateBornSelfPair(i, j, myPositions, myTopo);
+#endif
+        
+#ifdef ADDGB
+        //GB energies
+        if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
+          rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
+        }
+        
+        if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+          rhp += evaluateGBPair(i, j, myPositions, myTopo);
+        }
+#endif
+        
+        //Output matrix
+        int aout[2]={i,j};
+        for (int ii = 0; ii < 2; ii++){
+          for (int kk = 0; kk < 2; kk++) {
+            Matrix3By3 rhb;
+            if(ii == kk) rhb = rhp;
+            else rhb = -rhp;
+            //outputBlocks(aout[ii], aout[kk], rhb);
+            outputMatrix(atom_block_num[aout[ii]], atom_block_num[aout[kk]], sqrtMass[aout[ii]],
+                         sqrtMass[aout[kk]], rhb, blocks[ar1].Rows, blocks[ar1].arrayPointer());
+          }
+        }
+      }
+    }
+  }
+#endif
+  
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -598,6 +646,41 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
 
   //Dihedrals
   if (myDihedral) outputTorsions(myTopo->dihedrals, *myPositions);
+
+  //RBDihedrals
+  if (myRBDihedral){
+    
+    HessDihedral hd;        //create dihedral hessian
+    //loop over all
+    for (unsigned int i = 0; i < myTopo->rb_dihedrals.size(); i++) {
+      RBTorsion rbt = myTopo->rb_dihedrals[i];
+      bool nonZForce = false;       //test for force constants
+      
+      if (rbt.C0 || rbt.C1 || rbt.C2 || rbt.C3 || rbt.C4 || rbt.C5) nonZForce = true;
+      
+      if (nonZForce) {
+        int aout[4];
+        aout[0] = rbt.atom1; aout[1] = rbt.atom2;
+        aout[2] = rbt.atom3; aout[3] = rbt.atom4;
+        
+        //test all in same block
+        //
+        hd.evaluate(rbt, (*myPositions)[aout[0]],
+                        (*myPositions)[aout[1]], (*myPositions)[aout[2]],
+                        (*myPositions)[aout[3]]);
+        //output sparse matrix
+        for (int ii = 0; ii < 4; ii++){
+          for (int kk = 0; kk < 4; kk++) {
+            Matrix3By3 rhd = hd(ii, kk);
+            outputBlocks(aout[ii], aout[kk], rhd);
+          }
+        }
+                  
+      }
+      
+    }
+    
+  }
 
   //Bonds
   if (myBond){    

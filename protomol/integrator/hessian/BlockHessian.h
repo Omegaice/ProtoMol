@@ -33,8 +33,8 @@ namespace ProtoMol {
     void clearBlocks();
     void initialResidueData(const GenericTopology *myTopo, int res_per_block, bool fullElect);
     void evaluateResidues(const Vector3DBlock *myPositions,
-                          const GenericTopology *myTopo,
-                          bool simuMin);
+                            GenericTopology *myTopo,
+                              bool simuMin);
     void evaluateNumericalResidues(const Vector3DBlock *myPositions,
                           const GenericTopology *myTopo);
     void evaluateBlockForces(const unsigned int blockStart, const unsigned int blockMax,
