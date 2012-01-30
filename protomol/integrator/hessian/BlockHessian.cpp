@@ -42,8 +42,13 @@
 #include <stdio.h>
 #include <fstream>
 
+//defines for including SCPISM and GB and
+//adding paiwise forces to evaluateResidues()
 #define ADDSCPISM
 #define ADDGB
+//#define BLOCKPAIRWISEINTERACTION
+//#define BLOCKSCPISM
+//#define BLOCKGB
 
 using namespace std;
 using namespace ProtoMol::Report;
@@ -518,14 +523,14 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
   unsigned int _N = myTopo->atoms.size();
   //Pairwise intra block or adjacent
   
-#ifdef ADDSCPISM
+#ifdef BLOCKSCPISM
   //SCPISM
   //Pre-calculate Born radii if Self energy Hessian required
   if(myBornRadii && myBornSelf && myTopo->doSCPISM)
     evaluateBornRadii(myPositions, myTopo);
 #endif
   
-#ifdef ADDGB
+#ifdef BLOCKGB
   //Pre calculate Born radii for GB if required
   if (myGBBornBurialTerm && myTopo->doGBSAOpenMM) {
     evaluateGBBornBurialTerm(myPositions, myTopo);
@@ -549,7 +554,7 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
         if (myCoulomb)        //Coulombic
           rhp += evaluatePairsMatrix(i, j, COULOMB, myPositions, myTopo, true);
         
-#ifdef ADDSCPISM
+#ifdef BLOCKSCPISM
         if (myCoulombDielec)  //Coulombic Implicit solvent
           rhp += evaluatePairsMatrix(i, j, COULOMBDIELEC, myPositions, myTopo, true);
         if (myCoulombSCPISM)  //SCP
@@ -559,7 +564,7 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
           rhp += evaluateBornSelfPair(i, j, myPositions, myTopo);
 #endif
         
-#ifdef ADDGB
+#ifdef BLOCKGB
         //GB energies
         if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
