@@ -597,7 +597,7 @@ namespace ProtoMol {
       const unsigned int blockiisize = bHess->blocks_max[ii] * 3;
       blocks_num_eigs[ii] = blockiisize;
       
-      for(int jj=0;jj<blockiisize;jj++){
+      for(unsigned jj=0;jj<blockiisize;jj++){
         
         const Real currEig = fabs(rE[bHess->hess_eig_point[ii] * 3 + jj]);
         

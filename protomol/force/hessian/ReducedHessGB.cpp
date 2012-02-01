@@ -267,7 +267,7 @@ Real ReducedHessGB::FirstDerivativeFGB(
    
   unsigned int sz = topo->atoms.size();
 
-  for(int k=0; k<sz; k++){
+  for(unsigned k=0; k<sz; k++){
     
     if( k == atom1 ) continue;
       
@@ -333,9 +333,9 @@ ReducedHessGB::secondDerivativeRawTerms ReducedHessGB::SecondDerivativeFGB(
 
   unsigned int sz = topo->atoms.size();
   
-  for(unsigned int k=0; k<sz; k++){
+  for(unsigned k=0; k<sz; k++){
     
-    if( k == atom1 ) continue; //|| k == atom2 
+    if( k == (unsigned)atom1 ) continue; //|| k == atom2 
 
     //grab r_{ik} / r_{jk}
     const Real dist = topo->atoms[atom1].myGBSA_T->distij[k];
