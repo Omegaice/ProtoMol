@@ -269,7 +269,7 @@ Real ReducedHessGB::FirstDerivativeFGB(
 
   for(unsigned k=0; k<sz; k++){
     
-    if( k == atom1 ) continue;
+    if( k == (unsigned)atom1 ) continue;
       
     //grab r_{ik} / r_{jk}
     const Real dist = topo->atoms[atom1].myGBSA_T->distij[k];
