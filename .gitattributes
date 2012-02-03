@@ -480,6 +480,7 @@ protomol/type/ArrayFastest.h -text
 protomol/type/ArrayNoPartialSpecialization.h -text
 protomol/type/BlockMatrix.cpp -text
 protomol/type/BlockMatrix.h -text
+protomol/type/EigenvectorInfo.cpp -text
 protomol/type/EigenvectorInfo.h -text
 protomol/type/GromacsParameters.cpp -text
 protomol/type/GromacsParameters.h -text
