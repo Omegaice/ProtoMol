@@ -284,17 +284,21 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 					if( loops > 1 || postDiagonalizeMinimize ) {
 						std::cout << "Post Diagonalize Minimize" << std::endl;
 						app->eigenInfo.havePositionsChanged = true;
-
-						Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-
-						//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-						int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
-
-						report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
-
-						// Break if termination condition is met
-						if( itrs <= 2 ) {
+						
+						if( app->eigenInfo.OpenMMMinimize ){
 							break;
+						}else{
+							Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+
+							//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
+							int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+
+							report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
+
+							// Break if termination condition is met
+							if( itrs <= 2 ) {
+								break;
+							}
 						}
 					}
 				}
@@ -358,17 +362,23 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 
 					//post diag minimize?
 					if( loops > 1 || postDiagonalizeMinimize ) {
+						std::cout << "Post Diagonalize Minimize" << std::endl;
 						app->eigenInfo.havePositionsChanged = true;
-						Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-
-						//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-						int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
-
-						report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
-
-						// Break if termination condition is met
-						if( itrs <= 2 ) {
+						
+						if( app->eigenInfo.OpenMMMinimize ){
 							break;
+						}else{
+							Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+							
+							//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
+							int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+							
+							report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
+							
+							// Break if termination condition is met
+							if( itrs <= 2 ) {
+								break;
+							}
 						}
 					}
 

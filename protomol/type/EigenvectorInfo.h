@@ -42,6 +42,9 @@ namespace ProtoMol {
 		//re-diagonalization flag
 		bool reDiagonalize;
 		bool havePositionsChanged;
+		
+		bool OpenMMMinimize;
+		unsigned int RediagonalizationCount;
 
 		//OpenMM single precision interface
 		float *mySingleEigs;
