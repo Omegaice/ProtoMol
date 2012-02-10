@@ -353,31 +353,6 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 void OpenMMIntegrator::run( int numTimesteps ) {
 	preStepModify();
-	
-#ifdef HAVE_OPENMM_LTMD
-	if( mLTMDParameters.ShouldProtoMolDiagonalize ){
-		if( app->eigenInfo.havePositionsChanged ){
-			std::cout << "Uploading Positions" << std::endl;
-
-			const unsigned int sz = app->positions.size();
-
-			std::vector<OpenMM::Vec3> positions;
-			positions.reserve( sz );
-
-			OpenMM::Vec3 openMMvecp;
-			for( unsigned int i = 0; i < sz; ++i ) {
-				for( int j = 0; j < 3; j++ ) {
-					openMMvecp[j] = app->positions[i].c[j] * Constant::ANGSTROM_NM;
-				}
-				positions.push_back( openMMvecp );
-			}
-
-			context->setPositions( positions );
-
-			app->eigenInfo.havePositionsChanged = false;
-		}
-	}
-#endif
 
 	unsigned int completed = numTimesteps;
 	integrator->step( numTimesteps );
