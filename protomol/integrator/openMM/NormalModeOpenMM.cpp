@@ -150,7 +150,7 @@ namespace ProtoMol {
 			app->eigenInfo.myEigVecChanged = false;
 		}
 		
-		if( mLTMDParameters.ShouldProtoMolDiagonalize && app->eigenInfo.havePositionsChanged ){
+		/*if( mLTMDParameters.ShouldProtoMolDiagonalize && app->eigenInfo.havePositionsChanged ){
 			const unsigned int sz = app->positions.size();
 			
 			std::vector<OpenMM::Vec3> positions;
@@ -167,7 +167,7 @@ namespace ProtoMol {
 			context->setPositions( positions );
 			
 			app->eigenInfo.havePositionsChanged = false;
-		}
+		}*/
 #endif
 
 		OpenMMIntegrator::run( numTimesteps );

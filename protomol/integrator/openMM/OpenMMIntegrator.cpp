@@ -361,7 +361,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 		if( app->eigenInfo.OpenMMMinimize ){
 			OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
 			
-			bool minimizePassed = ltmd->minimize( 2 );
+			bool minimizePassed = ltmd->minimize( 50, 2 );
 			
 			if( minimizePassed || app->eigenInfo.RediagonalizationCount >= 5 ){
 				if( app->eigenInfo.RediagonalizationCount >= 5 ){
