@@ -374,6 +374,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 				std::cout << "Exiting Rediagonalizations" << std::endl;
 			}else{
 				execute = false;
+				app->eigenInfo.reDiagonalize = true;
 				app->eigenInfo.RediagonalizationCount++;
 			}
 		}

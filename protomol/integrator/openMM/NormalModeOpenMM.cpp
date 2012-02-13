@@ -106,6 +106,10 @@ namespace ProtoMol {
 			res_size++;
 		}
 		mLTMDParameters.residue_sizes.push_back( res_size );
+		
+		if( mLTMDParameters.ShouldProtoMolDiagonalize ){
+			app->eigenInfo.OpenMMMinimize = true;
+		}
 #endif
 		//initialize base
 		OpenMMIntegrator::initialize( app );
