@@ -117,7 +117,7 @@ namespace ProtoMol {
 		mLTMDParameters.residue_sizes.push_back( res_size );
 		
 		if( mLTMDParameters.ShouldProtoMolDiagonalize ){
-			app->eigenInfo.OpenMMMinimize = true;
+			//app->eigenInfo.OpenMMMinimize = true;
 		}
 #endif
 		//initialize base

@@ -356,7 +356,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 	
 	bool execute = true;
 
-#ifdef HAVE_OPENMM_LTMD
+/*#ifdef HAVE_OPENMM_LTMD
 	if( mLTMDParameters.ShouldProtoMolDiagonalize && mLTMDParameters.ShouldForceRediagOnMinFail ){
 		if( app->eigenInfo.OpenMMMinimize ){
 			OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
@@ -379,7 +379,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 			}
 		}
 	}
-#endif 
+#endif */
 	unsigned int completed = numTimesteps;
 	
 	if( execute ){
@@ -394,7 +394,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 		completed = ltmd->CompletedSteps();
 		if( completed != numTimesteps ) {
 			app->eigenInfo.reDiagonalize = true;
-			app->eigenInfo.OpenMMMinimize = true;
+			//app->eigenInfo.OpenMMMinimize = true;
 			std::cout << "OpenMM Failed Minimization" << std::endl;
 		}
 	}

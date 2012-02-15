@@ -8,7 +8,7 @@ using namespace ProtoMol;
 EigenvectorInfo::EigenvectorInfo() : myEigenvectorLength( 0 ), myNumEigenvectors( 0 ),
 	myNumUsedEigenvectors( 0 ),
 	myEigenvectors( 0 ), myOrigCEigval( 0.0 ), myNewCEigval( 0.0 ), myOrigTimestep( 0.0 ),
-	reDiagonalize( false ), havePositionsChanged( false ), RediagonalizationCount( 0 ),
+	reDiagonalize( false ), havePositionsChanged( false ), OpenMMMinimize( false ), RediagonalizationCount( 0 ),
 	mySingleEigs( 0 ), myEigVecChanged( true ), myMinimumLimit( 0.5 ), currentMode( -1 ) {
 
 }
@@ -17,7 +17,7 @@ EigenvectorInfo::EigenvectorInfo( unsigned int n, unsigned int m ) : myEigenvect
 	myNumEigenvectors( m ), myNumUsedEigenvectors( 0 ),
 	myMaxEigenvalue( 0.0 ), myEigenvectors( new double[n *m * 3] ),
 	myOrigCEigval( 0.0 ), myNewCEigval( 0.0 ), myOrigTimestep( 0.0 ), reDiagonalize( false ),
-	havePositionsChanged( false ), RediagonalizationCount( 0 ), mySingleEigs( 0 ), myEigVecChanged( true ), myMinimumLimit( 0.5 ),
+	havePositionsChanged( false ), OpenMMMinimize( false ), RediagonalizationCount( 0 ), mySingleEigs( 0 ), myEigVecChanged( true ), myMinimumLimit( 0.5 ),
 	currentMode( -1 ) {}
 
 EigenvectorInfo::~EigenvectorInfo() {
