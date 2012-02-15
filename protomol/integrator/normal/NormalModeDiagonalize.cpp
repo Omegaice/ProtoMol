@@ -282,9 +282,6 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 
 					//post diag minimize?
 					if( loops > 1 || postDiagonalizeMinimize ) {
-						std::cout << "Post Diagonalize Minimize" << std::endl;
-						app->eigenInfo.havePositionsChanged = true;
-						
 						if( app->eigenInfo.OpenMMMinimize ){
 							break;
 						}else{
@@ -292,6 +289,7 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 
 							//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
 							int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+							app->eigenInfo.havePositionsChanged = true;
 
 							report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
 
@@ -362,9 +360,6 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 
 					//post diag minimize?
 					if( loops > 1 || postDiagonalizeMinimize ) {
-						std::cout << "Post Diagonalize Minimize" << std::endl;
-						app->eigenInfo.havePositionsChanged = true;
-						
 						if( app->eigenInfo.OpenMMMinimize ){
 							break;
 						}else{
@@ -372,6 +367,7 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 							
 							//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
 							int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+							app->eigenInfo.havePositionsChanged = true;
 							
 							report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
 							
