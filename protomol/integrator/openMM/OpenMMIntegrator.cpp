@@ -48,6 +48,9 @@ OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup
 	mPlatform = params[13];
 	mMinSteps = params[14];
 	mTolerance = params[15];
+		
+	mNonbondedCutoff = params[16];
+	mGBCutoff = params[17];
 	
 	system = 0;
 	integrator = 0;
@@ -253,6 +256,11 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 			}
 		}
+		
+		if( mNonbondedCutoff != 0 ){
+			nonbonded->setNonbondedMethod( OpenMM::NonbondedForce::CutoffNonPeriodic );
+			nonbonded->setCutoffDistance( mNonbondedCutoff * Constant::ANGSTROM_NM );
+		}
 	}
 
 	// Add GBSA if needed.
@@ -271,6 +279,11 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			Real radius = app->topology->atoms[i].myGBSA_T->vanDerWaalRadius * Constant::ANGSTROM_NM; //0.1 factor in openMM, file in A
 
 			gbsa->addParticle( charge, radius, scaleFactors[i] );
+		}
+		
+		if( mGBCutoff != 0 ){
+			gbsa->setNonbondedMethod( OpenMM::GBSAOBCForce::CutoffNonPeriodic );
+			gbsa->setCutoffDistance( mGBCutoff * Constant::ANGSTROM_NM );
 		}
 	}
 
@@ -465,6 +478,10 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	parameters.push_back( Parameter( "platform", Value( mPlatform, ConstraintValueType::NoConstraints() ), 2 ) );
 	parameters.push_back( Parameter( "minSteps", Value( mMinSteps, ConstraintValueType::NotNegative() ), 0 ) );
 	parameters.push_back( Parameter( "tolerance", Value( mTolerance, ConstraintValueType::NotNegative() ), 1.0 ) );
+	
+	// Cutoff Parameters
+	parameters.push_back( Parameter( "CutoffNonBonded", Value( mNonbondedCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
+	parameters.push_back( Parameter( "CutoffGB", Value( mGBCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup *fg ) const {
@@ -472,7 +489,7 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup
 }
 
 unsigned int OpenMMIntegrator::getParameterSize() const {
-	return 16;
+	return 18;
 }
 
 // Figure out OBC scale factors based on the atomic masses.

@@ -48,6 +48,9 @@ namespace ProtoMol {
 			// Solvent Parameters
 			int mCommonMotionRate;
 			Real mGBSAEpsilon, mGBSASolvent;
+		
+			// CutoffParams
+			double mNonbondedCutoff, mGBCutoff;
 			
 			// Force Switches
 			bool isUsingHarmonicBondForce;
