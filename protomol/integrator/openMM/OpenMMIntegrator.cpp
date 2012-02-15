@@ -51,6 +51,8 @@ OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup
 		
 	mNonbondedCutoff = params[16];
 	mGBCutoff = params[17];
+		
+	mDeviceID = params[18];
 	
 	system = 0;
 	integrator = 0;
@@ -330,7 +332,19 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 	
 	std::cout << "OpenMM Propagation Platform: " << sPlatform << std::endl;
-	context = new OpenMM::Context( *system, *integrator, OpenMM::Platform::getPlatformByName( sPlatform ) );
+	
+	OpenMM::Platform& platform = OpenMM::Platform::getPlatformByName( sPlatform );
+	
+	if( mPlatform == 2 ){
+		std::ostringstream stream;
+		stream << mDeviceID;
+		
+		std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
+		
+		platform.setPropertyDefaultValue("CudaDevice", stream.str() );
+	}
+	
+	context = new OpenMM::Context( *system, *integrator, platform );
 
 	std::vector<OpenMM::Vec3> positions, velocities;
 	positions.reserve( sz );
@@ -461,6 +475,9 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	// Cutoff Parameters
 	parameters.push_back( Parameter( "CutoffNonBonded", Value( mNonbondedCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
 	parameters.push_back( Parameter( "CutoffGB", Value( mGBCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
+	
+	
+	parameters.push_back( Parameter( "DeviceID", Value( mDeviceID, ConstraintValueType::NoConstraints() ), 0 ) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup *fg ) const {
@@ -468,7 +485,7 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup
 }
 
 unsigned int OpenMMIntegrator::getParameterSize() const {
-	return 18;
+	return 19;
 }
 
 // Figure out OBC scale factors based on the atomic masses.

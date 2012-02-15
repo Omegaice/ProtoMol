@@ -34,7 +34,7 @@ namespace ProtoMol {
 			static const std::string keyword;
 		protected:
 			// OpenMM Parameters
-			int mPlatform, mMinSteps;
+			int mPlatform, mDeviceID, mMinSteps;
 			double mTolerance;
 			
 			OpenMM::System *system;
