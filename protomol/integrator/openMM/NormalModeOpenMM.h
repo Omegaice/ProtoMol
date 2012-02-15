@@ -26,6 +26,7 @@ namespace ProtoMol {
 			static const std::string keyword;
 		private:
 			bool shoudForceRediagOnMinFail;
+			bool mRediagOnQuadratic;
 
 			int mRediagonalizationFrequency;
 			

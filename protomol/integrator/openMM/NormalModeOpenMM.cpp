@@ -33,6 +33,7 @@ namespace ProtoMol {
 		shoudForceRediagOnMinFail = params[8];
 		mSDelta = params[9];
 		mProtomolDiagonalize = params[10];
+		mRediagOnQuadratic = params[11];
 	}
 
 	NormalModeOpenMM::~NormalModeOpenMM() {
@@ -76,6 +77,14 @@ namespace ProtoMol {
 		} else {
 			mLTMDParameters.ShouldForceRediagOnMinFail = false;
 			std::cout << "Failure Rediagonalization: False" << std::endl;
+		}
+		
+		if( mRediagOnQuadratic ){
+			mLTMDParameters.ShouldForceRediagOnQuadratic = true;
+			std::cout << "Force Rediagonalization on Quadratic Minimization: True" << std::endl;
+		}else{
+			mLTMDParameters.ShouldForceRediagOnQuadratic = false;
+			std::cout << "Force Rediagonalization on Quadratic Minimization: False" << std::endl;
 		}
 		
 		if( !mProtomolDiagonalize ){
@@ -194,6 +203,7 @@ namespace ProtoMol {
 		parameters.push_back( Parameter( "forceRediagOnMinFail", Value( shoudForceRediagOnMinFail, ConstraintValueType::NoConstraints() ), false ) );
 		parameters.push_back( Parameter( "sEpsilon", Value( mSDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
 		parameters.push_back( Parameter( "ProtomolDiag", Value( mProtomolDiagonalize, ConstraintValueType::NoConstraints() ), false ) );
+		parameters.push_back( Parameter( "forceRediagOnQuadratic", Value( mRediagOnQuadratic, ConstraintValueType::NoConstraints() ), true ) );
 	}
 
 	STSIntegrator *NormalModeOpenMM::doMake( const vector<Value>& values, ForceGroup *fg ) const {
