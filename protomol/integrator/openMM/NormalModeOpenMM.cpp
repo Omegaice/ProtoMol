@@ -177,6 +177,25 @@ namespace ProtoMol {
 		}
 		
 		OpenMMIntegrator::run( numTimesteps );
+		
+		if( mLTMDParameters.ShouldProtoMolDiagonalize && mLTMDParameters.ShouldForceRediagOnMinFail ){
+			OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
+			if( ltmd ){
+				const unsigned int completed = ltmd->CompletedSteps();
+				const unsigned int remaining = numTimesteps - completed;
+				
+				if( completed != numTimesteps ) {
+					app->eigenInfo.reDiagonalize = true;
+					
+					//fix time as no forces calculated
+					app->topology->time -= remaining * getTimestep();
+					
+					//Fix steps
+					app->currentStep -= remaining;
+					std::cout << "OpenMM Failed Minimization" << std::endl;
+				}
+			}
+		}
 	}
 
 	void NormalModeOpenMM::getParameters( vector<Parameter>& parameters ) const {

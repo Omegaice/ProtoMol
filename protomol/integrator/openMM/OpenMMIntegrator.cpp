@@ -393,25 +393,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 		}
 	}
 #endif */
-	unsigned int completed = numTimesteps;
-	
-	if( execute ){
-		integrator->step( numTimesteps );
-	}else{
-		completed = 0;
-	}
-
-#ifdef HAVE_OPENMM_LTMD
-	if( mLTMDParameters.ShouldProtoMolDiagonalize && mLTMDParameters.ShouldForceRediagOnMinFail && execute ){
-		OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
-		completed = ltmd->CompletedSteps();
-		if( completed != numTimesteps ) {
-			app->eigenInfo.reDiagonalize = true;
-			//app->eigenInfo.OpenMMMinimize = true;
-			std::cout << "OpenMM Failed Minimization" << std::endl;
-		}
-	}
-#endif	
+	integrator->step( numTimesteps );
 
 	// Retrive data
 	const OpenMM::State state = context->getState( OpenMM::State::Positions |
@@ -447,10 +429,7 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 	app->energies[ScalarStructure::OTHER] = state.getPotentialEnergy() * Constant::KJ_KCAL;
 
 	//fix time as no forces calculated
-	app->topology->time += completed * getTimestep();
-
-	//Fix steps
-	app->currentStep = app->currentStep - ( numTimesteps - completed );
+	app->topology->time += numTimesteps * getTimestep();
 	
 	postStepModify();
 }
