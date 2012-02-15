@@ -83,7 +83,7 @@ void OutputXTCTrajectory::doRun(int step) {
   //  Can be read from TPR file.
   real prec = 1000;
   int natoms = possize; //  Number of atom
-  real time = app->outputCache.getTime(); //  Real time
+	real time = app->outputCache.getTime() * Constant::FS_PS; //  Real time
 
   //  Write to fil
   if (!write_xtc((t_fileio *)fxtc, natoms, app->currentStep, time,
