@@ -336,12 +336,14 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	OpenMM::Platform& platform = OpenMM::Platform::getPlatformByName( sPlatform );
 	
 	if( mPlatform == 2 ){
-		std::ostringstream stream;
-		stream << mDeviceID;
-		
-		std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
-		
-		platform.setPropertyDefaultValue("CudaDevice", stream.str() );
+		if( mDeviceID != -1 ){
+			std::ostringstream stream;
+			stream << mDeviceID;
+			
+			std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
+			
+			platform.setPropertyDefaultValue("CudaDevice", stream.str() );
+		}
 	}
 	
 	context = new OpenMM::Context( *system, *integrator, platform );
@@ -477,7 +479,7 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	parameters.push_back( Parameter( "CutoffGB", Value( mGBCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
 	
 	
-	parameters.push_back( Parameter( "DeviceID", Value( mDeviceID, ConstraintValueType::NoConstraints() ), 0 ) );
+	parameters.push_back( Parameter( "DeviceID", Value( mDeviceID, ConstraintValueType::NoConstraints() ), -1 ) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup *fg ) const {
