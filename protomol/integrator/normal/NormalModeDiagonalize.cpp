@@ -230,6 +230,25 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 
 }
 
+bool NormalModeDiagonalize::Minimize(){
+	if( !app->eigenInfo.OpenMMMinimize ) {
+		Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+		
+		//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
+		int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+		app->eigenInfo.havePositionsChanged = true;
+		
+		report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
+		
+		// Break if termination condition is met
+		if( itrs <= 2 ) {
+			return true;
+		}
+	}
+	
+	return true;
+}
+
 void NormalModeDiagonalize::FullDiagonalize() {
 	//****Full method**********************************************************************//
 	// Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
@@ -302,22 +321,7 @@ void NormalModeDiagonalize::FullDiagonalize() {
 		
 		//post diag minimize?
 		if( loops > 1 || postDiagonalizeMinimize ) {
-			if( app->eigenInfo.OpenMMMinimize ) {
-				break;
-			} else {
-				Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-				
-				//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-				int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
-				app->eigenInfo.havePositionsChanged = true;
-				
-				report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
-				
-				// Break if termination condition is met
-				if( itrs <= 2 ) {
-					break;
-				}
-			}
+			if( Minimize() ) break;
 		}
 	}
 }
@@ -382,24 +386,8 @@ void NormalModeDiagonalize::CoarseDiagonalize(){
 		
 		//post diag minimize?
 		if( loops > 1 || postDiagonalizeMinimize ) {
-			if( app->eigenInfo.OpenMMMinimize ) {
-				break;
-			} else {
-				Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-				
-				//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-				int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
-				app->eigenInfo.havePositionsChanged = true;
-				
-				report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
-				
-				// Break if termination condition is met
-				if( itrs <= 2 ) {
-					break;
-				}
-			}
+			if( Minimize() ) break;
 		}
-		
 	}
 	
 	//adaptive timestep?

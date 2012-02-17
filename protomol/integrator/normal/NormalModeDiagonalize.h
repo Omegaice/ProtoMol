@@ -48,6 +48,7 @@ namespace ProtoMol {
 			void utilityCalculateForces();
 
 		private:
+			bool Minimize();
 			void FullDiagonalize();
 			void CoarseDiagonalize();
 		public:
