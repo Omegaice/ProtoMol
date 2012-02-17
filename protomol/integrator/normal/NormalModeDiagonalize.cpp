@@ -211,201 +211,9 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 
 			//Diagonalize
 			if( fullDiag ) {
-				//****Full method**********************************************************************//
-				// Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
-				//*************************************************************************************//
-				report << debug( 2 ) << "Start diagonalization." << endr;
-
-				int loops = 1;
-				if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
-					loops = mMaxRediagonalizations;
-				}
-				for( int iteration = 0; iteration < loops; iteration++ ) {
-					//Find Hessians
-					blockDiag.hessianTime.start(); //time Hessian
-					rHsn.clear();
-					rHsn.evaluate( &app->positions, app->topology, true ); //mass re-weighted hessian, used to pass diagAt, but this defeats the multiple diagonalize
-					report << debug( 2 ) << "Hessian found." << endr;
-
-					//stop timer
-					blockDiag.hessianTime.stop();
-					hessianCounter++;
-
-					//Diagonalize
-					blockDiag.rediagTime.start();
-					int numeFound;
-					int info = blockDiag.diagHessian( *Q , blockDiag.eigVal, rHsn.hessM, _3N, numeFound );
-
-					if( info ) {
-						report << error << "Full diagonalization failed." << endr;
-					}
-
-					//find number of -ve eigs
-					int ii;
-					for( ii = 0; ii < _3N - 3; ii++ ) {
-						if( blockDiag.eigVal[ii + 3] > 0 ) {
-							break;
-						}
-					}
-
-					report << debug( 1 ) << "[NormalModeDiagonalize::run] Full diagonalize. No. negative eigenvales = " << ii << endr;
-
-					for( int i = 0; i < _3N; i++ ) {
-						blockDiag.eigIndx[i] = i;
-					}
-
-					blockDiag.absSort( *Q , blockDiag.eigVal, blockDiag.eigIndx, _3N );
-
-					//set new max eigenvalue in C
-					app->eigenInfo.myNewCEigval = fabs( blockDiag.eigVal[_rfM] ); //safe as eigval set t length sz=_3N >= _rfM
-
-					//flag update to eigenvectors
-					*eigVecChangedP = true;
-
-					blockDiag.rediagTime.stop();
-					rediagCounter++;
-
-					//set flags if firstDiag
-					if( firstDiag ) {
-						numEigvectsu = _3N;
-						*eigValP = blockDiag.eigVal[_3N - 1];
-
-						//first max eigenvalue in C, save original timestep for adaptive use
-						if( !checkpointUpdate ) {
-							app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
-							app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
-						}
-
-						validMaxEigv = true;
-						firstDiag = false;
-					}
-
-					//post diag minimize?
-					if( loops > 1 || postDiagonalizeMinimize ) {
-						if( app->eigenInfo.OpenMMMinimize ) {
-							break;
-						} else {
-							Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-
-							//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-							int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
-							app->eigenInfo.havePositionsChanged = true;
-
-							report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
-
-							// Break if termination condition is met
-							if( itrs <= 2 ) {
-								break;
-							}
-						}
-					}
-				}
+				FullDiagonalize();
 			} else {
-				//****Coarse method**************************************************************************//
-				// Process:  Finds isolated 'minimized' block (of residues) Hessians   [evaluateResidues]    //
-				//           Diagonalizes blocks to form block eigenvectors B          [findCoarseBlockEigs] //
-				//           Finds actual Hessian H (but coarse grained) then S=B^THB  [innerHessian]        //
-				//           Diagonalizes S to get eigenvectors Q, then approximate                          //
-				//           eigenvectors are the first 'm' columns of BQ.                                   //
-				//*******************************************************************************************//
-				report << debug( 2 ) << "Start coarse diagonalization." << endr;
-
-				int loops = 1;
-				if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
-					loops = mMaxRediagonalizations;
-				}
-				for( int iteration = 0; iteration < loops; iteration++ ) {
-					Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
-										  *Q , _3N, _rfM,
-										  blockCutoffDistance, eigenValueThresh, blockVectorCols,
-										  geometricfdof, numerichessians );
-
-					//Stats/diagnostics
-					rediagCounter++; hessianCounter++;
-					memory_Hessian = ( rHsn.memory_base + rHsn.memory_blocks ) * sizeof( Real ) / 1000000;
-					memory_eigenvector = blockDiag.memory_footprint * sizeof( Real ) / 1000000;
-
-					//set new max eigenvalue in C
-					app->eigenInfo.myNewCEigval = fabs( blockDiag.eigVal[_rfM] ); //safe as eigval set t length sz=_3N >= _rfM
-
-					//flag update to eigenvectors
-					*eigVecChangedP = true;
-
-					//set flags if firstDiag (firstDiag can now be coarse)
-					if( firstDiag ) {
-						//Number of eigenvectors in set, _rfM
-						numEigvectsu = _rfM;
-
-						//use 1000 for regression tests, set REGRESSION_T NE 0.
-						if( REGRESSION_T ) {
-							*eigValP = 1000;
-						} else {
-
-							//maximum from blocks
-							*eigValP = max_eigenvalue;
-						}
-
-						//first max eigenvalue in C, save original timestep for adaptive use
-						if( !checkpointUpdate ) {
-							app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
-							app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
-						}
-
-						//flags
-						validMaxEigv = true;
-						firstDiag = false;
-					}
-
-					report << debug( 2 ) << "Coarse diagonalization complete. Maximum eigenvalue = " << max_eigenvalue << "." << endr;
-
-					//post diag minimize?
-					if( loops > 1 || postDiagonalizeMinimize ) {
-						if( app->eigenInfo.OpenMMMinimize ) {
-							break;
-						} else {
-							Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
-
-							//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-							int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
-							app->eigenInfo.havePositionsChanged = true;
-
-							report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
-
-							// Break if termination condition is met
-							if( itrs <= 2 ) {
-								break;
-							}
-						}
-					}
-
-				}
-
-				//adaptive timestep?
-				const double newCEig = app->eigenInfo.myNewCEigval;
-				const double oldCEig = app->eigenInfo.myOrigCEigval;
-				const double baseTimestep = app->eigenInfo.myOrigTimestep;
-
-				if( adaptiveTimestep && baseTimestep > 0 && newCEig > 0 && newCEig != oldCEig ) {
-
-					const double tRatio = sqrt( oldCEig / newCEig );
-
-					const double oldTimestep = bottom()->getTimestep();
-
-					if( baseTimestep *tRatio <= baseTimestep ) {
-						( ( STSIntegrator * )bottom() )->setTimestep( baseTimestep * tRatio );
-
-						report << debug( 1 ) << "Adaptive time-step change, base " << baseTimestep <<
-							   ", new " << baseTimestep *tRatio << ", old " << oldTimestep << "." << endr;
-					}
-
-				}
-
-				//sift current velocities/forces
-				myNextNormalMode->subSpaceSift( &app->velocities, myForces );
-
-				//clear re-diag flag
-				app->eigenInfo.reDiagonalize = false;
-
+				CoarseDiagonalize();
 			}
 		}
 
@@ -420,6 +228,205 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 		newDiag = false;
 	}
 
+}
+
+void NormalModeDiagonalize::FullDiagonalize() {
+	//****Full method**********************************************************************//
+	// Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
+	//*************************************************************************************//
+	report << debug( 2 ) << "Start diagonalization." << endr;
+	
+	int loops = 1;
+	if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
+		loops = mMaxRediagonalizations;
+	}
+	for( int iteration = 0; iteration < loops; iteration++ ) {
+		//Find Hessians
+		blockDiag.hessianTime.start(); //time Hessian
+		rHsn.clear();
+		rHsn.evaluate( &app->positions, app->topology, true ); //mass re-weighted hessian, used to pass diagAt, but this defeats the multiple diagonalize
+		report << debug( 2 ) << "Hessian found." << endr;
+		
+		//stop timer
+		blockDiag.hessianTime.stop();
+		hessianCounter++;
+		
+		//Diagonalize
+		blockDiag.rediagTime.start();
+		int numeFound;
+		int info = blockDiag.diagHessian( *Q , blockDiag.eigVal, rHsn.hessM, _3N, numeFound );
+		
+		if( info ) {
+			report << error << "Full diagonalization failed." << endr;
+		}
+		
+		//find number of -ve eigs
+		int ii;
+		for( ii = 0; ii < _3N - 3; ii++ ) {
+			if( blockDiag.eigVal[ii + 3] > 0 ) {
+				break;
+			}
+		}
+		
+		report << debug( 1 ) << "[NormalModeDiagonalize::run] Full diagonalize. No. negative eigenvales = " << ii << endr;
+		
+		for( int i = 0; i < _3N; i++ ) {
+			blockDiag.eigIndx[i] = i;
+		}
+		
+		blockDiag.absSort( *Q , blockDiag.eigVal, blockDiag.eigIndx, _3N );
+		
+		//set new max eigenvalue in C
+		app->eigenInfo.myNewCEigval = fabs( blockDiag.eigVal[_rfM] ); //safe as eigval set t length sz=_3N >= _rfM
+		
+		//flag update to eigenvectors
+		*eigVecChangedP = true;
+		
+		blockDiag.rediagTime.stop();
+		rediagCounter++;
+		
+		//set flags if firstDiag
+		if( firstDiag ) {
+			numEigvectsu = _3N;
+			*eigValP = blockDiag.eigVal[_3N - 1];
+			
+			//first max eigenvalue in C, save original timestep for adaptive use
+			if( !checkpointUpdate ) {
+				app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
+				app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
+			}
+			
+			validMaxEigv = true;
+			firstDiag = false;
+		}
+		
+		//post diag minimize?
+		if( loops > 1 || postDiagonalizeMinimize ) {
+			if( app->eigenInfo.OpenMMMinimize ) {
+				break;
+			} else {
+				Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+				
+				//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
+				int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+				app->eigenInfo.havePositionsChanged = true;
+				
+				report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
+				
+				// Break if termination condition is met
+				if( itrs <= 2 ) {
+					break;
+				}
+			}
+		}
+	}
+}
+
+void NormalModeDiagonalize::CoarseDiagonalize(){
+	//****Coarse method**************************************************************************//
+	// Process:  Finds isolated 'minimized' block (of residues) Hessians   [evaluateResidues]    //
+	//           Diagonalizes blocks to form block eigenvectors B          [findCoarseBlockEigs] //
+	//           Finds actual Hessian H (but coarse grained) then S=B^THB  [innerHessian]        //
+	//           Diagonalizes S to get eigenvectors Q, then approximate                          //
+	//           eigenvectors are the first 'm' columns of BQ.                                   //
+	//*******************************************************************************************//
+	report << debug( 2 ) << "Start coarse diagonalization." << endr;
+	
+	int loops = 1;
+	if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
+		loops = mMaxRediagonalizations;
+	}
+	for( int iteration = 0; iteration < loops; iteration++ ) {
+		Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
+														 *Q , _3N, _rfM,
+														 blockCutoffDistance, eigenValueThresh, blockVectorCols,
+														 geometricfdof, numerichessians );
+		
+		//Stats/diagnostics
+		rediagCounter++; hessianCounter++;
+		memory_Hessian = ( rHsn.memory_base + rHsn.memory_blocks ) * sizeof( Real ) / 1000000;
+		memory_eigenvector = blockDiag.memory_footprint * sizeof( Real ) / 1000000;
+		
+		//set new max eigenvalue in C
+		app->eigenInfo.myNewCEigval = fabs( blockDiag.eigVal[_rfM] ); //safe as eigval set t length sz=_3N >= _rfM
+		
+		//flag update to eigenvectors
+		*eigVecChangedP = true;
+		
+		//set flags if firstDiag (firstDiag can now be coarse)
+		if( firstDiag ) {
+			//Number of eigenvectors in set, _rfM
+			numEigvectsu = _rfM;
+			
+			//use 1000 for regression tests, set REGRESSION_T NE 0.
+			if( REGRESSION_T ) {
+				*eigValP = 1000;
+			} else {
+				
+				//maximum from blocks
+				*eigValP = max_eigenvalue;
+			}
+			
+			//first max eigenvalue in C, save original timestep for adaptive use
+			if( !checkpointUpdate ) {
+				app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
+				app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
+			}
+			
+			//flags
+			validMaxEigv = true;
+			firstDiag = false;
+		}
+		
+		report << debug( 2 ) << "Coarse diagonalization complete. Maximum eigenvalue = " << max_eigenvalue << "." << endr;
+		
+		//post diag minimize?
+		if( loops > 1 || postDiagonalizeMinimize ) {
+			if( app->eigenInfo.OpenMMMinimize ) {
+				break;
+			} else {
+				Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+				
+				//do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
+				int itrs = minimizer( minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology );
+				app->eigenInfo.havePositionsChanged = true;
+				
+				report << debug( 2 ) << "[NormalModeDiagonalize::run] iterations = " << itrs << " force calcs = " << forceCalc << endr;
+				
+				// Break if termination condition is met
+				if( itrs <= 2 ) {
+					break;
+				}
+			}
+		}
+		
+	}
+	
+	//adaptive timestep?
+	const double newCEig = app->eigenInfo.myNewCEigval;
+	const double oldCEig = app->eigenInfo.myOrigCEigval;
+	const double baseTimestep = app->eigenInfo.myOrigTimestep;
+	
+	if( adaptiveTimestep && baseTimestep > 0 && newCEig > 0 && newCEig != oldCEig ) {
+		
+		const double tRatio = sqrt( oldCEig / newCEig );
+		
+		const double oldTimestep = bottom()->getTimestep();
+		
+		if( baseTimestep *tRatio <= baseTimestep ) {
+			( ( STSIntegrator * )bottom() )->setTimestep( baseTimestep * tRatio );
+			
+			report << debug( 1 ) << "Adaptive time-step change, base " << baseTimestep <<
+			", new " << baseTimestep *tRatio << ", old " << oldTimestep << "." << endr;
+		}
+		
+	}
+	
+	//sift current velocities/forces
+	myNextNormalMode->subSpaceSift( &app->velocities, myForces );
+	
+	//clear re-diag flag
+	app->eigenInfo.reDiagonalize = false;
 }
 
 //********************************************************************************************************************************************
