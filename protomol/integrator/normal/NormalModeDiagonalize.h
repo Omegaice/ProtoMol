@@ -49,8 +49,8 @@ namespace ProtoMol {
 
 		private:
 			bool Minimize();
-			void FullDiagonalize();
-			void CoarseDiagonalize();
+			void FullDiagonalize( const unsigned int loops );
+			void CoarseDiagonalize( const unsigned int loops );
 		public:
 
 			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,7 @@ namespace ProtoMol {
 			BlockHessianDiagonalize blockDiag;
 
 			bool firstDiag, fullDiag, removeRand;
-			int rediagCount, nextRediag;
+			int rediagCount;
 			bool validMaxEigv;
 			NormalModeUtilities *myNextNormalMode, *myLastNormalMode;
 			Real rediagHysteresis;
