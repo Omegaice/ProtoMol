@@ -162,6 +162,8 @@ void NormalModeDiagonalize::initialize( ProtoMolApp *app ) {
 	}
 
 	newDiag = false;
+	
+	nextRediag = app->currentStep;
 
 	//timers/counters for diagnostics
 	hessianCounter = rediagCounter = rediagUpdateCounter = 0;
@@ -172,23 +174,31 @@ void NormalModeDiagonalize::initialize( ProtoMolApp *app ) {
 //*************************************************************************************
 
 void NormalModeDiagonalize::run( int numTimesteps ) {
-	if( numTimesteps < 1 ) {
-		return;
-	}
-
-	//main loop
+	if( numTimesteps < 1 )  return;
+	
+	const int finalStep = app->currentStep + numTimesteps;
+	
 	app->energies.clear();
-	for( int i = 0; i < numTimesteps; ) {
-		std::cout << "Diagonalize: " << app->currentStep << std::endl;
-		if( firstDiag || app->eigenInfo.reDiagonalize || ( app->currentStep % rediagCount == 0 ) ){
+	while( app->currentStep < finalStep ){
+		if( !firstDiag ){
+			const int toRediag = nextRediag - app->currentStep;
+			const int toExecute = std::min( toRediag, numTimesteps );
+			
+			app->currentStep += toExecute;
+			myNextIntegrator->run( toExecute );
+		}
+		
+		if( firstDiag || app->eigenInfo.reDiagonalize || app->currentStep >= nextRediag ){
+			std::cout << "Diagonalize: " << app->currentStep << std::endl;
+			
 			newDiag = true;
-
+			
 			report << debug( 2 ) << "[NormalModeDiagonalize::run] Finding diagonalized Hessian." << endr;
-
+			
 			if( !( checkpointUpdate && firstDiag ) ) {
 				//save positions where diagonalized for checkpoint save
 				diagAt = app->positions;
-
+				
 				//remove last random perturbation?
 				if( removeRand ) {
 					diagAt.intoSubtract( myLastNormalMode->gaussRandCoord1 );
@@ -210,15 +220,14 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 			} else {
 				CoarseDiagonalize( loops );
 			}
+			
+			nextRediag = app->currentStep + rediagCount;
 		}
-
-		myNextIntegrator->run( numTimesteps );
-		i += numTimesteps;
-
-		//remove diagonalization flags after inner integrator call
+		
 		newDiag = false;
 	}
-
+	
+	app->currentStep -= numTimesteps;
 }
 
 bool NormalModeDiagonalize::Minimize(){

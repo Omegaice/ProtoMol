@@ -102,7 +102,7 @@ namespace ProtoMol {
 			BlockHessianDiagonalize blockDiag;
 
 			bool firstDiag, fullDiag, removeRand;
-			int rediagCount;
+			int rediagCount, nextRediag;
 			bool validMaxEigv;
 			NormalModeUtilities *myNextNormalMode, *myLastNormalMode;
 			Real rediagHysteresis;
