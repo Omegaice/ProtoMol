@@ -246,7 +246,7 @@ bool NormalModeDiagonalize::Minimize(){
 		}
 	}
 	
-	return true;
+	return false;
 }
 
 void NormalModeDiagonalize::FullDiagonalize( const unsigned int loops ) {
