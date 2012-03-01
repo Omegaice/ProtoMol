@@ -254,7 +254,7 @@ void NormalModeDiagonalize::FullDiagonalize( const unsigned int loops ) {
 	// Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
 	//*************************************************************************************//
 	report << debug( 2 ) << "Start full diagonalization." << endr;
-	for( int iteration = 0; iteration < loops; iteration++ ) {
+	for( unsigned iteration = 0; iteration < loops; iteration++ ) {
 		//Find Hessians
 		blockDiag.hessianTime.start(); //time Hessian
 		rHsn.clear();
@@ -330,7 +330,7 @@ void NormalModeDiagonalize::CoarseDiagonalize( const unsigned int loops ){
 	//           eigenvectors are the first 'm' columns of BQ.                                   //
 	//*******************************************************************************************//
 	report << debug( 2 ) << "Start coarse diagonalization." << endr;
-	for( int iteration = 0; iteration < loops; iteration++ ) {
+	for( unsigned iteration = 0; iteration < loops; iteration++ ) {
 		Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
 														 *Q , _3N, _rfM,
 														 blockCutoffDistance, eigenValueThresh, blockVectorCols,
