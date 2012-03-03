@@ -189,7 +189,9 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 		//Diagonalization if repetitive, first for forced
 		if( ( rediagCount && currentStepNum >= nextRediag ) || firstDiag || app->eigenInfo.reDiagonalize ) {
 
-			nextRediag += rediagCount;
+			if( ( rediagCount && currentStepNum >= nextRediag ) || firstDiag ){
+				nextRediag += rediagCount;
+			}
 
 			newDiag = true;
 
