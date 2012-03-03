@@ -215,6 +215,32 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 			} else {
 				CoarseDiagonalize();
 			}
+			
+			//adaptive timestep?
+			const double newCEig = app->eigenInfo.myNewCEigval;
+			const double oldCEig = app->eigenInfo.myOrigCEigval;
+			const double baseTimestep = app->eigenInfo.myOrigTimestep;
+			
+			if( adaptiveTimestep && baseTimestep > 0 && newCEig > 0 && newCEig != oldCEig ) {
+				
+				const double tRatio = sqrt( oldCEig / newCEig );
+				
+				const double oldTimestep = bottom()->getTimestep();
+				
+				if( baseTimestep *tRatio <= baseTimestep ) {
+					( ( STSIntegrator * )bottom() )->setTimestep( baseTimestep * tRatio );
+					
+					report << debug( 1 ) << "Adaptive time-step change, base " << baseTimestep <<
+					", new " << baseTimestep *tRatio << ", old " << oldTimestep << "." << endr;
+				}
+				
+			}
+			
+			//sift current velocities/forces
+			myNextNormalMode->subSpaceSift( &app->velocities, myForces );
+			
+			//clear re-diag flag
+			app->eigenInfo.reDiagonalize = false;
 		}
 
 		//run integrator
@@ -389,32 +415,6 @@ void NormalModeDiagonalize::CoarseDiagonalize(){
 			if( Minimize() ) break;
 		}
 	}
-	
-	//adaptive timestep?
-	const double newCEig = app->eigenInfo.myNewCEigval;
-	const double oldCEig = app->eigenInfo.myOrigCEigval;
-	const double baseTimestep = app->eigenInfo.myOrigTimestep;
-	
-	if( adaptiveTimestep && baseTimestep > 0 && newCEig > 0 && newCEig != oldCEig ) {
-		
-		const double tRatio = sqrt( oldCEig / newCEig );
-		
-		const double oldTimestep = bottom()->getTimestep();
-		
-		if( baseTimestep *tRatio <= baseTimestep ) {
-			( ( STSIntegrator * )bottom() )->setTimestep( baseTimestep * tRatio );
-			
-			report << debug( 1 ) << "Adaptive time-step change, base " << baseTimestep <<
-			", new " << baseTimestep *tRatio << ", old " << oldTimestep << "." << endr;
-		}
-		
-	}
-	
-	//sift current velocities/forces
-	myNextNormalMode->subSpaceSift( &app->velocities, myForces );
-	
-	//clear re-diag flag
-	app->eigenInfo.reDiagonalize = false;
 }
 
 //********************************************************************************************************************************************
