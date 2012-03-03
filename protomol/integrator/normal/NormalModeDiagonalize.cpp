@@ -23,7 +23,7 @@ const string NormalModeDiagonalize::keyword( "NormalModeDiagonalize" );
 
 NormalModeDiagonalize::NormalModeDiagonalize() :
 	MTSIntegrator(), NormalModeUtilities(), firstDiag( true ),
-	fullDiag( 0 ), removeRand( 0 ), rediagCount( 0 ),
+	fullDiag( 0 ), removeRand( 0 ), rediagCount( 0 ), nextRediag( 0 ),
 	validMaxEigv( 0 ), myNextNormalMode( 0 ), myLastNormalMode( 0 ),
 	rediagHysteresis( 0 ), hessianCounter( 0 ), rediagCounter( 0 ),
 	rediagUpdateCounter( 0 ), eigenValueThresh( 0 ), blockCutoffDistance( 0 ),
@@ -44,7 +44,7 @@ NormalModeDiagonalize( int cycles, int redi, bool fDiag, bool rRand,
 					   StandardIntegrator *nextIntegrator ) :
 	MTSIntegrator( cycles, overloadedForces, nextIntegrator ),
 	NormalModeUtilities( 1, 1, 91.0, 1234, 300.0 ), firstDiag( true ),
-	fullDiag( fDiag ), removeRand( rRand ), rediagCount( redi ),
+	fullDiag( fDiag ), removeRand( rRand ), rediagCount( redi ), nextRediag( 0 ),
 	validMaxEigv( 0 ), myNextNormalMode( 0 ), myLastNormalMode( 0 ),
 	rediagHysteresis( redhy ), hessianCounter( 0 ), rediagCounter( 0 ),
 	rediagUpdateCounter( 0 ), eigenValueThresh( eTh ),
@@ -154,6 +154,9 @@ void NormalModeDiagonalize::initialize( ProtoMolApp *app ) {
 	//Diagnostics
 	memory_Hessian = memory_eigenvector = 0;
 
+	//setup rediag counter in case valid
+	nextRediag = app->currentStep;//( int )( app->topology->time / getTimestep() ); //rediag first time
+
 	//save positions where diagonalized for checkpoint save (assume I.C. if file)
 	if( !checkpointUpdate ) {
 		diagAt = app->positions;
@@ -162,8 +165,6 @@ void NormalModeDiagonalize::initialize( ProtoMolApp *app ) {
 	}
 
 	newDiag = false;
-	
-	nextRediag = app->currentStep;
 
 	//timers/counters for diagnostics
 	hessianCounter = rediagCounter = rediagUpdateCounter = 0;
@@ -174,31 +175,30 @@ void NormalModeDiagonalize::initialize( ProtoMolApp *app ) {
 //*************************************************************************************
 
 void NormalModeDiagonalize::run( int numTimesteps ) {
-	if( numTimesteps < 1 )  return;
-	
-	const int finalStep = app->currentStep + numTimesteps;
-	
+	if( numTimesteps < 1 ) {
+		return;
+	}
+
+	//Current step at start
+	int currentStepNum = app->currentStep;
+
+	//main loop
 	app->energies.clear();
-	while( app->currentStep < finalStep ){
-		if( !firstDiag ){
-			const int toRediag = nextRediag - app->currentStep;
-			const int toExecute = std::min( toRediag, numTimesteps );
-			
-			app->currentStep += toExecute;
-			myNextIntegrator->run( toExecute );
-		}
-		
-		if( firstDiag || app->eigenInfo.reDiagonalize || app->currentStep >= nextRediag ){
-			std::cout << "Diagonalize: " << app->currentStep << std::endl;
-			
+	for( int i = 0; i < numTimesteps; ) {
+
+		//Diagonalization if repetitive, first for forced
+		if( ( rediagCount && currentStepNum >= nextRediag ) || firstDiag || app->eigenInfo.reDiagonalize ) {
+
+			nextRediag += rediagCount;
+
 			newDiag = true;
-			
+
 			report << debug( 2 ) << "[NormalModeDiagonalize::run] Finding diagonalized Hessian." << endr;
-			
+
 			if( !( checkpointUpdate && firstDiag ) ) {
 				//save positions where diagonalized for checkpoint save
 				diagAt = app->positions;
-				
+
 				//remove last random perturbation?
 				if( removeRand ) {
 					diagAt.intoSubtract( myLastNormalMode->gaussRandCoord1 );
@@ -208,26 +208,26 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 					}
 				}
 			}
-			
-			unsigned int loops = 1;
-			if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
-				loops = mMaxRediagonalizations;
-			}
-			
+
 			//Diagonalize
 			if( fullDiag ) {
-				FullDiagonalize( loops );
+				FullDiagonalize();
 			} else {
-				CoarseDiagonalize( loops );
+				CoarseDiagonalize();
 			}
-			
-			nextRediag = app->currentStep + rediagCount;
 		}
-		
+
+		//run integrator
+		int stepsToRun = min( nextRediag - currentStepNum, numTimesteps - i );
+
+		myNextIntegrator->run( stepsToRun );
+		i += stepsToRun;
+		currentStepNum += stepsToRun;
+
+		//remove diagonalization flags after inner integrator call
 		newDiag = false;
 	}
-	
-	app->currentStep -= numTimesteps;
+
 }
 
 bool NormalModeDiagonalize::Minimize(){
@@ -246,15 +246,20 @@ bool NormalModeDiagonalize::Minimize(){
 		}
 	}
 	
-	return false;
+	return true;
 }
 
-void NormalModeDiagonalize::FullDiagonalize( const unsigned int loops ) {
+void NormalModeDiagonalize::FullDiagonalize() {
 	//****Full method**********************************************************************//
 	// Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
 	//*************************************************************************************//
-	report << debug( 2 ) << "Start full diagonalization." << endr;
-	for( unsigned iteration = 0; iteration < loops; iteration++ ) {
+	report << debug( 2 ) << "Start diagonalization." << endr;
+	
+	int loops = 1;
+	if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
+		loops = mMaxRediagonalizations;
+	}
+	for( int iteration = 0; iteration < loops; iteration++ ) {
 		//Find Hessians
 		blockDiag.hessianTime.start(); //time Hessian
 		rHsn.clear();
@@ -321,7 +326,7 @@ void NormalModeDiagonalize::FullDiagonalize( const unsigned int loops ) {
 	}
 }
 
-void NormalModeDiagonalize::CoarseDiagonalize( const unsigned int loops ){
+void NormalModeDiagonalize::CoarseDiagonalize(){
 	//****Coarse method**************************************************************************//
 	// Process:  Finds isolated 'minimized' block (of residues) Hessians   [evaluateResidues]    //
 	//           Diagonalizes blocks to form block eigenvectors B          [findCoarseBlockEigs] //
@@ -330,7 +335,12 @@ void NormalModeDiagonalize::CoarseDiagonalize( const unsigned int loops ){
 	//           eigenvectors are the first 'm' columns of BQ.                                   //
 	//*******************************************************************************************//
 	report << debug( 2 ) << "Start coarse diagonalization." << endr;
-	for( unsigned iteration = 0; iteration < loops; iteration++ ) {
+	
+	int loops = 1;
+	if( app->eigenInfo.reDiagonalize || mShouldDoMultipleRediagonalization ) {
+		loops = mMaxRediagonalizations;
+	}
+	for( int iteration = 0; iteration < loops; iteration++ ) {
 		Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
 														 *Q , _3N, _rfM,
 														 blockCutoffDistance, eigenValueThresh, blockVectorCols,

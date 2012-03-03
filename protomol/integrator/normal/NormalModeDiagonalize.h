@@ -49,8 +49,8 @@ namespace ProtoMol {
 
 		private:
 			bool Minimize();
-			void FullDiagonalize( const unsigned int loops );
-			void CoarseDiagonalize( const unsigned int loops );
+			void FullDiagonalize();
+			void CoarseDiagonalize();
 		public:
 
 			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
