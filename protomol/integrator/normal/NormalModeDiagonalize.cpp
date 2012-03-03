@@ -196,16 +196,9 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 			report << debug( 2 ) << "[NormalModeDiagonalize::run] Finding diagonalized Hessian." << endr;
 
 			if( !( checkpointUpdate && firstDiag ) ) {
-				//save positions where diagonalized for checkpoint save
-				diagAt = app->positions;
-
 				//remove last random perturbation?
 				if( removeRand ) {
-					diagAt.intoSubtract( myLastNormalMode->gaussRandCoord1 );
-					//if coarse then we need to use the actual positions in case numeric S
-					if( !fullDiag ) {
-						app->positions.intoSubtract( myLastNormalMode->gaussRandCoord1 );
-					}
+					app->positions.intoSubtract( myLastNormalMode->gaussRandCoord1 );
 				}
 			}
 
@@ -214,6 +207,14 @@ void NormalModeDiagonalize::run( int numTimesteps ) {
 				FullDiagonalize();
 			} else {
 				CoarseDiagonalize();
+			}
+			
+			if( !( checkpointUpdate && firstDiag ) ) {
+				diagAt = app->positions;
+				//remove last random perturbation?
+				if( removeRand && !postDiagonalizeMinimize && fullDiag ) {
+					app->positions.intoAdd( myLastNormalMode->gaussRandCoord1 );
+				}
 			}
 			
 			//adaptive timestep?
