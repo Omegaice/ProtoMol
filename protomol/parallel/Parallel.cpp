@@ -137,7 +137,7 @@ void allReduce(T *begin, T *end) {
 
 template<bool exludeMaster, bool dobarrier>
 void allReduce(Vector3DBlock *coords) {
-	const unsigned int endSize = ( coords->vec.size() * 3 ) - 1;
+	const unsigned int endSize = ( coords->vec.size() * 3 );
   allReduce<exludeMaster, dobarrier>(&(coords->c[0]),
                                      &(coords->c[endSize]));
 }
@@ -171,7 +171,7 @@ void broadcast(T *begin, T *end) {
 
 template<bool exludeMaster, bool dobarrier>
 void broadcast(Vector3DBlock *coords) {
-	const unsigned int endSize = ( coords->vec.size() * 3 ) - 1;
+	const unsigned int endSize = ( coords->vec.size() * 3 );
 	broadcast<exludeMaster, dobarrier>(&(coords->c[0]),
 									   &(coords->c[endSize]) );
 }
