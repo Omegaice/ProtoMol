@@ -29,6 +29,8 @@
 
 #include <protomol/output/OutputCollection.h>
 
+#include <protomol/parallel/Parallel.h>
+
 #include <iomanip>
 #ifdef HAVE_PACKAGE_H
 #include <protomol/package.h>
@@ -61,37 +63,39 @@ ProtoMolApp::~ProtoMolApp() {}
 
 
 void ProtoMolApp::splash(ostream &stream) {
-  const int w = 16;
-  stream
-    << headerRow("ProtoMol") << endl
-    << setw(w) << "Description: ";
-  fillFormat(stream, "A rapid PROTOtyping MOLecular dynamics object-oriented "
-             "component based framework.", w, w);
-  stream
+	if( Parallel::iAmMaster() ){
+		const int w = 16;
+		stream
+		<< headerRow("ProtoMol") << endl
+		<< setw(w) << "Description: ";
+		fillFormat(stream, "A rapid PROTOtyping MOLecular dynamics object-oriented "
+				 "component based framework.", w, w);
+		stream
 #ifdef HAVE_PACKAGE_H
-    << setw(w) << "Version: " << PACKAGE_VERSION << endl
-    << setw(w) << "SVN revision: " << PACKAGE_REVISION << endl
-    << setw(w) << "Repository: " << PACKAGE_SOURCE_REPO << endl
-    << setw(w) << "Homepage: " << PACKAGE_HOMEPAGE << endl
-    << setw(w) << "Report bugs to: " << PACKAGE_BUGREPORT << endl
-    << setw(w) << "Compiler: " << PACKAGE_COMPILER << " "
-    << PACKAGE_COMPILER_VERSION << endl
-    << setw(w) << "Flags: " << PACKAGE_COMPILER_FLAGS << endl
-    << setw(w) << "Extra libs: " << PACKAGE_COMPILER_LIBS << endl
-    << setw(w) << "Built by: " << PACKAGE_BUILT_BY << endl
-    << setw(w) << "Build platform: " << PACKAGE_PLATFORM << endl
+		<< setw(w) << "Version: " << PACKAGE_VERSION << endl
+		<< setw(w) << "SVN revision: " << PACKAGE_REVISION << endl
+		<< setw(w) << "Repository: " << PACKAGE_SOURCE_REPO << endl
+		<< setw(w) << "Homepage: " << PACKAGE_HOMEPAGE << endl
+		<< setw(w) << "Report bugs to: " << PACKAGE_BUGREPORT << endl
+		<< setw(w) << "Compiler: " << PACKAGE_COMPILER << " "
+		<< PACKAGE_COMPILER_VERSION << endl
+		<< setw(w) << "Flags: " << PACKAGE_COMPILER_FLAGS << endl
+		<< setw(w) << "Extra libs: " << PACKAGE_COMPILER_LIBS << endl
+		<< setw(w) << "Built by: " << PACKAGE_BUILT_BY << endl
+		<< setw(w) << "Build platform: " << PACKAGE_PLATFORM << endl
 #endif // HAVE_PACKAGE_H
-    << setw(w) << "Build date: " <<  __DATE__ << ", " << __TIME__ << endl
+		<< setw(w) << "Build date: " <<  __DATE__ << ", " << __TIME__ << endl
 #ifdef HAVE_LIBFAH
-    << setw(w) << "Checksumming: "
-    << "Enabled for Folding@Home file protection." << endl
+		<< setw(w) << "Checksumming: "
+		<< "Enabled for Folding@Home file protection." << endl
 #endif // HAVE_LIBFAH
 #ifdef HAVE_PACKAGE_H
-    << setw(w) << "Please cite: ";
-  fillFormat(stream, PACKAGE_CITE, w, w);
-  stream
+		<< setw(w) << "Please cite: ";
+		fillFormat(stream, PACKAGE_CITE, w, w);
+		stream
 #endif // HAVE_PACKAGE_H
-    << PROTOMOL_HR << endl;
+		<< PROTOMOL_HR << endl;
+	}
 }
 
 
@@ -105,6 +109,7 @@ void ProtoMolApp::load(const string &configfile) {
 
 
 bool ProtoMolApp::load(int argc, char *argv[]) {
+	Parallel::init( argc, argv );
   return load(vector<string>(argv, argv + argc));
 }
 
@@ -280,12 +285,14 @@ void ProtoMolApp::build() {
 
   // Create outputs
   // TODO if !Parallel::iAmMaster() turn off outputs
-  if (config[InputOutput::keyword])
-    outputs = outputFactory.makeCollection(&config);
-
-  else outputs = new OutputCollection; // Empty collection
-
-
+	if( !Parallel::iAmMaster() ){
+		outputs = new OutputCollection;
+	}else{
+		if (config[InputOutput::keyword]){
+			outputs = outputFactory.makeCollection(&config);
+		}
+	}
+  
   // Post build processing
   modManager->postBuild(this);
 
@@ -381,48 +388,52 @@ void ProtoMolApp::finalize() {
 
   TimerStatistic::timer[TimerStatistic::WALL].stop();
 
-  report
-    << allnodesserial << plain << "Timing: " << TimerStatistic() << "." << endr;
+	if( Parallel::iAmMaster() ){
+		report << plain << "Timing: " << TimerStatistic() << "." << endr;
+	}
+	
+	Parallel::finalize();
 }
 
 
 void ProtoMolApp::print(ostream &stream) {
+	if( Parallel::iAmMaster() ){
+		// Output
+		stream << headerRow("Outputs") << endl;
 
-  // Output
-  stream << headerRow("Outputs") << endl;
+		for (OutputCollection::const_iterator itr =
+			 const_cast<const OutputCollection *>(outputs)->begin();
+		   itr != const_cast<const OutputCollection*>(outputs)->end(); itr++) {
 
-  for (OutputCollection::const_iterator itr =
-         const_cast<const OutputCollection *>(outputs)->begin();
-       itr != const_cast<const OutputCollection*>(outputs)->end(); itr++) {
+		stream << "Output " << (*itr)->getId();
 
-    stream << "Output " << (*itr)->getId();
+		vector<Parameter> parameters;
+		(*itr)->getParameters(parameters);
+		for (unsigned int i = 0; i < parameters.size(); i++)
+		  stream << " " << parameters[i].value.getString();
+		stream << "." << endl;
+		}
 
-    vector<Parameter> parameters;
-    (*itr)->getParameters(parameters);
-    for (unsigned int i = 0; i < parameters.size(); i++)
-      stream << " " << parameters[i].value.getString();
-    stream << "." << endl;
-  }
-
-  if (!((bool)config[InputOutput::keyword]))
-    stream << "All output suppressed!" << endl;
-
-
-  // Integrator
-  stream << headerRow("Integrator") << endl;
-  vector<IntegratorDefinition> inter = integrator->getIntegratorDefinitionAll();
-  stream  << InputIntegrator::keyword << " {" << endl;
-
-  for (int i = inter.size() - 1; i >= 0; i--)
-    stream << Constant::PRINTINDENT << "Level "
-           << i << " " << inter[i].print() << endl;
-
-  stream << "}" << endl;
+		if (!((bool)config[InputOutput::keyword]))
+		stream << "All output suppressed!" << endl;
 
 
-  // Topology
-  stream << headerRow("Topology") << endl;
-  stream << topology->print(&positions) << endl;
+		// Integrator
+		stream << headerRow("Integrator") << endl;
+		vector<IntegratorDefinition> inter = integrator->getIntegratorDefinitionAll();
+		stream  << InputIntegrator::keyword << " {" << endl;
 
-  stream << PROTOMOL_HR << endl;
+		for (int i = inter.size() - 1; i >= 0; i--)
+		stream << Constant::PRINTINDENT << "Level "
+			   << i << " " << inter[i].print() << endl;
+
+		stream << "}" << endl;
+
+
+		// Topology
+		stream << headerRow("Topology") << endl;
+		stream << topology->print(&positions) << endl;
+
+		stream << PROTOMOL_HR << endl;
+	}
 }

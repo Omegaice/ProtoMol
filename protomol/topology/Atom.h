@@ -10,7 +10,7 @@ namespace ProtoMol {
   //________________________________________ Atom
 
   struct SCPISMAtomParameters {
-    SCPISMAtomParameters() {}
+	  SCPISMAtomParameters() {}
 
     //Pre force initialization
     void preForce(){

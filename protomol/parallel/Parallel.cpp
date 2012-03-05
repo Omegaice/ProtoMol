@@ -14,7 +14,6 @@
 #include <protomol/base/SystemUtilities.h>
 #include <protomol/base/TimerStatistic.h>
 #include <protomol/base/Report.h>
-#include <protomol/parallel/FFTComplex.h>
 
 using namespace std;
 using namespace ProtoMol::Report;
@@ -138,8 +137,9 @@ void allReduce(T *begin, T *end) {
 
 template<bool exludeMaster, bool dobarrier>
 void allReduce(Vector3DBlock *coords) {
-  allReduce<exludeMaster, dobarrier>(&(coords->begin()->x),
-                                     &(coords->end()->x));
+	const unsigned int endSize = ( coords->vec.size() * 3 ) - 1;
+  allReduce<exludeMaster, dobarrier>(&(coords->c[0]),
+                                     &(coords->c[endSize]));
 }
 
 template<bool exludeMaster, bool dobarrier>
@@ -171,8 +171,9 @@ void broadcast(T *begin, T *end) {
 
 template<bool exludeMaster, bool dobarrier>
 void broadcast(Vector3DBlock *coords) {
-  broadcast<exludeMaster, dobarrier>(&(coords->begin()->x),
-                                     &(coords->end()->x));
+	const unsigned int endSize = ( coords->vec.size() * 3 ) - 1;
+	broadcast<exludeMaster, dobarrier>(&(coords->c[0]),
+									   &(coords->c[endSize]) );
 }
 
 template<bool exludeMaster, bool dobarrier>
@@ -326,8 +327,7 @@ void Parallel::finalize() {
       delete[] myBuffer;
       myBuffer = NULL;
     }
-    FFTComplex::FFTComplexMPIFinalize();
-    MPI_Finalize();
+	MPI_Finalize();
 #endif
     myFinalized = true;
   }
@@ -378,8 +378,6 @@ void Parallel::setMode(ParallelType mode) {
   MPI_Group_free(&slaveGroup);
   if (slaveComm != MPI_COMM_NULL)
     MPI_Comm_rank(slaveComm, &myAvailableId);
-  FFTComplex::FFTComplexMPIInit(
-    mode == ParallelType::MASTERSLAVE ? myMasterId : -1);
 #endif
 #ifdef DEBUG_PARALLEL
   report << allnodesserial << "ParallelMode (" << getId << ") : "
