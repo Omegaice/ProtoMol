@@ -78,38 +78,45 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
 			if (Parallel::isParallel()){
 				(*currentForce)->parallelEvaluate(app->topology, &app->positions, forces, &app->energies);
 				
+        /*int rank = 0;
+        
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        
+        std::cout << " Force at " << rank << " slave " <<  Parallel::iAmSlave() << " is " << (*currentForce)->getId() << std::endl;*/
+        
+        Parallel::sync();
+        
 				if( (*currentForce)->getId().find( "BornRadii" ) != std::string::npos ){
-					/* Copy Radii
-					std::vector<double> radii( app->topology->atoms.size() );
+          
+          //std::cout << "Force in loop at " << rank << " is " << (*currentForce)->getId() << std::endl;
+
+					// Copy Radii
+					double *radii = new double[ app->topology->atoms.size() ];
 					for( unsigned int i = 0; i < app->topology->atoms.size(); i++ ){
-						radii[i] = app->topology->atoms[i].mySCPISM_A->bornRadius;
+						radii[i] = app->topology->atoms[i].mySCPISM_A->bornRadius - app->topology->atoms[i].mySCPISM_A->zeta;
 					}
 					
-					std::vector<double> radiiResult( app->topology->atoms.size() );
-					MPI_Allreduce(&radii[0], &radiiResult[0], app->topology->atoms.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+					double *radiiResult = new double[ app->topology->atoms.size() ];
+          
+					MPI_Allreduce(radii, radiiResult, app->topology->atoms.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 					
 					for( unsigned int i = 0; i < app->topology->atoms.size(); i++ ){
-						app->topology->atoms[i].mySCPISM_A->bornRadius = radiiResult[i];
-					}*/
+						app->topology->atoms[i].mySCPISM_A->bornRadius = radiiResult[i] + app->topology->atoms[i].mySCPISM_A->zeta;
+					}
+          
+          delete [] radii;
+          
+          delete [] radiiResult;
 										
-					/* Copy DS 
-					std::vector<double> ds( app->topology->atoms.size() );
-					for( unsigned int i = 0; i < app->topology->atoms.size(); i++ ){
-						ds[i] = app->topology->atoms[i].mySCPISM_A->D_s;
-					}
-					
-					std::vector<double> dsresult( app->topology->atoms.size() );
-					MPI_Allreduce(&ds[0], &dsresult[0], app->topology->atoms.size(), MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-					
-					for( unsigned int i = 0; i < app->topology->atoms.size(); i++ ){
-						app->topology->atoms[i].mySCPISM_A->D_s = dsresult[i];
-					}*/
 				}
+        
 			}else{
 				(*currentForce)->evaluate(app->topology, &app->positions, forces, &app->energies);
 			}
+
 		}
 		
+
 		TimerStatistic::timer[TimerStatistic::FORCES].stop();
 	}
 
