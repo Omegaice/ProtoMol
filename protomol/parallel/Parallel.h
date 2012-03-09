@@ -106,6 +106,12 @@ namespace ProtoMol {
      * nodes have the correct summed energies and forces locally.
      */
     static void reduce(ScalarStructure *energy, Vector3DBlock *coords);
+    
+    /**
+     * Does a reduction and a broadcast, such that all
+     * nodes have the correct summed Real array locally.
+     */
+    static void reduce(Real *begin, Real *end);
 
     /// Reduction over all nodes, exluding the master if running master-slave.
     static void reduceSlaves(Real *begin, Real *end);

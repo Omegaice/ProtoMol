@@ -671,6 +671,21 @@ void Parallel::reduce(ScalarStructure *, Vector3DBlock *) {}
 #endif
 
 #ifdef HAVE_MPI
+void Parallel::reduce(Real *begin, Real *end) {
+  TimerStatistic::timer[TimerStatistic::COMMUNICATION].start();
+  
+  //include master and use barrier
+  allReduce<false, true>(begin, end);
+  
+  TimerStatistic::timer[TimerStatistic::COMMUNICATION].stop();
+}
+
+#else
+void Parallel::reduce(Real *begin, Real *end) {}
+
+#endif
+
+#ifdef HAVE_MPI
 void Parallel::bcast(Vector3DBlock *coords) {
   if (!isParallel())
     return;

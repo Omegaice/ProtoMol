@@ -56,72 +56,113 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
 	if (mySystemForcesList.empty()) return;
 	app->topology->uncacheCellList();
 
-	Parallel::distribute(&app->energies, forces);
-
-	if (Parallel::isDynamic()) {
-		// Collecting the number of blocks of each force.
-		vector<int> blocks;
-		list<SystemForce *>::const_iterator currentForce;
-		for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce) {
-		  blocks.push_back((*currentForce)->numberOfBlocks(app->topology, &app->positions));
-		}
-
-		Parallel::resetNext(blocks);
-	}
-
-	if (Parallel::iAmSlave()) {
-		Parallel::resetNext();
-
+  //not parallel forces?~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if( !Parallel::isParallel() ){
+    
 		TimerStatistic::timer[TimerStatistic::FORCES].start();
 		list<SystemForce *>::const_iterator currentForce;
+    
 		for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
-			if (Parallel::isParallel()){
-				(*currentForce)->parallelEvaluate(app->topology, &app->positions, forces, &app->energies);
-				
-        /*int rank = 0;
-        
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        
-        std::cout << " Force at " << rank << " slave " <<  Parallel::iAmSlave() << " is " << (*currentForce)->getId() << std::endl;*/
-        
-        Parallel::sync();
-        
-				if( (*currentForce)->getId().find( "BornRadii" ) != std::string::npos ){
-          
-          //std::cout << "Force in loop at " << rank << " is " << (*currentForce)->getId() << std::endl;
+      (*currentForce)->evaluate(app->topology, &app->positions, forces, &app->energies);
+    }
+    
+    TimerStatistic::timer[TimerStatistic::FORCES].stop();
 
-					// Copy Radii
-					double *radii = new double[ app->topology->atoms.size() ];
-					for( unsigned int i = 0; i < app->topology->atoms.size(); i++ ){
-						radii[i] = app->topology->atoms[i].mySCPISM_A->bornRadius - app->topology->atoms[i].mySCPISM_A->zeta;
-					}
-					
-					double *radiiResult = new double[ app->topology->atoms.size() ];
+    //return;
+    
+  }else{
+    //parallel code here~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+    Parallel::distribute(&app->energies, forces);
+    
+    //find forces that require post-parallel processing
+    list<SystemForce *>::const_iterator startForce = mySystemForcesList.begin();
+    
+    list<SystemForce *>::const_iterator stopAtForce;
+    
+    //loop until all forces complete
+    while( startForce != mySystemForcesList.end() ){
+      
+      //int rank;
+      //MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
+      //std::cout << "Force iter " << (*startForce)->getId() << ", " << rank << std:: endl;
+      
+      bool doPostParallel = false;
+      
+      //find end of list OR next post-parallel process
+      for (stopAtForce = startForce; stopAtForce != mySystemForcesList.end(); ++stopAtForce) {
+      
+        if( (*stopAtForce)->getId().find( "BornRadii" ) != std::string::npos ){		
+          ++stopAtForce;
+          doPostParallel = true;
+          break;
+        }
+      }
+      
+      //
+      if (Parallel::isDynamic()) {
+        // Collecting the number of blocks of each force.
+        vector<int> blocks;
+        list<SystemForce *>::const_iterator currentForce;
+        for (currentForce = startForce; currentForce != stopAtForce; ++currentForce) {
+          blocks.push_back((*currentForce)->numberOfBlocks(app->topology, &app->positions));
+        }
+
+        Parallel::resetNext(blocks);
+      }
+
+      if (Parallel::iAmSlave()) {
+        Parallel::resetNext();
+
+        TimerStatistic::timer[TimerStatistic::FORCES].start();
+        list<SystemForce *>::const_iterator currentForce;
+        
+        for (currentForce = startForce; currentForce != stopAtForce; ++currentForce){
+
+          (*currentForce)->parallelEvaluate(app->topology, &app->positions, forces, &app->energies);
+				
+				}//do forces
+        
+        //local reduce here
+        if( doPostParallel ){
           
-					MPI_Allreduce(radii, radiiResult, app->topology->atoms.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-					
-					for( unsigned int i = 0; i < app->topology->atoms.size(); i++ ){
-						app->topology->atoms[i].mySCPISM_A->bornRadius = radiiResult[i] + app->topology->atoms[i].mySCPISM_A->zeta;
-					}
+          const unsigned int atomnumber = app->topology->atoms.size();
+          
+          // Copy Radii
+          Real *radii = new Real[ atomnumber ];
+
+          //put radii (minus zeta) into array
+          for( unsigned int i = 0; i < atomnumber; i++ ){
+            radii[i] = app->topology->atoms[i].mySCPISM_A->bornRadius - app->topology->atoms[i].mySCPISM_A->zeta;
+          }
+          
+          //sum accross nodes
+          Parallel::reduce(radii, radii + atomnumber); //reduceSlaves only?
+          
+          //put radii back and add in zeta
+          for( unsigned int i = 0; i < atomnumber; i++ ){
+            app->topology->atoms[i].mySCPISM_A->bornRadius = radii[i] + app->topology->atoms[i].mySCPISM_A->zeta;
+          }
           
           delete [] radii;
           
-          delete [] radiiResult;
-										
-				}
+        }
         
-			}else{
-				(*currentForce)->evaluate(app->topology, &app->positions, forces, &app->energies);
-			}
-
-		}
+        TimerStatistic::timer[TimerStatistic::FORCES].stop();
+        
+			}//if slave
+      
+      //point to next steps
+      startForce = stopAtForce;
+            
+		}//stop while
 		
+    Parallel::reduce(&app->energies, forces);
 
-		TimerStatistic::timer[TimerStatistic::FORCES].stop();
-	}
+	}//lel-serial test
 
-  Parallel::reduce(&app->energies, forces);
 }
+
 //____ Evaluate all system forces in this group.
 
 void ForceGroup::evaluateExtendedForces(ProtoMolApp *app, Vector3DBlock *forces) const {
