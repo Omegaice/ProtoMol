@@ -90,6 +90,10 @@ namespace ProtoMol {
                      myFromRange[i].second, myToRange[i].first,
                      myToRange[i].second);
     }
+    
+    virtual void postProcess() {
+      this->myOneAtomPair.postProcess();
+    }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // From class Force
