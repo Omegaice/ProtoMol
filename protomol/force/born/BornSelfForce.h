@@ -162,13 +162,13 @@ namespace ProtoMol {
 
       //**********************************************
       // Eq. (8)
-      if(topo->atoms[atom1].mySCPISM_A->energySum){
-        energy = 0.5 * q_i * q_i * rBornRadius * (rDs_r - 1);
-        topo->atoms[atom1].mySCPISM_A->energySum = false;
+      if(!(topo->atoms[atom1].mySCPISM_A->energySum)){
+        topo->atoms[atom1].mySCPISM_A->selfEnergy = 0.5 * q_i * q_i * rBornRadius * (rDs_r - 1);
+        topo->atoms[atom1].mySCPISM_A->energySum = 1;
       }
-      if(topo->atoms[atom2].mySCPISM_A->energySum){
-        energy += 0.5 * q_j * q_j * rBornRadius_j * (rDs_r_j - 1);
-        topo->atoms[atom2].mySCPISM_A->energySum = false;
+      if(!(topo->atoms[atom2].mySCPISM_A->energySum)){
+        topo->atoms[atom2].mySCPISM_A->selfEnergy = 0.5 * q_j * q_j * rBornRadius_j * (rDs_r_j - 1);
+        topo->atoms[atom2].mySCPISM_A->energySum = 1;
       }
       //**********************************************
     }
@@ -181,7 +181,17 @@ namespace ProtoMol {
       return (*energies)[ScalarStructure::COULOMB];
     }
     
-    static void postProcess() {
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+      
+      const unsigned int atoms = topo->atoms.size();
+      
+      Real totalSelfEnergy = 0.0;
+      
+      for( unsigned int i=0; i<atoms; i++){
+        totalSelfEnergy += topo->atoms[i].mySCPISM_A->selfEnergy;
+      }
+      
+      accumulateEnergy( energies, totalSelfEnergy );
       
     }
 

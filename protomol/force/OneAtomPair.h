@@ -121,7 +121,7 @@ namespace ProtoMol {
     }
     
     void postProcess(){
-		  nonbondedForceFunction.postProcess();
+		  nonbondedForceFunction.postProcess(realTopo, energies);
 	  }
 
     static OneAtomPair make(std::vector<Value> values) {

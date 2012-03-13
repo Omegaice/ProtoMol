@@ -119,7 +119,7 @@ namespace ProtoMol {
 
     static Real getEnergy(const ScalarStructure *energies) {return 0;}
 
-    static void postProcess() {
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
       
     }
     

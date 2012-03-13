@@ -15,8 +15,9 @@ namespace ProtoMol {
     //Pre force initialization
     void preForce(){
       bornRadius = zeta;
-      energySum = true;
+      energySum = 0;
       D_s = 0.0;
+      selfEnergy = 0.0;
     }
 
     Real sqrtalphaSCPISM;
@@ -26,7 +27,8 @@ namespace ProtoMol {
 
     Real bornRadius, D_s;
     Real zeta, eta;
-    bool energySum;
+    int energySum;
+    Real selfEnergy;
   };
 
   //add variables to store GBSA paramaters for each atom

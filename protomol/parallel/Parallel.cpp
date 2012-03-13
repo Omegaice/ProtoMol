@@ -135,6 +135,19 @@ void allReduce(T *begin, T *end) {
                 (exludeMaster ? slaveComm : MPI_COMM_WORLD));
 }
 
+//____ allReduceMax
+template<bool exludeMaster, bool dobarrier, typename T>
+void allReduceMax(T *begin, T *end) {
+  vector<T> tmp(end - begin);
+  copy(begin, end, tmp.begin());
+  if (dobarrier)
+    doBarrier<exludeMaster>();
+  MPI_Allreduce(&(tmp[0]), begin, (end - begin), MPITypeTraits<T>::datatype,
+                MPI_MAX,
+                (exludeMaster ? slaveComm : MPI_COMM_WORLD));
+}
+
+
 template<bool exludeMaster, bool dobarrier>
 void allReduce(Vector3DBlock *coords) {
 	const unsigned int endSize = ( coords->vec.size() * 3 );
@@ -684,6 +697,22 @@ void Parallel::reduce(Real *begin, Real *end) {
 void Parallel::reduce(Real *begin, Real *end) {}
 
 #endif
+
+#ifdef HAVE_MPI
+void Parallel::reduceMax(Real *begin, Real *end) {
+  TimerStatistic::timer[TimerStatistic::COMMUNICATION].start();
+  
+  //include master and use barrier
+  allReduceMax<false, true>(begin, end);
+  
+  TimerStatistic::timer[TimerStatistic::COMMUNICATION].stop();
+}
+
+#else
+void Parallel::reduce(Real *begin, Real *end) {}
+
+#endif
+
 
 #ifdef HAVE_MPI
 void Parallel::bcast(Vector3DBlock *coords) {

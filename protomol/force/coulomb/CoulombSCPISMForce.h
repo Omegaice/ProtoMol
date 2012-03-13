@@ -90,7 +90,7 @@ namespace ProtoMol {
       return (*energies)[ScalarStructure::COULOMB];
     }
     
-    static void postProcess() {
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
       
     }
 

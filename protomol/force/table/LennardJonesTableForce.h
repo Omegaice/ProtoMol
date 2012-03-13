@@ -98,7 +98,7 @@ namespace ProtoMol {
 
     static std::string getKeyword() {return "LennardJonesTable";}
       
-    static void postProcess(){
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies){
       
     }
 

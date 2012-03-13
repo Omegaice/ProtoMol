@@ -68,7 +68,7 @@ namespace ProtoMol {
       return (*energies)[ScalarStructure::LENNARDJONES];
     }
     
-    static void postProcess(){
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies){
 		  
 	  }
 
