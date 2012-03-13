@@ -166,6 +166,10 @@ namespace ProtoMol {
     static Real getEnergy(const ScalarStructure *energies) {
       return (*energies)[ScalarStructure::COULOMB];
     }
+    
+    static void postProcess() {
+      
+    }
 
     // Parsing
     static std::string getId() {return keyword;}

@@ -119,6 +119,10 @@ namespace ProtoMol {
       nonbondedForceFunction.getParameters(parameters);
       switchingFunction.getParameters(parameters);
     }
+    
+    void postProcess(){
+		  nonbondedForceFunction.postProcess();
+	  }
 
     static OneAtomPairNoExclusion make(std::vector<Value> values) {
       unsigned int n = TNonbondedForce::getParameterSize();

@@ -97,6 +97,10 @@ namespace ProtoMol {
     }
 
     static std::string getKeyword() {return "LennardJonesTable";}
+      
+    static void postProcess(){
+      
+    }
 
     // Parsing
     static std::string getId() {

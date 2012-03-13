@@ -175,6 +175,10 @@ namespace ProtoMol {
       nonbondedForceFunction.getParameters(parameters);
       switchingFunction.getParameters(parameters);
     }
+    
+    void postProcess(){
+		  nonbondedForceFunction.postProcess();
+	  }
 
     static unsigned int getParameterSize() {
       return TNonbondedForce::getParameterSize() +

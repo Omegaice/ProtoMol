@@ -44,6 +44,10 @@ namespace ProtoMol {
                                   const Vector3DBlock *positions,
                                   Vector3DBlock *forces,
                                   ScalarStructure *energies);
+    
+    virtual void postProcess() {
+		  
+	  }
 
     //    virtual void computeBorn();
     // Evaluate this force using the information given.

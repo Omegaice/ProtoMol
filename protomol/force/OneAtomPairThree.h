@@ -148,6 +148,12 @@ namespace ProtoMol {
       nonbondedForceFunctionThird.getParameters(parameters);
       switchingFunctionThird.getParameters(parameters);
     }
+    
+    void postProcess(){
+		  nonbondedForceFunctionFirst.postProcess();
+		  nonbondedForceFunctionSecond.postProcess();
+		  nonbondedForceFunctionThird.postProcess();
+	  }
 
     static unsigned int getParameterSize() {
       return

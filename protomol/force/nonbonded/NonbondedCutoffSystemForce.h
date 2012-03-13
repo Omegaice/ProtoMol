@@ -75,6 +75,10 @@ namespace ProtoMol {
         else this->enumerator.nextNewPair(l);
       }
     }
+                                                             
+    virtual void postProcess() {
+     this->myOneAtomPair.postProcess();
+    }
   };
 }
 #endif /* NONBONDEDCUTOFFSYSTEMFORCE_H */
