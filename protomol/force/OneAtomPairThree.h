@@ -154,6 +154,19 @@ namespace ProtoMol {
 		  nonbondedForceFunctionSecond.postProcess(realTopo, energies);
 		  nonbondedForceFunctionThird.postProcess(realTopo, energies);
 	  }
+    
+    void parallelPostProcess(){
+		  nonbondedForceFunctionFirst.parallelPostProcess(realTopo, energies);
+		  nonbondedForceFunctionSecond.parallelPostProcess(realTopo, energies);
+		  nonbondedForceFunctionThird.parallelPostProcess(realTopo, energies);
+	  }
+
+    bool doParallelPostProcess(){
+      return
+        nonbondedForceFunctionFirst.doParallelPostProcess()
+        || nonbondedForceFunctionSecond.doParallelPostProcess()
+          || nonbondedForceFunctionThird.doParallelPostProcess();
+	  }
 
     static unsigned int getParameterSize() {
       return

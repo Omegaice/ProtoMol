@@ -7,6 +7,7 @@
 #include <protomol/topology/ExclusionTable.h>
 #include <protomol/config/Parameter.h>
 #include <protomol/force/born/BornSwitch.h>
+#include <protomol/parallel/Parallel.h>
 #include <string>
 
 #include <protomol/base/Report.h>
@@ -195,6 +196,52 @@ namespace ProtoMol {
       
     }
 
+    static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
+      //find self energy count
+
+      const unsigned int atomnumber = topo->atoms.size();
+
+      // Copy self energy count
+      Real *selfcount = new Real[ atomnumber ];
+      
+      //put self energy count into array
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        selfcount[i] = (Real)topo->atoms[i].mySCPISM_A->energySum;
+      }
+      
+      //sum accross nodes
+      Parallel::reduce(selfcount, selfcount + atomnumber); //reduceSlaves only?
+      
+      //find self energies
+      // Copy self energies
+      Real *selfenergy = new Real[ atomnumber ];
+      
+      //put self energy into array
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        selfenergy[i] = topo->atoms[i].mySCPISM_A->selfEnergy;
+      }
+      
+      //sum accross nodes
+      Parallel::reduce(selfenergy, selfenergy + atomnumber); //reduceSlaves only?
+      
+      //put corrected self energy back
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        
+        if( selfcount[i] != 0.0 )
+          topo->atoms[i].mySCPISM_A->selfEnergy = selfenergy[i] / selfcount[i] / (Real)Parallel::getNum();
+      }
+      
+      delete [] selfenergy;
+      
+      delete [] selfcount;
+      
+    }
+
+    //do parallel post process?
+    static bool doParallelPostProcess() {
+      return true;
+    }
+    
     // Parsing
     static std::string getId() {return keyword;}
     static unsigned int getParameterSize() {return 2;}

@@ -95,6 +95,15 @@ namespace ProtoMol {
       
     }
 
+    static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
+      
+    }
+
+    //do parallel post process?
+    static bool doParallelPostProcess() {
+      return false;
+    }
+    
     // Parsing
     static std::string getId() {return keyword;}
     void getParameters(std::vector<Parameter> &) const;

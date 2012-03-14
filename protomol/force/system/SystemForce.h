@@ -49,6 +49,14 @@ namespace ProtoMol {
 		  
 	  }
 
+    virtual void parallelPostProcess(){
+      
+    }
+    
+    virtual bool doParallelPostProcess(){
+      return false;
+    }
+    
     //    virtual void computeBorn();
     // Evaluate this force using the information given.
     // This is a default methods for forces which do not have their

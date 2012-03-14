@@ -180,6 +180,15 @@ namespace ProtoMol {
 		  nonbondedForceFunction.postProcess(realTopo, energies);
 	  }
 
+    void parallelPostProcess(){
+		  nonbondedForceFunction.parallelPostProcess(realTopo, energies);
+	  }
+
+    bool doParallelPostProcess(){
+      return
+        nonbondedForceFunction.doParallelPostProcess();
+	  }
+    
     static unsigned int getParameterSize() {
       return TNonbondedForce::getParameterSize() +
         TSwitchingFunction::getParameterSize();

@@ -9,6 +9,7 @@
 #include <protomol/type/Vector3D.h>
 #include <protomol/config/Parameter.h>
 #include <protomol/force/born/BornSwitch.h>
+#include <protomol/parallel/Parallel.h>
 #include <string>
 
 #include <protomol/base/Report.h>
@@ -123,6 +124,35 @@ namespace ProtoMol {
       
     }
     
+    static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
+      
+      const unsigned int atomnumber = topo->atoms.size();
+      
+      // Copy Radii
+      Real *radii = new Real[ atomnumber ];
+      
+      //put radii (minus zeta) into array
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        radii[i] = topo->atoms[i].mySCPISM_A->bornRadius - topo->atoms[i].mySCPISM_A->zeta;
+      }
+      
+      //sum accross nodes
+      Parallel::reduce(radii, radii + atomnumber); //reduceSlaves only?
+      
+      //put radii back and add in zeta
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        topo->atoms[i].mySCPISM_A->bornRadius = radii[i] + topo->atoms[i].mySCPISM_A->zeta;
+      }
+      
+      delete [] radii;
+      
+    }
+    
+    //do parallel post process?
+    static bool doParallelPostProcess() {
+      return true;
+    }
+
     // Parsing
     static std::string getId() {return keyword;}
     void getParameters(std::vector<Parameter> &) const;

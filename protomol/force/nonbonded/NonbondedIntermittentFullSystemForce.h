@@ -62,7 +62,15 @@ namespace ProtoMol {
     virtual void postProcess() {
       this->myOneAtomPair.postProcess();
     }
+    
+    virtual void parallelPostProcess() {
+      this->myOneAtomPair.parallelPostProcess();
+    }
 
+    virtual bool doParallelPostProcess() {
+      return this->myOneAtomPair.doParallelPostProcess();
+    }
+    
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // From class Force
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

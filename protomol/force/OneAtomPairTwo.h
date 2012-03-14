@@ -136,6 +136,11 @@ namespace ProtoMol {
 		  nonbondedForceFunctionSecond.postProcess(realTopo, energies);
 	  }
 
+    void parallelPostProcess(){
+		  nonbondedForceFunctionFirst.parallelPostProcess(realTopo, energies);
+		  nonbondedForceFunctionSecond.parallelPostProcess(realTopo, energies);
+	  }
+
     static unsigned int getParameterSize() {
       return
         TNonbondedForceFirst::getParameterSize() +
@@ -144,6 +149,11 @@ namespace ProtoMol {
         TSwitchingFunctionSecond::getParameterSize();
     }
 
+    bool doParallelPostProcess(){
+      return
+        nonbondedForceFunctionFirst.doParallelPostProcess()
+          || nonbondedForceFunctionSecond.doParallelPostProcess();
+	  }
     static OneAtomPairTwo make(std::vector<Value> values) {
       unsigned int l1 = TNonbondedForceFirst::getParameterSize();
       unsigned int l2 = TSwitchingFunctionFirst::getParameterSize() + l1;

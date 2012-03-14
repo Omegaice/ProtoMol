@@ -124,6 +124,15 @@ namespace ProtoMol {
 		  nonbondedForceFunction.postProcess(realTopo, energies);
 	  }
 
+    void parallelPostProcess(){
+		  nonbondedForceFunction.parallelPostProcess(realTopo, energies);
+	  }
+
+    bool doParallelPostProcess(){
+      return
+        nonbondedForceFunction.doParallelPostProcess();
+	  }
+
     static OneAtomPair make(std::vector<Value> values) {
       unsigned int n = TNonbondedForce::getParameterSize();
 

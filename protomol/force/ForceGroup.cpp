@@ -66,15 +66,8 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
       (*currentForce)->evaluate(app->topology, &app->positions, forces, &app->energies);
     }
 
-    //post process
-    for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
-      (*currentForce)->postProcess();
-    }
-
     TimerStatistic::timer[TimerStatistic::FORCES].stop();
 
-    //return;
-    
   }else{
     //parallel code here~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
@@ -92,23 +85,18 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
       //MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
       //std::cout << "Force iter " << (*startForce)->getId() << ", " << rank << std:: endl;
       
-      int doPostParallel = 0;
+      bool doPostParallel = false;
       
       //find end of list OR next post-parallel process
       for (stopAtForce = startForce; stopAtForce != mySystemForcesList.end(); ++stopAtForce) {
       
-        if( (*stopAtForce)->getId().find( "BornRadii" ) != std::string::npos ){		
+        if( (*stopAtForce)->doParallelPostProcess() ){	
+          //std::cout << "Force stop = " << (*stopAtForce)->getId() << std::endl;
           ++stopAtForce;
-          doPostParallel = 1;
+          doPostParallel = true;
           break;
         }
         
-        if( (*stopAtForce)->getId().find( "BornSelf" ) != std::string::npos ){		
-          ++stopAtForce;
-          doPostParallel = 2;
-          break;
-        }
-
       }
       
       //
@@ -137,65 +125,7 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
         
         //local reduce here
         if( doPostParallel ){
-          
-          const unsigned int atomnumber = app->topology->atoms.size();
-          
-          if( doPostParallel == 1 ){
-            // Copy Radii
-            Real *radii = new Real[ atomnumber ];
-
-            //put radii (minus zeta) into array
-            for( unsigned int i = 0; i < atomnumber; i++ ){
-              radii[i] = app->topology->atoms[i].mySCPISM_A->bornRadius - app->topology->atoms[i].mySCPISM_A->zeta;
-            }
-            
-            //sum accross nodes
-            Parallel::reduce(radii, radii + atomnumber); //reduceSlaves only?
-            
-            //put radii back and add in zeta
-            for( unsigned int i = 0; i < atomnumber; i++ ){
-              app->topology->atoms[i].mySCPISM_A->bornRadius = radii[i] + app->topology->atoms[i].mySCPISM_A->zeta;
-            }
-            
-            delete [] radii;
-              
-          }else{
-          
-            //find self energy count
-            // Copy self energy count
-            Real *selfcount = new Real[ atomnumber ];
-            
-            //put self energy count into array
-            for( unsigned int i = 0; i < atomnumber; i++ ){
-              selfcount[i] = (Real)app->topology->atoms[i].mySCPISM_A->energySum;
-            }
-            
-            //sum accross nodes
-            Parallel::reduce(selfcount, selfcount + atomnumber); //reduceSlaves only?
-            
-            //find self energies
-            // Copy self energies
-            Real *selfenergy = new Real[ atomnumber ];
-            
-            //put self energy into array
-            for( unsigned int i = 0; i < atomnumber; i++ ){
-              selfenergy[i] = app->topology->atoms[i].mySCPISM_A->selfEnergy;
-            }
-            
-            //sum accross nodes
-            Parallel::reduce(selfenergy, selfenergy + atomnumber); //reduceSlaves only?
-            
-            //put corrected self energy back
-            for( unsigned int i = 0; i < atomnumber; i++ ){
-              
-              if( selfcount[i] != 0.0 )
-                app->topology->atoms[i].mySCPISM_A->selfEnergy = selfenergy[i] / selfcount[i] / (Real)Parallel::getNum();
-            }
-            
-            delete [] selfenergy;
-            
-            delete [] selfcount;
-          }
+            (*(--currentForce))->parallelPostProcess();
         }
         
         TimerStatistic::timer[TimerStatistic::FORCES].stop();
@@ -209,15 +139,14 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
     
     Parallel::reduce(&app->energies, forces);
     
-    //post process
-    list<SystemForce *>::const_iterator currentForce;
-    
-    for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
-      (*currentForce)->postProcess();
-    }
-
-
 	}//lel-serial test
+
+  //post process after parallel or serial
+  list<SystemForce *>::const_iterator currentForce;
+  
+  for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
+    (*currentForce)->postProcess();
+  }
 
 }
 
