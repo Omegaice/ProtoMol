@@ -194,6 +194,8 @@ protomol/integrator/base/LangevinImpulseIntegrator.cpp -text
 protomol/integrator/base/LangevinImpulseIntegrator.h -text
 protomol/integrator/base/LangevinLeapfrogIntegrator.cpp -text
 protomol/integrator/base/LangevinLeapfrogIntegrator.h -text
+protomol/integrator/base/LangevinVVVRIntegrator.cpp -text
+protomol/integrator/base/LangevinVVVRIntegrator.h -text
 protomol/integrator/base/NumericalDifferentiation.cpp -text
 protomol/integrator/base/NumericalDifferentiation.h -text
 protomol/integrator/base/NumericallyDifferentiatedHessian.cpp -text
