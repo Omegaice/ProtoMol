@@ -62,8 +62,10 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
 		TimerStatistic::timer[TimerStatistic::FORCES].start();
 		list<SystemForce *>::const_iterator currentForce;
     
+    //calculate forces and post process if required
 		for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
       (*currentForce)->evaluate(app->topology, &app->positions, forces, &app->energies);
+      (*currentForce)->postProcess();
     }
 
     TimerStatistic::timer[TimerStatistic::FORCES].stop();
@@ -128,6 +130,11 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
             (*(--currentForce))->parallelPostProcess();
         }
         
+        //batch post process after parallel
+        for (currentForce = mySystemForcesList.begin(); currentForce != stopAtForce; ++currentForce){
+          (*currentForce)->postProcess();
+        }
+
         TimerStatistic::timer[TimerStatistic::FORCES].stop();
         
 			}//if slave
@@ -140,13 +147,6 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
     Parallel::reduce(&app->energies, forces);
     
 	}//lel-serial test
-
-  //post process after parallel or serial
-  list<SystemForce *>::const_iterator currentForce;
-  
-  for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
-    (*currentForce)->postProcess();
-  }
 
 }
 
