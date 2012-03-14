@@ -128,10 +128,13 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
         //local reduce here
         if( doPostParallel ){
             (*(--currentForce))->parallelPostProcess();
+        }else{
+          //else barrier before post process
+          Parallel::sync();
         }
         
         //batch post process after parallel
-        for (currentForce = mySystemForcesList.begin(); currentForce != stopAtForce; ++currentForce){
+        for (currentForce = startForce; currentForce != stopAtForce; ++currentForce){
           (*currentForce)->postProcess();
         }
 
