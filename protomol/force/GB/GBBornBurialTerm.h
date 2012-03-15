@@ -9,6 +9,7 @@
 #include <protomol/type/Vector3D.h>
 #include <protomol/config/Parameter.h>
 #include <protomol/force/born/BornSwitch.h>
+#include <protomol/parallel/Parallel.h>
 #include <string>
 
 #include <protomol/base/Report.h>
@@ -166,11 +167,10 @@ namespace ProtoMol {
    }
 
    static void accumulateEnergy(ScalarStructure *energies, Real energy) {
-      //(*energies)[ScalarStructure::COULOMB] += energy;
     }
 
     static Real getEnergy(const ScalarStructure *energies) {
-      return (*energies)[ScalarStructure::COULOMB];
+      return 0;
     }
     
     static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
@@ -179,11 +179,27 @@ namespace ProtoMol {
 
     static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
       
+      const unsigned int numatoms = topo->atoms.size();
+      
+      double *burialterm = new double[ numatoms ];
+      
+      for( unsigned int i=0; i<numatoms; i++){
+        burialterm[i] = topo->atoms[i].myGBSA_T->burialTerm;
+      }
+      
+      Parallel::reduce(&burialterm[0],&burialterm[numatoms]);
+
+      for( unsigned int i=0; i<numatoms; i++){
+        topo->atoms[i].myGBSA_T->burialTerm = burialterm[i];
+      }
+
+      delete [] burialterm;
+      
     }
 
     //do parallel post process?
     static bool doParallelPostProcess() {
-      return false;
+      return true;
     }
 
     // Parsing
