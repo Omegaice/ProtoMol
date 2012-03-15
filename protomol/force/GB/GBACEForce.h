@@ -28,12 +28,12 @@ namespace ProtoMol {
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Constructors, destructors, assignment
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   GBACEForce() : sigma(0), rho_s(0) {}
-   GBACEForce(Real s, Real r_s) : sigma(s), rho_s(r_s) {}
+  GBACEForce() : sigma(0), rho_s(0) {}
+  GBACEForce(Real s, Real r_s) : sigma(s), rho_s(r_s) {}
 
-   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class GBForce
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // New methods of class GBForce
+  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     void operator()(Real &energy, Real &force, Real distSquared,
                     Real rDistSquared, const Vector3D &,
@@ -47,24 +47,23 @@ namespace ProtoMol {
       Real radius_i = topo->atoms[atom1].myGBSA_T->vanDerWaalRadius; 
       Real radius_j = topo->atoms[atom2].myGBSA_T->vanDerWaalRadius;
 
-     //offset radii ({\tilde{\rho}_{j}})
-     Real offsetRadius_i = radius_i - topo->atoms[atom1].myGBSA_T->offsetRadius;
-     Real offsetRadius_j = radius_j - topo->atoms[atom2].myGBSA_T->offsetRadius;
+      //offset radii ({\tilde{\rho}_{j}})
+      Real offsetRadius_i = radius_i - topo->atoms[atom1].myGBSA_T->offsetRadius;
+      Real offsetRadius_j = radius_j - topo->atoms[atom2].myGBSA_T->offsetRadius;
 
 
-     //Scaling factors
-     Real S_i = topo->atoms[atom1].myGBSA_T->scalingFactor;
-     Real S_j = topo->atoms[atom2].myGBSA_T->scalingFactor;
+      //Scaling factors
+      Real S_i = topo->atoms[atom1].myGBSA_T->scalingFactor;
+      Real S_j = topo->atoms[atom2].myGBSA_T->scalingFactor;
 
-     Real psi_i, psi_j;
+      Real psi_i, psi_j;
 
-     Real tanhparam_i, tanhparam_j;
+      Real tanhparam_i, tanhparam_j;
 
-     psi_i = topo->atoms[atom1].myGBSA_T->PsiValue;
-     psi_j = topo->atoms[atom2].myGBSA_T->PsiValue;
-     tanhparam_i = topo->alphaObc*psi_i - topo->betaObc*psi_i*psi_i + topo->gammaObc*psi_i*psi_i*psi_i;
-     tanhparam_j = topo->alphaObc*psi_j - topo->betaObc*psi_j*psi_j + topo->gammaObc*psi_j*psi_j*psi_j;
-
+      psi_i = topo->atoms[atom1].myGBSA_T->PsiValue;
+      psi_j = topo->atoms[atom2].myGBSA_T->PsiValue;
+      tanhparam_i = topo->alphaObc*psi_i - topo->betaObc*psi_i*psi_i + topo->gammaObc*psi_i*psi_i*psi_i;
+      tanhparam_j = topo->alphaObc*psi_j - topo->betaObc*psi_j*psi_j + topo->gammaObc*psi_j*psi_j*psi_j;
 
       Real bornRad_i = topo->atoms[atom1].myGBSA_T->bornRad;
       Real bornRad_j = topo->atoms[atom2].myGBSA_T->bornRad;
@@ -103,6 +102,7 @@ namespace ProtoMol {
       }
 
       Real Lji, Uji;
+      
       if (offsetRadius_j >=  dist + S_i*offsetRadius_i) {
         Lji = 1;
         Uji = 1;
@@ -110,12 +110,6 @@ namespace ProtoMol {
         Lji = (offsetRadius_j > abs(dist - S_i*offsetRadius_i)) ? offsetRadius_j : abs(dist - S_i*offsetRadius_i);         
         Uji = dist + S_i*offsetRadius_i;
       }
-
-      //Real Lij = topo->atoms[atom1].myGBSA_T->Lvalues[atom2];
-      //Real Uij = topo->atoms[atom1].myGBSA_T->Uvalues[atom2];
-
-      //Real Lji = topo->atoms[atom2].myGBSA_T->Lvalues[atom1];
-      //Real Uji = topo->atoms[atom2].myGBSA_T->Uvalues[atom1];
 
       //Derivatives for calculation of the derivative of the born radii
       Real dLijdrij, dUijdrij, dCijdrij;
@@ -130,8 +124,7 @@ namespace ProtoMol {
       if (offsetRadius_i <= (S_j*offsetRadius_j - dist)) dCijdrij = 2*(1/Lij)*(1/Lij)*dLijdrij;
       else dCijdrij = 0;
 
-
-     //Derivatives for calculation of the derivative of the born radii
+      //Derivatives for calculation of the derivative of the born radii
       Real dLjidrij, dUjidrij, dCjidrij;
 
       if (offsetRadius_j <= (dist - S_i*offsetRadius_i)) dLjidrij = 1;
@@ -149,37 +142,36 @@ namespace ProtoMol {
       //tanhi angle
       Real tanh_j = tanh(tanhparam_j);
 
-     //tanhk derivative
-     Real tanhparam_derv_i = (topo->alphaObc - 2*topo->betaObc*psi_i + 3*topo->gammaObc*psi_i*psi_i);
+      //tanhk derivative
+      Real tanhparam_derv_i = (topo->alphaObc - 2*topo->betaObc*psi_i + 3*topo->gammaObc*psi_i*psi_i);
 
-     //tanhi derivative
-     Real tanhparam_derv_j = (topo->alphaObc - 2*topo->betaObc*psi_j + 3*topo->gammaObc*psi_j*psi_j);
+      //tanhi derivative
+      Real tanhparam_derv_j = (topo->alphaObc - 2*topo->betaObc*psi_j + 3*topo->gammaObc*psi_j*psi_j);
 
-     Real S_i_term = (S_i*offsetRadius_i)/dist;
-     Real S_j_term = (S_j*offsetRadius_j)/dist;
+      Real S_i_term = (S_i*offsetRadius_i)/dist;
+      Real S_j_term = (S_j*offsetRadius_j)/dist;
 
-     //Check Equation (10) for the derivative of the burial term
-     Real dBTidrij = -0.5*dLijdrij*(1/(Lij*Lij)) + 0.5*dUijdrij*(1/(Uij*Uij)) + 0.125*((1/(Uij*Uij)) - (1/(Lij*Lij))) + 0.125*dist*((2/(Lij*Lij*Lij))*dLijdrij - (2/(Uij*Uij*Uij))*dUijdrij) - 0.25*(1/(dist*dist))*log(Lij/Uij) + (Uij/(4*dist*Lij))*((1/Uij)*dLijdrij - (Lij/(Uij*Uij))*dUijdrij) - 0.125*power(S_j_term,2)*((1/(Lij*Lij)) - (1/(Uij*Uij))) + 0.25*((S_j*S_j*offsetRadius_j*offsetRadius_j)/(dist*Uij*Uij*Uij))*dUijdrij - 0.25*((S_j*S_j*offsetRadius_j*offsetRadius_j)/(dist*Lij*Lij*Lij))*dLijdrij + dCijdrij;
+      //Check Equation (10) for the derivative of the burial term
+      Real dBTidrij = -0.5*dLijdrij*(1/(Lij*Lij)) + 0.5*dUijdrij*(1/(Uij*Uij)) + 0.125*((1/(Uij*Uij)) - (1/(Lij*Lij))) + 0.125*dist*((2/(Lij*Lij*Lij))*dLijdrij - (2/(Uij*Uij*Uij))*dUijdrij) - 0.25*(1/(dist*dist))*log(Lij/Uij) + (Uij/(4*dist*Lij))*((1/Uij)*dLijdrij - (Lij/(Uij*Uij))*dUijdrij) - 0.125*power(S_j_term,2)*((1/(Lij*Lij)) - (1/(Uij*Uij))) + 0.25*((S_j*S_j*offsetRadius_j*offsetRadius_j)/(dist*Uij*Uij*Uij))*dUijdrij - 0.25*((S_j*S_j*offsetRadius_j*offsetRadius_j)/(dist*Lij*Lij*Lij))*dLijdrij + dCijdrij;
 
-     //Check Equation (9)
-     Real dRidrij = power(bornRad_i,2)*offsetRadius_i*(1-tanh_i*tanh_i)*tanhparam_derv_i*(1/radius_i)*dBTidrij;
+      //Check Equation (9)
+      Real dRidrij = power(bornRad_i,2)*offsetRadius_i*(1-tanh_i*tanh_i)*tanhparam_derv_i*(1/radius_i)*dBTidrij;
 
-     topo->atoms[atom1].myGBSA_T->btDerv1[atom2] = dBTidrij;
-     topo->atoms[atom1].myGBSA_T->bornRadiusDerivatives[atom2] = dRidrij;
+      topo->atoms[atom1].myGBSA_T->btDerv1[atom2] = dBTidrij;
+      topo->atoms[atom1].myGBSA_T->bornRadiusDerivatives[atom2] = dRidrij;
 
 
-     Real dBTjdrji = -0.5*dLjidrij*(1/(Lji*Lji)) + 0.5*dUjidrij*(1/(Uji*Uji)) + 0.125*((1/(Uji*Uji)) - (1/(Lji*Lji))) + 0.125*dist*((2/(Lji*Lji*Lji))*dLjidrij - (2/(Uji*Uji*Uji))*dUjidrij) - 0.25*(1/(dist*dist))*log(Lji/Uji) + (Uji/(4*dist*Lji))*((1/Uji)*dLjidrij - (Lji/(Uji*Uji))*dUjidrij) - 0.125*power(S_i_term,2)*((1/(Lji*Lji)) - (1/(Uji*Uji))) + 0.25*((S_i*S_i*offsetRadius_i*offsetRadius_i)/(dist*Uji*Uji*Uji))*dUjidrij - 0.25*((S_i*S_i*offsetRadius_i*offsetRadius_i)/(dist*Lji*Lji*Lji))*dLjidrij + dCjidrij;
+      Real dBTjdrji = -0.5*dLjidrij*(1/(Lji*Lji)) + 0.5*dUjidrij*(1/(Uji*Uji)) + 0.125*((1/(Uji*Uji)) - (1/(Lji*Lji))) + 0.125*dist*((2/(Lji*Lji*Lji))*dLjidrij - (2/(Uji*Uji*Uji))*dUjidrij) - 0.25*(1/(dist*dist))*log(Lji/Uji) + (Uji/(4*dist*Lji))*((1/Uji)*dLjidrij - (Lji/(Uji*Uji))*dUjidrij) - 0.125*power(S_i_term,2)*((1/(Lji*Lji)) - (1/(Uji*Uji))) + 0.25*((S_i*S_i*offsetRadius_i*offsetRadius_i)/(dist*Uji*Uji*Uji))*dUjidrij - 0.25*((S_i*S_i*offsetRadius_i*offsetRadius_i)/(dist*Lji*Lji*Lji))*dLjidrij + dCjidrij;
 
-     Real dRjdrji = power(bornRad_j,2)*offsetRadius_j*(1-tanh_j*tanh_j)*tanhparam_derv_j*(1/radius_j)*dBTjdrji;
+      Real dRjdrji = power(bornRad_j,2)*offsetRadius_j*(1-tanh_j*tanh_j)*tanhparam_derv_j*(1/radius_j)*dBTjdrji;
 
-     topo->atoms[atom2].myGBSA_T->btDerv1[atom1] = dBTjdrji;
-     topo->atoms[atom2].myGBSA_T->bornRadiusDerivatives[atom1] = dRjdrji;
-     //Check Equation (15)
-     force += c1*(c_i*(1/power(bornRad_i,7))*dRidrij*(1/dist) + c_j*(1/power(bornRad_j,7))*dRjdrji*(1/dist));
+      topo->atoms[atom2].myGBSA_T->btDerv1[atom1] = dBTjdrji;
+      topo->atoms[atom2].myGBSA_T->bornRadiusDerivatives[atom1] = dRjdrji;
+      //Check Equation (15)
+      force += c1*(c_i*(1/power(bornRad_i,7))*dRidrij*(1/dist) + c_j*(1/power(bornRad_j,7))*dRjdrji*(1/dist));
+    }
 
-  }
-
-   static void accumulateEnergy(ScalarStructure *energies, Real energy) {
+    static void accumulateEnergy(ScalarStructure *energies, Real energy) {
       (*energies)[ScalarStructure::COULOMB] += energy;
     }
 
