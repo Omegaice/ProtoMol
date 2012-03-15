@@ -177,7 +177,7 @@ namespace ProtoMol {
       //new N^2 handeling of interaction with other atoms
       if (!topo->atoms[atom1].myGBSA_T->havePartialGBForceTerms) {
         //if here we should not be //lel
-        if( Parallel::isParallel() ) THROW("GBForce: Parallel execution requires force GBPartailSum!");
+        if( Parallel::isParallel() ) report << error << "GBForce: Parallel execution requires force GBPartialSum!" << endr;;
         
         topo->atoms[atom1].myGBSA_T->partialGBForceTerms = Force_i_term(topo, atom1);
         topo->atoms[atom1].myGBSA_T->havePartialGBForceTerms = true;
@@ -187,7 +187,7 @@ namespace ProtoMol {
       
       if (!topo->atoms[atom2].myGBSA_T->havePartialGBForceTerms) {
         //if here we should not be //lel
-        if( Parallel::isParallel() ) THROW("GBForce: Parallel execution requires force GBPartailSum!");
+        if( Parallel::isParallel() ) report << error << "GBForce: Parallel execution requires force GBPartialSum!" << endr;;
         
         topo->atoms[atom2].myGBSA_T->partialGBForceTerms = Force_i_term(topo, atom2);
         topo->atoms[atom2].myGBSA_T->havePartialGBForceTerms = true;
