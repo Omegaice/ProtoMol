@@ -130,7 +130,7 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
             (*(--currentForce))->parallelPostProcess(app->topology, &app->energies);
         }else{
           //else barrier before post process
-          Parallel::sync();
+          //Parallel::sync();
         }
         
         //batch post process after parallel
