@@ -31,6 +31,7 @@
 #include <protomol/force/GB/GBBornRadii.h>
 #include <protomol/force/GB/GBForce.h>
 #include <protomol/force/GB/GBACEForce.h>
+#include <protomol/force/GB/GBPartialSum.h>
 
 
 using namespace std;
@@ -195,6 +196,7 @@ void NonbondedSimpleFullForceModule::registerForces(ProtoMolApp *app) {
     f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBBornRadii> >());
     f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBForce> >());
     f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBACEForce> >());
+    f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBPartialSum> >());
 
 
     // OneAtomPairTwo

@@ -93,6 +93,8 @@ protomol/force/GB/GBBornRadii.cpp -text
 protomol/force/GB/GBBornRadii.h -text
 protomol/force/GB/GBForce.cpp -text
 protomol/force/GB/GBForce.h -text
+protomol/force/GB/GBPartialSum.cpp -text
+protomol/force/GB/GBPartialSum.h -text
 protomol/force/GB/SConscript -text
 protomol/force/LennardJonesForce.cpp -text
 protomol/force/LennardJonesForce.h -text

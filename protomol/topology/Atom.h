@@ -87,7 +87,8 @@ namespace ProtoMol {
       doneCalculateBornRadius = false;
       //doSelfForceTerm = false;
       ACEPotential = 0.0;
-      ACEPotentialCount = 0.0;
+      ACEPotentialCount = 0;
+      partialGBForceTerms = 0.0;
       havePartialGBForceTerms = false;
       havePartialGBHessianTerms = false;
       selfEnergy = 0.0;

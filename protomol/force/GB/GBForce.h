@@ -72,7 +72,6 @@ namespace ProtoMol {
       //Equation (16)
       energy = -(scaledCharge_i*scaledCharge_j)*(1/fGB_ij)*((1/soluteDielec) - (1/solventDielec));
 
-
       //self terms (Equation (18))
       if (!topo->atoms[atom1].myGBSA_T->selfEnergyCount) {
          topo->atoms[atom1].myGBSA_T->selfEnergy = -0.5 * (scaledCharge_i*scaledCharge_i)*(1/bornRad_i)*((1/soluteDielec) - (1/solventDielec));
@@ -122,7 +121,7 @@ namespace ProtoMol {
         Lji = 1;
         Uji = 1;
       }else {
-        Lji = (offsetRadius_j > abs(dist - S_i*offsetRadius_i)) ? offsetRadius_j : abs(dist - S_i*offsetRadius_i);         
+        Lji = (offsetRadius_j > abs(dist - S_i*offsetRadius_i)) ? offsetRadius_j : fabs(dist - S_i*offsetRadius_i);         
         Uji = dist + S_i*offsetRadius_i;
       }
 
