@@ -58,12 +58,12 @@ namespace ProtoMol {
                      myToRange[i].second);
     }
     
-    virtual void postProcess() {
-      this->myOneAtomPair.postProcess();
+    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {
+      this->myOneAtomPair.postProcess(apptopo, appenergies);
     }
     
-    virtual void parallelPostProcess() {
-      this->myOneAtomPair.parallelPostProcess();
+    virtual void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {
+      this->myOneAtomPair.parallelPostProcess(apptopo, appenergies);
     }
 
     virtual bool doParallelPostProcess() {

@@ -85,10 +85,13 @@ namespace ProtoMol {
     void preForce() {
       burialTerm = 0.0;
       doneCalculateBornRadius = false;
-      doSelfForceTerm = false;
-      doneACEPotential = false;
+      //doSelfForceTerm = false;
+      ACEPotential = 0.0;
+      ACEPotentialCount = 0.0;
       havePartialGBForceTerms = false;
       havePartialGBHessianTerms = false;
+      selfEnergy = 0.0;
+      selfEnergyCount = 0;
     }
 
     Real bornRad, burialTerm;
@@ -120,7 +123,7 @@ namespace ProtoMol {
     bool doneCalculateBornRadius;
 
     //flag to control calculation of i-i term
-    bool doSelfForceTerm;
+    //bool doSelfForceTerm;
 
     // For optimization purposes, we're memoizing the calculation of the forces
     // between i and all of the other atoms.  We use a flag to determine if the
@@ -133,8 +136,9 @@ namespace ProtoMol {
     Real partialGBHessianTerms_term1;
     Real partialGBHessianTerms_term2;
 
-    //flag for setting ACE potential
-    bool doneACEPotential;
+    //ACE potential storage and counter
+    Real ACEPotential;
+    int ACEPotentialCount;
 
     // Variable for storing Van der Waal radius used in GB calculations.
     // As part of the incremental fix for GB, we realized the Van der Waal radii
@@ -142,6 +146,10 @@ namespace ProtoMol {
     // in AtomType will not be removed until SCPISM has been updated to refer to
     // this field for the Van der Waal Radii.
     Real vanDerWaalRadius;
+    
+    //self energy terms
+    Real selfEnergy;
+    int selfEnergyCount;
 
 
   };

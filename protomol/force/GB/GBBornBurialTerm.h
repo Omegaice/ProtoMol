@@ -9,7 +9,6 @@
 #include <protomol/type/Vector3D.h>
 #include <protomol/config/Parameter.h>
 #include <protomol/force/born/BornSwitch.h>
-#include <protomol/parallel/Parallel.h>
 #include <string>
 
 #include <protomol/base/Report.h>
@@ -47,7 +46,7 @@ namespace ProtoMol {
                     const GenericTopology *topo,
                     int atom1, int atom2, ExclusionClass excl) const {
 
-    Real one = (Real) 1.0 ;
+    /*Real one = (Real) 1.0 ;
     Real two = (Real) 2.0 ;
     Real four = (Real) 4.0;
 
@@ -160,7 +159,7 @@ namespace ProtoMol {
 
      //add this to the burial term for atom j (atom2) (see Equation (5) in the writeup)
      Real term_j = (invLji - invUji) + (dist/four)*(invUji2 - invLji2) + (one/(two*dist))*(Real)ratio_j + ((S_i*S_i*offsetRadius_i*offsetRadius_i)/(four*dist))*(invLji2 - invUji2) + Cji;
-     topo->atoms[atom2].myGBSA_T->burialTerm += term_j;
+     topo->atoms[atom2].myGBSA_T->burialTerm += term_j;*/
 
     
         
@@ -179,7 +178,7 @@ namespace ProtoMol {
 
     static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
       
-      const unsigned int numatoms = topo->atoms.size();
+      /*const unsigned int numatoms = topo->atoms.size();
       
       double *burialterm = new double[ numatoms ];
       
@@ -193,13 +192,13 @@ namespace ProtoMol {
         topo->atoms[i].myGBSA_T->burialTerm = burialterm[i];
       }
 
-      delete [] burialterm;
+      delete [] burialterm;*/
       
     }
 
     //do parallel post process?
     static bool doParallelPostProcess() {
-      return true;
+      return false;
     }
 
     // Parsing

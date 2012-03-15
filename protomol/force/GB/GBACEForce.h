@@ -7,6 +7,7 @@
 #include <protomol/topology/ExclusionTable.h>
 #include <protomol/config/Parameter.h>
 #include <protomol/base/MathUtilities.h>
+#include <protomol/parallel/Parallel.h>
 
 #include <protomol/base/Report.h>
 
@@ -71,18 +72,18 @@ namespace ProtoMol {
       Real ratio_i, ratio_j;
 
       //Check Equation (14) for ACE nonpolar solvation potential
-      if (!topo->atoms[atom1].myGBSA_T->doneACEPotential) {
+      if (!topo->atoms[atom1].myGBSA_T->ACEPotentialCount) {
          Real p1 = radius_i/topo->atoms[atom1].myGBSA_T->bornRad;
          ratio_i = power(p1,SIXPOW);
-         energy += 4*PI*sigma*(radius_i + rho_s)*(radius_i + rho_s)*ratio_i;
-         topo->atoms[atom1].myGBSA_T->doneACEPotential = true;
+         topo->atoms[atom1].myGBSA_T->ACEPotential = 4*PI*sigma*(radius_i + rho_s)*(radius_i + rho_s)*ratio_i;
+         topo->atoms[atom1].myGBSA_T->ACEPotentialCount = 1;
       }
 
-      if (!topo->atoms[atom2].myGBSA_T->doneACEPotential) {
+      if (!topo->atoms[atom2].myGBSA_T->ACEPotentialCount) {
          Real p2 = radius_j/topo->atoms[atom2].myGBSA_T->bornRad;
          ratio_j = power(p2,SIXPOW);
-         energy += 4*PI*sigma*(radius_j + rho_s)*(radius_j + rho_s)*ratio_j;
-         topo->atoms[atom2].myGBSA_T->doneACEPotential = true;
+         topo->atoms[atom2].myGBSA_T->ACEPotential = 4*PI*sigma*(radius_j + rho_s)*(radius_j + rho_s)*ratio_j;
+         topo->atoms[atom2].myGBSA_T->ACEPotentialCount = 1;
       }
 
       Real c1 = 24*PI*sigma;
@@ -90,12 +91,31 @@ namespace ProtoMol {
       Real c_i = (radius_i + rho_s)*(radius_i + rho_s)*pow(radius_i,SIXPOW);
       Real c_j = (radius_j + rho_s)*(radius_j + rho_s)*pow(radius_j,SIXPOW);
 
+      //It would be nice if we can precalculate this terms.
+      Real Lij, Uij;
+      
+      if (offsetRadius_i >=  dist + S_j*offsetRadius_j) {
+        Lij = 1;
+        Uij = 1;
+      }else {
+        Lij =(offsetRadius_i > fabs(dist - S_j*offsetRadius_j)) ? offsetRadius_i : fabs(dist - S_j*offsetRadius_j);
+        Uij = dist + S_j*offsetRadius_j;
+      }
 
-      Real Lij = topo->atoms[atom1].myGBSA_T->Lvalues[atom2];
-      Real Uij = topo->atoms[atom1].myGBSA_T->Uvalues[atom2];
+      Real Lji, Uji;
+      if (offsetRadius_j >=  dist + S_i*offsetRadius_i) {
+        Lji = 1;
+        Uji = 1;
+      }else {
+        Lji = (offsetRadius_j > abs(dist - S_i*offsetRadius_i)) ? offsetRadius_j : abs(dist - S_i*offsetRadius_i);         
+        Uji = dist + S_i*offsetRadius_i;
+      }
 
-      Real Lji = topo->atoms[atom2].myGBSA_T->Lvalues[atom1];
-      Real Uji = topo->atoms[atom2].myGBSA_T->Uvalues[atom1];
+      //Real Lij = topo->atoms[atom1].myGBSA_T->Lvalues[atom2];
+      //Real Uij = topo->atoms[atom1].myGBSA_T->Uvalues[atom2];
+
+      //Real Lji = topo->atoms[atom2].myGBSA_T->Lvalues[atom1];
+      //Real Uji = topo->atoms[atom2].myGBSA_T->Uvalues[atom1];
 
       //Derivatives for calculation of the derivative of the born radii
       Real dLijdrij, dUijdrij, dCijdrij;
@@ -168,16 +188,62 @@ namespace ProtoMol {
     }
     
     static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+      const unsigned int atoms = topo->atoms.size();
+      
+      Real totalSelfEnergy = 0.0;
+      
+      for( unsigned int i=0; i<atoms; i++){
+        totalSelfEnergy += topo->atoms[i].myGBSA_T->ACEPotential;
+      }
+      
+      accumulateEnergy( energies, totalSelfEnergy );
       
     }
 
     static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
+      //find ACE energy count
+      
+      const unsigned int atomnumber = topo->atoms.size();
+      
+      // Copy self energy count
+      Real *selfcount = new Real[ atomnumber ];
+      
+      //put self energy count into array
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        selfcount[i] = (Real)topo->atoms[i].myGBSA_T->ACEPotentialCount;
+      }
+      
+      //sum accross nodes
+      Parallel::reduce(selfcount, selfcount + atomnumber); //reduceSlaves only?
+      
+      //find self energies
+      // Copy self energies
+      Real *selfenergy = new Real[ atomnumber ];
+      
+      //put self energy into array
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        selfenergy[i] = topo->atoms[i].myGBSA_T->ACEPotential;
+      }
+      
+      //sum accross nodes
+      Parallel::reduce(selfenergy, selfenergy + atomnumber); //reduceSlaves only?
+      
+      //put corrected self energy back
+      for( unsigned int i = 0; i < atomnumber; i++ ){
+        
+        if( selfcount[i] != 0.0 )
+          topo->atoms[i].myGBSA_T->ACEPotential = selfenergy[i] / selfcount[i] / (Real)Parallel::getNum();
+      }
+      
+      delete [] selfenergy;
+      
+      delete [] selfcount;
       
     }
 
     //do parallel post process?
     static bool doParallelPostProcess() {
-      return false;
+      return true;
     }
 
     // Parsing

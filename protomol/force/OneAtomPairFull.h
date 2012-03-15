@@ -176,12 +176,12 @@ namespace ProtoMol {
       switchingFunction.getParameters(parameters);
     }
     
-    void postProcess(){
-		  nonbondedForceFunction.postProcess(realTopo, energies);
+    void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
+		  nonbondedForceFunction.postProcess(apptopo, appenergies);
 	  }
 
-    void parallelPostProcess(){
-		  nonbondedForceFunction.parallelPostProcess(realTopo, energies);
+    void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
+		  nonbondedForceFunction.parallelPostProcess(apptopo, appenergies);
 	  }
 
     bool doParallelPostProcess(){

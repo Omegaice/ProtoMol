@@ -45,11 +45,11 @@ namespace ProtoMol {
                                   Vector3DBlock *forces,
                                   ScalarStructure *energies);
     
-    virtual void postProcess() {
+    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {
 		  
 	  }
 
-    virtual void parallelPostProcess(){
+    virtual void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
       
     }
     
