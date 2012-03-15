@@ -180,14 +180,14 @@ namespace ProtoMol {
         topo->atoms[atom1].myGBSA_T->havePartialGBForceTerms = true;
       }
        
-      force -= (topo->atoms[atom1].myGBSA_T->partialGBForceTerms - Force_i_j_term(topo, atom1, atom2)) *(dRidrij/dist);
+      force -= (topo->atoms[atom1].myGBSA_T->partialGBForceTerms - Force_i_j_term(topo, atom1, atom2, dist)) *(dRidrij/dist);
       
       if (!topo->atoms[atom2].myGBSA_T->havePartialGBForceTerms) {
         topo->atoms[atom2].myGBSA_T->partialGBForceTerms = Force_i_term(topo, atom2);
         topo->atoms[atom2].myGBSA_T->havePartialGBForceTerms = true;
       }
       
-      force -= (topo->atoms[atom2].myGBSA_T->partialGBForceTerms - Force_i_j_term(topo, atom2, atom1))*(dRjdrji/dist);
+      force -= (topo->atoms[atom2].myGBSA_T->partialGBForceTerms - Force_i_j_term(topo, atom2, atom1, dist))*(dRjdrji/dist);
       //end
       
       force *= ((1/soluteDielec) - (1/solventDielec));
@@ -235,44 +235,25 @@ namespace ProtoMol {
      
     }
      
-     
     //estimate the force term for the sum over k,l where k=i,j and l {\neq} j if 
     //k=i and l {\neq}i if k=j
     // modified to calculate the force only between two atoms.  will be used in
     // optimization
-    Real Force_i_j_term(const GenericTopology *topo, int atom1, int atom2) const{
+    Real Force_i_j_term(const GenericTopology *topo, const int atom1, const int atom2, const Real ril) const{
      
-      Real scaledCharge_i, scaledCharge_l;
+      const Real bornRad_i = topo->atoms[atom1].myGBSA_T->bornRad;
+      const Real scaledCharge_i = topo->atoms[atom1].scaledCharge;
 
-      Real bornRad_i, bornRad_l;
+      const Real bornRad_l = topo->atoms[atom2].myGBSA_T->bornRad;
+      const Real scaledCharge_l = topo->atoms[atom2].scaledCharge;
 
-      Real filGB, expterm;
+      const Real expterm = (ril*ril)/(4.0*bornRad_i*bornRad_l);
+      const Real filGB = sqrt(ril*ril + bornRad_i*bornRad_l*exp(-expterm));
 
-      bornRad_i = topo->atoms[atom1].myGBSA_T->bornRad;
+      return scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*exp(-expterm)*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
 
-      scaledCharge_i = topo->atoms[atom1].scaledCharge;
-
-      Real force = 0;
-
-      Real ril;
-
-      unsigned int l = (unsigned) atom2;
-
-      ril = topo->atoms[atom1].myGBSA_T->distij[l];
-
-      bornRad_l = topo->atoms[l].myGBSA_T->bornRad;
-      scaledCharge_l = topo->atoms[l].scaledCharge;
-
-      expterm = (ril*ril)/(4.0*bornRad_i*bornRad_l);
-      filGB = sqrt(ril*ril + bornRad_i*bornRad_l*exp(-expterm));
-
-      force += scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*exp(-expterm)*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
-
-      return force; 
-     
     }
      
-    
     static void accumulateEnergy(ScalarStructure *energies, Real energy) {
       (*energies)[ScalarStructure::COULOMB] += energy;
     }
