@@ -43,7 +43,7 @@ namespace ProtoMol {
       }
 
       // Computes the force and energy for atom i and j.
-      void doOneAtomPair(const int i, const int j) {
+      virtual void doOneAtomPair(const int i, const int j) {
         if (Constraint::PRE_CHECK)
           if (!Constraint::check(realTopo, i, j))
             return;

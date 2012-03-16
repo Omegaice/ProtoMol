@@ -5,159 +5,101 @@
 #include <protomol/topology/Topology.h>
 #include <protomol/config/Parameter.h>
 #include <protomol/type/ScalarStructure.h>
+#include <protomol/force/OneAtomPair.h>
 #include <protomol/force/OneAtomContraints.h>
 
 namespace ProtoMol {
-  //____ OneAtomPairNoExclusion
+  template<typename Boundary, typename Switch, typename Force, typename Constraint = NoConstraint>
+  class OneAtomPairNoExclusion : public OneAtomPair<Boundary,Switch,Force,Constraint> {
+    typedef OneAtomPair<Boundary,Switch,Force,Constraint> Base;
+    
+    public:
+      OneAtomPairNoExclusion() : Base() {
+        
+      }
+      
+      OneAtomPairNoExclusion(Force nF, Switch sF) : Base( nF, sF ){
+        
+      }
+    
+      void doOneAtomPair(const int i, const int j) {
+        if (Constraint::PRE_CHECK){
+          if (!Constraint::check(Base::realTopo, i, j)) return;
+        }
 
-  /**
-   * Computes the interaction for a given force between two atoms with the
-   * template arguments defining the boundary conditions, switching function,
-   * potential and optional constraint.
-   */
-  template<typename Boundary, typename Switch,
-           typename Force, typename Constraint = NoConstraint>
-  class OneAtomPairNoExclusion {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Typedef & sub classes
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    typedef Boundary BoundaryConditions;
-    typedef SemiGenericTopology<Boundary> TopologyType;
-    // Make the boundary conditions visible
+        // Get atom distance.
+        Real distSquared;
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    OneAtomPairNoExclusion() : SwitchFunction(), ForceFunction() {};
-    OneAtomPairNoExclusion(Force nF, Switch sF) :
-      SwitchFunction(sF), ForceFunction(nF),
-      mySquaredCutoff(Cutoff<Force::CUTOFF>::cutoff(sF, nF)) {}
+        Vector3D diff = Base::realTopo-> boundaryConditions.minimalDifference(
+          (*Base::positions)[i], (*Base::positions)[j], distSquared
+        );
+        
+        // Do switching function rough test, if necessary.
+        if (Switch::USE || Force::CUTOFF){
+          if (distSquared > Base::mySquaredCutoff) return;
+        }
+        
+        // Don't Check for an exclusion.
+        int mi = Base::realTopo->atoms[i].molecule;
+        int mj = Base::realTopo->atoms[j].molecule;
+        bool same = (mi == mj);
+        ExclusionClass excl =
+          (same ? Base::realTopo->exclusions.check(i, j) : EXCLUSION_NONE);
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class OneAtomPairNoExclusion
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    void initialize(const TopologyType *topo, const Vector3DBlock *pos,
-                    Vector3DBlock *f, ScalarStructure *e) {
-      realTopo = (TopologyType *)topo;
-      positions = pos;
-      forces = f;
-      energies = e;
-    }
+        // Calculate the force and energy.
+        Real energy = 0, force = 0;
+        Real rDistSquared = (Force::DIST_R2 ? 1.0 / distSquared : 1.0);
+        Base::ForceFunction(energy, force, distSquared, rDistSquared, diff,
+                               Base::realTopo, i, j, excl);
+        
+        // Calculate the switched force and energy.
+        if (Switch::MODIFY) {
+          Real switchingValue, switchingDeriv;
+          Base::SwitchFunction(switchingValue, switchingDeriv, distSquared);
+          // This has a - sign because the force is the negative of the
+          // derivative of the energy (divided by the distance between the atoms).
+          force = force * switchingValue - energy * switchingDeriv;
+          energy = energy * switchingValue;
+        }
 
-    void initialize(TopologyType *topo, const Vector3DBlock *pos,
-                    Vector3DBlock *f, ScalarStructure *e) {
-      initialize(static_cast<const TopologyType *>(topo), pos, f, e);
-    }
+        // Add this energy into the total system energy.
+        Base::ForceFunction.accumulateEnergy(Base::energies, energy);
+        
+        // Add this force into the atom forces.
+        Vector3D fij(diff * force);
+        (*Base::forces)[i] -= fij;
+        (*Base::forces)[j] += fij;
 
-    // Computes the force and energy for atom i and j.
-    void doOneAtomPair(const int i, const int j) {
-      if (Constraint::PRE_CHECK)
-        if (!Constraint::check(realTopo, i, j))
-          return;
+        // compute the vector between molecular centers of mass
+        if (!same && Base::energies->molecularVirial()){
+          // Add to the atomic and molecular virials
+          Base::energies->
+            addVirial(fij, diff, Base::realTopo->boundaryConditions.
+                      minimalDifference(Base::realTopo->molecules[mi].position,
+                                        Base::realTopo->molecules[mj].position));
+        } else if (Base::energies->virial()) {
+          Base::energies->addVirial(fij, diff);
+        }
+        
+        // End of force computation.
+        if (Constraint::POST_CHECK){
+          Constraint::check(Base::realTopo, i, j, diff, energy, fij);
+        }
+      }
+      
+      static OneAtomPairNoExclusion make(std::vector<Value> values) {
+        unsigned int n = Force::getParameterSize();
 
-      // Get atom distance.
-      Real distSquared;
+        std::vector<Value> parmsNF(values.begin(), values.begin() + n);
+        std::vector<Value> parmsSF(values.begin() + n, values.end());
 
-      Vector3D diff = realTopo->
-        boundaryConditions.minimalDifference((*positions)[i], (*positions)[j],
-                                             distSquared);
-      //      cout << "DIFF: " << diff << endl;
-      // Do switching function rough test, if necessary.
-      if (Switch::USE || Force::CUTOFF)
-        if (distSquared > mySquaredCutoff)
-          return;
-      // Don't Check for an exclusion.
-      int mi = realTopo->atoms[i].molecule;
-      int mj = realTopo->atoms[j].molecule;
-      bool same = (mi == mj);
-      ExclusionClass excl =
-        (same ? realTopo->exclusions.check(i, j) : EXCLUSION_NONE);
-      //if (excl == EXCLUSION_FULL)
-      //  return;
-
-      // Calculate the force and energy.
-      Real energy = 0, force = 0;
-      Real rDistSquared = (Force::DIST_R2 ? 1.0 / distSquared : 1.0);
-      ForceFunction(energy, force, distSquared, rDistSquared, diff,
-                             realTopo, i, j, excl);
-      //      cout << "EN: " << energy << " FO: " << force << endl;
-      // Calculate the switched force and energy.
-      if (Switch::MODIFY) {
-        Real switchingValue, switchingDeriv;
-        SwitchFunction(switchingValue, switchingDeriv, distSquared);
-        // This has a - sign because the force is the negative of the
-        // derivative of the energy (divided by the distance between the atoms).
-        force = force * switchingValue - energy * switchingDeriv;
-        energy = energy * switchingValue;
+        return OneAtomPairNoExclusion(Force::make(parmsNF), Switch::make(parmsSF));
       }
 
-      // Add this energy into the total system energy.
-      ForceFunction.accumulateEnergy(energies, energy);
-      // Add this force into the atom forces.
-      Vector3D fij(diff * force);
-      (*forces)[i] -= fij;
-      (*forces)[j] += fij;
-
-      // compute the vector between molecular centers of mass
-      if (!same && energies->molecularVirial())
-        // Add to the atomic and molecular virials
-        energies->
-          addVirial(fij, diff, realTopo->boundaryConditions.
-                    minimalDifference(realTopo->molecules[mi].position,
-                                      realTopo->molecules[mj].position));
-      else if (energies->virial())
-        energies->addVirial(fij, diff);
-      // End of force computation.
-      if (Constraint::POST_CHECK)
-        Constraint::check(realTopo, i, j, diff, energy, fij);
-    }
-
-    void getParameters(std::vector<Parameter> &parameters) const {
-      ForceFunction.getParameters(parameters);
-      SwitchFunction.getParameters(parameters);
-    }
-    
-    void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  ForceFunction.postProcess(apptopo, appenergies);
-	  }
-
-    void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  ForceFunction.parallelPostProcess(apptopo, appenergies);
-	  }
-
-    bool doParallelPostProcess(){
-      return
-        ForceFunction.doParallelPostProcess();
-	  }
-    
-    static OneAtomPairNoExclusion make(std::vector<Value> values) {
-      unsigned int n = Force::getParameterSize();
-
-      std::vector<Value> parmsNF(values.begin(), values.begin() + n);
-      std::vector<Value> parmsSF(values.begin() + n, values.end());
-
-      return OneAtomPairNoExclusion(Force::make(parmsNF),
-                         Switch::make(parmsSF));
-    }
-
-    static std::string getId() {
-      return Constraint::getPrefixId() + Force::getId() +
-        Constraint::getPostfixId() +
-        std::string((!Switch::USE) ? std::string("") :
-                    std::string(" -switchingFunction " +
-                                Switch::getId()));
-    }
-  private:
-    mutable TopologyType *realTopo;
-    const Vector3DBlock *positions;
-    Vector3DBlock *forces;
-    ScalarStructure *energies;
-    Switch SwitchFunction;
-    Force ForceFunction;
-    Real mySquaredCutoff;
+      static std::string getId() {
+        return Constraint::getPrefixId() + Force::getId() + Constraint::getPostfixId() +
+          std::string((!Switch::USE) ? std::string("") : std::string(" -switchingFunction " + Switch::getId()));
+      }
   };
 }
 #endif /* ONEATOMPAIRNOEXCLUSION_H */
