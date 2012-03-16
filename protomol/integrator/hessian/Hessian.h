@@ -59,7 +59,6 @@ namespace ProtoMol {
                             const GenericTopology *myTopo, const bool massWeight );
 
     //GB specific code
-    void evaluateGBBornBurialTerm(const Vector3DBlock *myPositions, GenericTopology *myTopo);
     void evaluateGBBornRadii(const Vector3DBlock *myPositions, GenericTopology *myTopo);
     //new parallel partial sums
     void evaluateGBPartialSum(const Vector3DBlock *myPositions, GenericTopology *myTopo);
@@ -99,7 +98,7 @@ namespace ProtoMol {
     bool myRBDihedral;
 
     //GB stuff
-    bool myGBBornBurialTerm, myGBBornRadii;
+    bool myGBBornRadii;
     bool myGBPartialSum;
     bool myGBACEForce;
     Real solvationparam, watersphereradius;

@@ -21,8 +21,8 @@
 #include <protomol/force/born/BornSelfForce.h>
 
 //GB
-#include <protomol/force/GB/GBBornBurialTerm.h>
 #include <protomol/force/GB/GBBornRadii.h>
+#include <protomol/force/GB/GBPartialSum.h>
 
 using namespace std;
 using namespace ProtoMol;
@@ -49,8 +49,8 @@ void NonbondedIntermittentFullForceModule::registerForces(ProtoMolApp *app) {
     f.reg(new IntermittentFullSystem<OneAtomPairNoExclusion<VBC, Cutoff, BornSelfForce> >());
     
     // GB
-    f.reg(new IntermittentFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBBornBurialTerm> >());
     f.reg(new IntermittentFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBBornRadii> >());
+    f.reg(new IntermittentFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBPartialSum> >());
     
   }
 }

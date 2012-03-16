@@ -25,7 +25,6 @@
 #include <protomol/force/coulomb/CoulombSCPISMForce.h>
 #include <protomol/force/born/BornRadii.h>
 
-#include <protomol/force/GB/GBBornBurialTerm.h>
 #include <protomol/force/GB/GBBornRadii.h>
 #include <protomol/force/GB/GBPartialSum.h>
 #include <protomol/force/GB/GBACEForce.h>
@@ -79,7 +78,6 @@ Hessian::Hessian(const Hessian &hess) {
   myBornRadii = hess.myBornRadii;
   myBornSelf = hess.myBornSelf;
   //GB
-  myGBBornBurialTerm = hess.myGBBornBurialTerm;
   myGBBornRadii = hess.myGBBornRadii;
   myGBPartialSum = hess.myGBPartialSum;
   myGBACEForce = hess.myGBACEForce;
@@ -134,11 +132,10 @@ void Hessian::findForces(ForceGroup *overloadedForces) {
                                   myBornRadii =
                                        myBornSelf = 
                                            myRBDihedral = 
-                                               myGBBornBurialTerm = 
-                                                   myGBBornRadii = 
-                                                       myGBACEForce = 
-                                                          myGBForce = 
-                                                            myGBPartialSum = false;
+                                              myGBBornRadii = 
+                                                  myGBACEForce = 
+                                                      myGBForce = 
+                                                          myGBPartialSum = false;
 
    solvationparam = 2.26 / 418.4 ; watersphereradius = 1.4;
 
@@ -314,8 +311,6 @@ void Hessian::findForces(ForceGroup *overloadedForces) {
           myDielecConst = Fparam[j].value;
         } 
       }
-    } else if (equalStartNocase("GBBornBurialTerm", ListForces[i]->getId())) {
-        myGBBornBurialTerm = true;
     } else if (equalStartNocase("GBBornRadii", ListForces[i]->getId())) {
         myGBBornRadii = true;
     }else if (equalStartNocase("GBPartialSum", ListForces[i]->getId())) {
@@ -514,11 +509,6 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
     evaluateBornRadii(myPositions, myTopo);
   }
 
-  if (myGBBornBurialTerm && myTopo->doGBSAOpenMM) {
-     //report << plain <<"Hessian : Calculate forces GBBornBurialTerm"<<endr;
-     evaluateGBBornBurialTerm(myPositions, myTopo);
-  }
-
   if (myGBBornRadii && myTopo->doGBSAOpenMM) {
      //report << plain <<"Hessian : Calculate forces GBBornRadii"<<endr;
      evaluateGBBornRadii(myPositions, myTopo);
@@ -528,7 +518,7 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
     evaluateGBPartialSum(myPositions, myTopo);
   }
 
-  if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+  if (myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
     //report << plain <<"Hessian : Appropriate flags set for calculation of GB hessian"<<endr;
   }
 
@@ -553,11 +543,11 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
         rhp += evaluateBornSelfPair(i, j, myPositions, myTopo);
 
 
-      if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
+      if (myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
         rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
       }
 
-      if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+      if (myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
          rhp += evaluateGBPair(i, j, myPositions, myTopo);
       }
       //output sum to matrix
@@ -783,32 +773,6 @@ Matrix3By3 Hessian::evaluateBornSelfPair(int i, int j, const Vector3DBlock *myPo
     }
   }
   return rha;
-}
-
-//GB Burial term
-void Hessian::evaluateGBBornBurialTerm(const Vector3DBlock *myPositions,
-                                         GenericTopology *myTopo) {
-
-   unsigned int atom_size = myTopo->atoms.size();
-   GBBornBurialTerm gbBornBurialTerm;
-   
-   //substitute code for preForce() 
-   for (unsigned int i = 0 ; i <atom_size ; i++) {
-      myTopo->atoms[i].myGBSA_T->preForce();
-   }
-   for (unsigned int i=0; i < atom_size ; i++) {
-      for (unsigned int j = i + 1; j < atom_size; j++){
-         ExclusionClass ec = myTopo->exclusions.check(i, j);
-         //Now include ALL atoms, no exclusions
-         if (1) { //ec != EXCLUSION_FULL) {
-           Vector3D rij =
-              myTopo->minimalDifference((*myPositions)[i], (*myPositions)[j]);
-           Real a = rij.normSquared();
-           Real rawE, rawF;
-           gbBornBurialTerm(rawE, rawF, a, 1.0/a, rij, myTopo, i, j, ec);
-         }
-      }
-   }
 }
 
 //GB born radii

@@ -87,8 +87,6 @@ protomol/force/ForceGroup.cpp -text
 protomol/force/ForceGroup.h -text
 protomol/force/GB/GBACEForce.cpp -text
 protomol/force/GB/GBACEForce.h -text
-protomol/force/GB/GBBornBurialTerm.cpp -text
-protomol/force/GB/GBBornBurialTerm.h -text
 protomol/force/GB/GBBornRadii.cpp -text
 protomol/force/GB/GBBornRadii.h -text
 protomol/force/GB/GBForce.cpp -text

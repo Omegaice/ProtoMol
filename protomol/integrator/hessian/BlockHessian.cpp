@@ -21,7 +21,6 @@
 #include <protomol/force/coulomb/CoulombSCPISMForce.h>
 
 //GB
-#include <protomol/force/GB/GBBornBurialTerm.h>
 #include <protomol/force/GB/GBBornRadii.h>
 #include <protomol/force/GB/GBACEForce.h>
 #include <protomol/force/hessian/ReducedHessGBACE.h>
@@ -532,10 +531,6 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
   
 #ifdef BLOCKGB
   //Pre calculate Born radii for GB if required
-  if (myGBBornBurialTerm && myTopo->doGBSAOpenMM) {
-    evaluateGBBornBurialTerm(myPositions, myTopo);
-  }
-  
   if (myGBBornRadii && myTopo->doGBSAOpenMM) {
     evaluateGBBornRadii(myPositions, myTopo);
   }
@@ -566,11 +561,11 @@ void BlockHessian::evaluateResidues(const Vector3DBlock *myPositions,
         
 #ifdef BLOCKGB
         //GB energies
-        if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
+        if (myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
         }
         
-        if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+        if (myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBPair(i, j, myPositions, myTopo);
         }
 #endif
@@ -797,21 +792,12 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
   
 #ifdef ADDGB
   //Pre calculate Born radii for GB if required
-  if (myGBBornBurialTerm && myTopo->doGBSAOpenMM) {
-    //report << plain <<"Hessian : Calculate forces GBBornBurialTerm"<<endr;
-    evaluateGBBornBurialTerm(myPositions, myTopo);
-    
-  }
   
   if (myGBBornRadii && myTopo->doGBSAOpenMM) {
     //report << plain <<"Hessian : Calculate forces GBBornRadii"<<endr;
     evaluateGBBornRadii(myPositions, myTopo);
   }
-  
-  //if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
-    //report << plain <<"Hessian : Appropriate flags set for calculation of GB hessian"<<endr;
-  //}
-  
+    
 #endif
 
   for (unsigned int i = 0; i < _N; i++){
@@ -835,11 +821,11 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
         
 #ifdef ADDGB
         //GB energies
-        if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
+        if (myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
         }
         
-        if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+        if (myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBPair(i, j, myPositions, myTopo);
         }
         
@@ -907,11 +893,11 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
               
 #ifdef ADDGB
               //add GB forces
-              if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
+              if (myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
                 rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
               }
               
-              if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+              if (myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
                 rhp += evaluateGBPair(i, j, myPositions, myTopo);
               }
               
@@ -1011,13 +997,7 @@ void BlockHessian::evaluateInterBlocks(const Vector3DBlock *myPositions,
     evaluateBornRadii(myPositions, myTopo);
   
 #ifdef ADDGB
-  //Pre calculate Born radii for GB if required
-  if (myGBBornBurialTerm && myTopo->doGBSAOpenMM) {
-    //report << plain <<"Hessian : Calculate forces GBBornBurialTerm"<<endr;
-    evaluateGBBornBurialTerm(myPositions, myTopo);
-    
-  }
-  
+  //Pre calculate Born radii for GB if required  
   if (myGBBornRadii && myTopo->doGBSAOpenMM) {
     //report << plain <<"Hessian : Calculate forces GBBornRadii"<<endr;
     evaluateGBBornRadii(myPositions, myTopo);
@@ -1045,11 +1025,11 @@ void BlockHessian::evaluateInterBlocks(const Vector3DBlock *myPositions,
         
 #ifdef ADDGB
         // add GB forces
-        if (myGBBornBurialTerm && myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
+        if (myGBBornRadii && myGBACEForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBACEPair(i, j, myPositions, myTopo);
         }
         
-        if (myGBBornBurialTerm && myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
+        if (myGBBornRadii && myGBForce && myTopo->doGBSAOpenMM) {
           rhp += evaluateGBPair(i, j, myPositions, myTopo);
         }
         

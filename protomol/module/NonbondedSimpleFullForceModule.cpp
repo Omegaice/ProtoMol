@@ -27,7 +27,6 @@
 #include <protomol/topology/CellListEnumeratorStandard.h>
 
 //GB
-#include <protomol/force/GB/GBBornBurialTerm.h>
 #include <protomol/force/GB/GBBornRadii.h>
 #include <protomol/force/GB/GBForce.h>
 #include <protomol/force/GB/GBACEForce.h>
@@ -192,7 +191,6 @@ void NonbondedSimpleFullForceModule::registerForces(ProtoMolApp *app) {
           CoulombSCPISMForce> >());
 
     // GB
-    f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBBornBurialTerm> >());
     f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBBornRadii> >());
     f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBForce> >());
     f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal, GBACEForce> >());
