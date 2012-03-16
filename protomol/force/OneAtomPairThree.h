@@ -4,84 +4,57 @@
 
 #include <protomol/topology/Topology.h>
 #include <protomol/config/Parameter.h>
+#include <protomol/force/OneAtomPair.h>
 #include <protomol/force/OneAtomContraints.h>
 
 namespace ProtoMol {
-  //____ OneAtomPairThree
-
-  /**
-   * Computes the interaction for a given force between two atoms with the
-   * template arguments defining the boundary conditions, three switching 
-   * functions, three potentials and optional constraint.
-   */
   template<typename Boundary, typename SwitchA,
            typename ForceA, typename SwitchB,
            typename ForceB, typename SwitchC,
            typename ForceC, typename Constraint = NoConstraint>
-  class OneAtomPairThree {
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Typedef & sub classes
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  class OneAtomPairThree : public OneAtomPair<Boundary,SwitchA,ForceA,Constraint> {
+    typedef OneAtomPair<Boundary,SwitchA,ForceA,Constraint> Base;
+    
   public:
-    typedef Boundary BoundaryConditions;
-    // Make the boundary conditions visible
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    OneAtomPairThree() {}
-
-    OneAtomPairThree(ForceA f1, SwitchA sF1,
-                   ForceB f2, SwitchB sF2,
-                   ForceC f3, SwitchC sF3 ) :
-      SwitchFunctionA(sF1), ForceFunctionA(f1),
-      SwitchFunctionB(sF2), ForceFunctionB(f2),
-      SwitchFunctionC(sF3), ForceFunctionC(f3),
-      mySquaredCutoff(std::max(
-                      std::max
-                      (Cutoff<ForceA::CUTOFF>::cutoff(sF1, f1),
-                        Cutoff<ForceB::CUTOFF>::cutoff(sF2, f2)),
-                          Cutoff<ForceC::CUTOFF>::cutoff(sF3, f3))
-                       )
-    {}
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // New methods of class OneAtomPairThree
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    void initialize(const SemiGenericTopology<Boundary> *topo,
-                    const Vector3DBlock *pos, Vector3DBlock *f,
-                    ScalarStructure *e) {
-      realTopo = topo;
-      positions = pos;
-      forces = f;
-      energies = e;
+    OneAtomPairThree() : Base() {
+      
     }
-
-    // Computes the force and energy for atom i and j.
+    
+    OneAtomPairThree(ForceA f1, SwitchA sF1,
+                     ForceB f2, SwitchB sF2,
+                     ForceC f3, SwitchC sF3 ) 
+      : Base( f1, sF1 ), SwitchFunctionB(sF2), ForceFunctionB(f2),
+        SwitchFunctionC(sF3), ForceFunctionC(f3) {
+          
+        Base::mySquaredCutoff = std::max(
+                             std::max
+                             (Cutoff<ForceA::CUTOFF>::cutoff(sF1, f1),
+                                Cutoff<ForceB::CUTOFF>::cutoff(sF2, f2)),
+                                         Cutoff<ForceC::CUTOFF>::cutoff(sF3, f3));
+    }
+  
     void doOneAtomPair(const int i, const int j) {
       if (Constraint::PRE_CHECK)
-        if (!Constraint::check(realTopo, i, j))
+        if (!Constraint::check(Base::realTopo, i, j))
           return;
 
       // Get atom distance.
       Real distSquared;
-      Vector3D diff(realTopo->boundaryConditions.
-                    minimalDifference((*positions)[i], (*positions)[j],
+      Vector3D diff(Base::realTopo->boundaryConditions.
+                    minimalDifference((*Base::positions)[i], (*Base::positions)[j],
                                       distSquared));
       // Do switching function rough test, if necessary.
       if ((SwitchA::USE || SwitchB::USE || SwitchC::USE ||
            ForceA::CUTOFF || ForceB::CUTOFF || ForceC::CUTOFF ) 
-           && distSquared > mySquaredCutoff)
+           && distSquared > Base::mySquaredCutoff)
         return;
 
       // Check for an exclusion.
-      int mi = realTopo->atoms[i].molecule;
-      int mj = realTopo->atoms[j].molecule;
+      int mi = Base::realTopo->atoms[i].molecule;
+      int mj = Base::realTopo->atoms[j].molecule;
       bool same = (mi == mj);
       ExclusionClass excl =
-        (same ? realTopo->exclusions.check(i, j) : EXCLUSION_NONE);
+        (same ? Base::realTopo->exclusions.check(i, j) : EXCLUSION_NONE);
       if (excl == EXCLUSION_FULL)
         return;
 
@@ -91,20 +64,20 @@ namespace ProtoMol {
             ForceB::DIST_R2 ||
               ForceC::DIST_R2 ) ? 1.0 / distSquared : 1.0);
       Real energy1, force1, energy2 = 0, force2 = 0, energy3 = 0, force3 = 0;
-      ForceFunctionA(energy1, force1, distSquared, rDistSquared,
-                                  diff, realTopo, i, j, excl);
+      Base::ForceFunction(energy1, force1, distSquared, rDistSquared,
+                                  diff, Base::realTopo, i, j, excl);
       ForceFunctionB(energy2, force2, distSquared, rDistSquared,
-                                   diff, realTopo, i, j, excl);
+                                   diff, Base::realTopo, i, j, excl);
       ForceFunctionC(energy3, force3, distSquared, rDistSquared,
-                                   diff, realTopo, i, j, excl);
-      //Report::report << "\t"<<i << "\t"<<j<<Report::endr;
+                                   diff, Base::realTopo, i, j, excl);
+      
       // Calculate the switched force and energy.
       if (SwitchA::MODIFY || 
             SwitchB::MODIFY || 
               SwitchC::MODIFY) {
         Real switchingValue, switchingDeriv;
 
-        SwitchFunctionA(switchingValue, switchingDeriv, distSquared);
+        Base::SwitchFunction(switchingValue, switchingDeriv, distSquared);
         force1 = force1 * switchingValue - energy1 * switchingDeriv;
         energy1 = energy1 * switchingValue;
 
@@ -118,53 +91,53 @@ namespace ProtoMol {
       }
 
       // Add this energy into the total system energy.
-      ForceFunctionA.accumulateEnergy(energies, energy1);
-      ForceFunctionB.accumulateEnergy(energies, energy2);
-      ForceFunctionC.accumulateEnergy(energies, energy3);
+      Base::ForceFunction.accumulateEnergy(Base::energies, energy1);
+      ForceFunctionB.accumulateEnergy(Base::energies, energy2);
+      ForceFunctionC.accumulateEnergy(Base::energies, energy3);
+      
       // Add this force into the atom forces.
       Vector3D fij(diff * (force1 + force2 + force3));
-      (*forces)[i] -= fij;
-      (*forces)[j] += fij;
+      (*Base::forces)[i] -= fij;
+      (*Base::forces)[j] += fij;
 
       // compute the vector between molecular centers of mass
-      if (!same && energies->molecularVirial())
+      if (!same && Base::energies->molecularVirial())
         // Add to the atomic and molecular virials
-        energies->
-          addVirial(fij, diff, realTopo->boundaryConditions.
-                    minimalDifference(realTopo->molecules[mi].position,
-                                      realTopo->molecules[mj].position));
-      else if (energies->virial())
-        energies->addVirial(fij, diff);
+        Base::energies->
+          addVirial(fij, diff, Base::realTopo->boundaryConditions.
+                    minimalDifference(Base::realTopo->molecules[mi].position,
+                                      Base::realTopo->molecules[mj].position));
+      else if (Base::energies->virial())
+        Base::energies->addVirial(fij, diff);
+      
       // End of force computation.
       if (Constraint::POST_CHECK)
-        Constraint::check(realTopo, i, j, diff, energy1 + energy2 + energy3, fij);
+        Constraint::check(Base::realTopo, i, j, diff, energy1 + energy2 + energy3, fij);
     }
 
-    void getParameters(std::vector<Parameter> &parameters) const {
-      ForceFunctionA.getParameters(parameters);
-      SwitchFunctionA.getParameters(parameters);
+    virtual void getParameters(std::vector<Parameter> &parameters) const {
+      Base::ForceFunction.getParameters(parameters);
+      Base::SwitchFunction.getParameters(parameters);
       ForceFunctionB.getParameters(parameters);
       SwitchFunctionB.getParameters(parameters);
       ForceFunctionC.getParameters(parameters);
       SwitchFunctionC.getParameters(parameters);
     }
     
-    void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  ForceFunctionA.postProcess(apptopo, appenergies);
+    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
+		  Base::ForceFunction.postProcess(apptopo, appenergies);
 		  ForceFunctionB.postProcess(apptopo, appenergies);
 		  ForceFunctionC.postProcess(apptopo, appenergies);
 	  }
     
-    void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  ForceFunctionA.parallelPostProcess(apptopo, appenergies);
+    virtual void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
+		  Base::ForceFunction.parallelPostProcess(apptopo, appenergies);
 		  ForceFunctionB.parallelPostProcess(apptopo, appenergies);
 		  ForceFunctionC.parallelPostProcess(apptopo, appenergies);
 	  }
 
-    bool doParallelPostProcess(){
-      return
-        ForceFunctionA.doParallelPostProcess()
-        || ForceFunctionB.doParallelPostProcess()
+    virtual bool doParallelPostProcess(){
+      return Base::ForceFunction.doParallelPostProcess() || ForceFunctionB.doParallelPostProcess()
           || ForceFunctionC.doParallelPostProcess();
 	  }
 
@@ -192,61 +165,35 @@ namespace ProtoMol {
       std::vector<Value> F3(values.begin() + l2b, values.begin() + l3a);
       std::vector<Value> S3(values.begin() + l3a, values.end());
 
-      return OneAtomPairThree
-        (ForceA::make(F1), SwitchA::make(S1),
+      return OneAtomPairThree (ForceA::make(F1), SwitchA::make(S1),
           ForceB::make(F2), SwitchB::make(S2),
-            ForceC::make(F3), SwitchC::make(S3));
+          ForceC::make(F3), SwitchC::make(S3)
+      );
     }
 
     static std::string getId() {
       return
-        Constraint::getPrefixId() +
-        headString(ForceA::getId()) +
+        Constraint::getPrefixId() + headString(ForceA::getId()) +
         Constraint::getPostfixId() + " " + 
-        Constraint::getPrefixId() +
-        headString(ForceB::getId()) +
-        Constraint::getPostfixId() + " " + 
-        Constraint::getPrefixId() +
-        headString(ForceC::getId()) +
+        Constraint::getPrefixId() + headString(ForceB::getId()) +
+        Constraint::getPostfixId() + " " +  
+        Constraint::getPrefixId() + headString(ForceC::getId()) + 
         Constraint::getPostfixId() +
 
-        (tailString(ForceA::getId()).empty() ? "" : " ") +
-        tailString(ForceA::getId()) +
-        (tailString(ForceB::getId()).empty() ? "" : " ") +
-        tailString(ForceB::getId()) +
-        (tailString(ForceC::getId()).empty() ? "" : " ") +
-        tailString(ForceC::getId()) +
+        (tailString(ForceA::getId()).empty() ? "" : " ") + tailString(ForceA::getId()) +
+        (tailString(ForceB::getId()).empty() ? "" : " ") + tailString(ForceB::getId()) +
+        (tailString(ForceC::getId()).empty() ? "" : " ") + tailString(ForceC::getId()) +
 
-        std::string((!SwitchA::USE) ?
-                    std::string("") :
-                    std::string(" -switchingFunction " +
-                                SwitchA::getId())) +
-        std::string((!SwitchB::USE) ?
-                    std::string("") :
-                    std::string(" -switchingFunction " +
-                                SwitchB::getId())) +
-        std::string((!SwitchC::USE) ?
-                    std::string("") :
-                    std::string(" -switchingFunction " +
-                                SwitchC::getId()));
+        std::string((!SwitchA::USE) ? std::string("") : std::string(" -switchingFunction " + SwitchA::getId())) +
+        std::string((!SwitchB::USE) ? std::string("") : std::string(" -switchingFunction " + SwitchB::getId())) +
+        std::string((!SwitchC::USE) ? std::string("") : std::string(" -switchingFunction " + SwitchC::getId()));
 
     }
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  private:
-    const SemiGenericTopology<Boundary> *realTopo;
-    const Vector3DBlock *positions;
-    Vector3DBlock *forces;
-    ScalarStructure *energies;
-    SwitchA SwitchFunctionA;
-    ForceA ForceFunctionA;
+  protected:
     SwitchB SwitchFunctionB;
     ForceB ForceFunctionB;
     SwitchC SwitchFunctionC;
     ForceC ForceFunctionC;
-    Real mySquaredCutoff;
   };
 }
 
