@@ -25,9 +25,9 @@ namespace ProtoMol {
     // Constructors, destructors, assignment
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    OneAtomPairFull() : switchingFunction(), nonbondedForceFunction() {};
+    OneAtomPairFull() : SwitchFunction(), ForceFunction() {};
     OneAtomPairFull(Force nF, Switch sF) :
-      switchingFunction(sF), nonbondedForceFunction(nF) {};
+      SwitchFunction(sF), ForceFunction(nF) {};
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class OneAtomPairFull
@@ -62,7 +62,7 @@ namespace ProtoMol {
         Real distSquared = diffMinimal.normSquared();
         // Do switching function rough test, if necessary.
         if (Switch::USE &&
-            !switchingFunction.roughTest(distSquared))
+            !SwitchFunction.roughTest(distSquared))
           return;
 
         // Check for an exclusion.
@@ -71,13 +71,13 @@ namespace ProtoMol {
           // Calculate the force and energy.
           Real rawEnergy, rawForce;
           Real rDistSquared = 1.0 / distSquared;
-          nonbondedForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
+          ForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
                                  diffMinimal, realTopo, i, j, excl);
           // Calculate the switched force and energy.
           Real energy, force;
           if (Switch::USE) {
             Real switchingValue, switchingDeriv;
-            switchingFunction(switchingValue, switchingDeriv, distSquared);
+            SwitchFunction(switchingValue, switchingDeriv, distSquared);
             energy = rawEnergy * switchingValue;
             // This has a - sign because the force is the negative of the
             // derivative of the energy (divided by the distance between the
@@ -88,7 +88,7 @@ namespace ProtoMol {
             force = rawForce;
           }
           // Add this energy into the total system energy.
-          nonbondedForceFunction.accumulateEnergy(energies, energy);
+          ForceFunction.accumulateEnergy(energies, energy);
           // Add this force into the atom forces.
           Vector3D fij = -diffMinimal * force;
           (*forces)[i] += fij;
@@ -118,19 +118,19 @@ namespace ProtoMol {
         Real distSquared = diff.normSquared();
         // Do switching function rough test, if necessary.
         if (Switch::USE &&
-            !switchingFunction.roughTest(distSquared))
+            !SwitchFunction.roughTest(distSquared))
           continue;
 
         // Calculate the force and energy.
         Real rawEnergy, rawForce;
         Real rDistSquared = 1.0 / distSquared;
-        nonbondedForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
+        ForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
                                diff, realTopo, i, j, EXCLUSION_NONE);
         // Calculate the switched force and energy.
         Real energy, force;
         if (Switch::USE) {
           Real switchingValue, switchingDeriv;
-          switchingFunction(switchingValue, switchingDeriv, distSquared);
+          SwitchFunction(switchingValue, switchingDeriv, distSquared);
           energy = rawEnergy * switchingValue;
           // This has a - sign because the force is the negative of the
           // derivative of the energy (divided by the distance between the
@@ -165,28 +165,28 @@ namespace ProtoMol {
             energies->addVirial(fij, -diff);
         }
         // Add this energy into the total system energy.
-        nonbondedForceFunction.accumulateEnergy(energies, energy);
+        ForceFunction.accumulateEnergy(energies, energy);
         if (Constraint::POST_CHECK)
           Constraint::check(realTopo, i, j, diff, energy, -diff * force);
       }
     }
 
     void getParameters(std::vector<Parameter> &parameters) const {
-      nonbondedForceFunction.getParameters(parameters);
-      switchingFunction.getParameters(parameters);
+      ForceFunction.getParameters(parameters);
+      SwitchFunction.getParameters(parameters);
     }
     
     void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  nonbondedForceFunction.postProcess(apptopo, appenergies);
+		  ForceFunction.postProcess(apptopo, appenergies);
 	  }
 
     void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  nonbondedForceFunction.parallelPostProcess(apptopo, appenergies);
+		  ForceFunction.parallelPostProcess(apptopo, appenergies);
 	  }
 
     bool doParallelPostProcess(){
       return
-        nonbondedForceFunction.doParallelPostProcess();
+        ForceFunction.doParallelPostProcess();
 	  }
     
     static unsigned int getParameterSize() {
@@ -208,7 +208,7 @@ namespace ProtoMol {
       return Constraint::getPrefixId() + Force::getId() +
         Constraint::getPostfixId() +
         std::string((!Switch::USE) ? std::string("") :
-                    std::string(" -switchingFunction " +
+                    std::string(" -SwitchFunction " +
                                 Switch::getId()));
     }
 
@@ -220,8 +220,8 @@ namespace ProtoMol {
     const Vector3DBlock *positions;
     Vector3DBlock *forces;
     ScalarStructure *energies;
-    Switch switchingFunction;
-    Force nonbondedForceFunction;
+    Switch SwitchFunction;
+    Force ForceFunction;
     const std::vector<Vector3D> *lattice;
   };
 }

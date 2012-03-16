@@ -35,9 +35,9 @@ namespace ProtoMol {
     OneAtomPairThree(ForceA f1, SwitchA sF1,
                    ForceB f2, SwitchB sF2,
                    ForceC f3, SwitchC sF3 ) :
-      switchingFunctionFirst(sF1), nonbondedForceFunctionFirst(f1),
-      switchingFunctionSecond(sF2), nonbondedForceFunctionSecond(f2),
-      switchingFunctionThird(sF3), nonbondedForceFunctionThird(f3),
+      SwitchFunctionA(sF1), ForceFunctionA(f1),
+      SwitchFunctionB(sF2), ForceFunctionB(f2),
+      SwitchFunctionC(sF3), ForceFunctionC(f3),
       mySquaredCutoff(std::max(
                       std::max
                       (Cutoff<ForceA::CUTOFF>::cutoff(sF1, f1),
@@ -91,11 +91,11 @@ namespace ProtoMol {
             ForceB::DIST_R2 ||
               ForceC::DIST_R2 ) ? 1.0 / distSquared : 1.0);
       Real energy1, force1, energy2 = 0, force2 = 0, energy3 = 0, force3 = 0;
-      nonbondedForceFunctionFirst(energy1, force1, distSquared, rDistSquared,
+      ForceFunctionA(energy1, force1, distSquared, rDistSquared,
                                   diff, realTopo, i, j, excl);
-      nonbondedForceFunctionSecond(energy2, force2, distSquared, rDistSquared,
+      ForceFunctionB(energy2, force2, distSquared, rDistSquared,
                                    diff, realTopo, i, j, excl);
-      nonbondedForceFunctionThird(energy3, force3, distSquared, rDistSquared,
+      ForceFunctionC(energy3, force3, distSquared, rDistSquared,
                                    diff, realTopo, i, j, excl);
       //Report::report << "\t"<<i << "\t"<<j<<Report::endr;
       // Calculate the switched force and energy.
@@ -104,23 +104,23 @@ namespace ProtoMol {
               SwitchC::MODIFY) {
         Real switchingValue, switchingDeriv;
 
-        switchingFunctionFirst(switchingValue, switchingDeriv, distSquared);
+        SwitchFunctionA(switchingValue, switchingDeriv, distSquared);
         force1 = force1 * switchingValue - energy1 * switchingDeriv;
         energy1 = energy1 * switchingValue;
 
-        switchingFunctionSecond(switchingValue, switchingDeriv, distSquared);
+        SwitchFunctionB(switchingValue, switchingDeriv, distSquared);
         force2 = force2 * switchingValue - energy2 * switchingDeriv;
         energy2 = energy2 * switchingValue;
 
-        switchingFunctionThird(switchingValue, switchingDeriv, distSquared);
+        SwitchFunctionC(switchingValue, switchingDeriv, distSquared);
         force3 = force3 * switchingValue - energy3 * switchingDeriv;
         energy3 = energy3 * switchingValue;
       }
 
       // Add this energy into the total system energy.
-      nonbondedForceFunctionFirst.accumulateEnergy(energies, energy1);
-      nonbondedForceFunctionSecond.accumulateEnergy(energies, energy2);
-      nonbondedForceFunctionThird.accumulateEnergy(energies, energy3);
+      ForceFunctionA.accumulateEnergy(energies, energy1);
+      ForceFunctionB.accumulateEnergy(energies, energy2);
+      ForceFunctionC.accumulateEnergy(energies, energy3);
       // Add this force into the atom forces.
       Vector3D fij(diff * (force1 + force2 + force3));
       (*forces)[i] -= fij;
@@ -141,31 +141,31 @@ namespace ProtoMol {
     }
 
     void getParameters(std::vector<Parameter> &parameters) const {
-      nonbondedForceFunctionFirst.getParameters(parameters);
-      switchingFunctionFirst.getParameters(parameters);
-      nonbondedForceFunctionSecond.getParameters(parameters);
-      switchingFunctionSecond.getParameters(parameters);
-      nonbondedForceFunctionThird.getParameters(parameters);
-      switchingFunctionThird.getParameters(parameters);
+      ForceFunctionA.getParameters(parameters);
+      SwitchFunctionA.getParameters(parameters);
+      ForceFunctionB.getParameters(parameters);
+      SwitchFunctionB.getParameters(parameters);
+      ForceFunctionC.getParameters(parameters);
+      SwitchFunctionC.getParameters(parameters);
     }
     
     void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  nonbondedForceFunctionFirst.postProcess(apptopo, appenergies);
-		  nonbondedForceFunctionSecond.postProcess(apptopo, appenergies);
-		  nonbondedForceFunctionThird.postProcess(apptopo, appenergies);
+		  ForceFunctionA.postProcess(apptopo, appenergies);
+		  ForceFunctionB.postProcess(apptopo, appenergies);
+		  ForceFunctionC.postProcess(apptopo, appenergies);
 	  }
     
     void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  nonbondedForceFunctionFirst.parallelPostProcess(apptopo, appenergies);
-		  nonbondedForceFunctionSecond.parallelPostProcess(apptopo, appenergies);
-		  nonbondedForceFunctionThird.parallelPostProcess(apptopo, appenergies);
+		  ForceFunctionA.parallelPostProcess(apptopo, appenergies);
+		  ForceFunctionB.parallelPostProcess(apptopo, appenergies);
+		  ForceFunctionC.parallelPostProcess(apptopo, appenergies);
 	  }
 
     bool doParallelPostProcess(){
       return
-        nonbondedForceFunctionFirst.doParallelPostProcess()
-        || nonbondedForceFunctionSecond.doParallelPostProcess()
-          || nonbondedForceFunctionThird.doParallelPostProcess();
+        ForceFunctionA.doParallelPostProcess()
+        || ForceFunctionB.doParallelPostProcess()
+          || ForceFunctionC.doParallelPostProcess();
 	  }
 
     static unsigned int getParameterSize() {
@@ -240,12 +240,12 @@ namespace ProtoMol {
     const Vector3DBlock *positions;
     Vector3DBlock *forces;
     ScalarStructure *energies;
-    SwitchA switchingFunctionFirst;
-    ForceA nonbondedForceFunctionFirst;
-    SwitchB switchingFunctionSecond;
-    ForceB nonbondedForceFunctionSecond;
-    SwitchC switchingFunctionThird;
-    ForceC nonbondedForceFunctionThird;
+    SwitchA SwitchFunctionA;
+    ForceA ForceFunctionA;
+    SwitchB SwitchFunctionB;
+    ForceB ForceFunctionB;
+    SwitchC SwitchFunctionC;
+    ForceC ForceFunctionC;
     Real mySquaredCutoff;
   };
 }
