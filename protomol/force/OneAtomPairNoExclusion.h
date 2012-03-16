@@ -150,17 +150,6 @@ namespace ProtoMol {
                     std::string(" -SwitchFunction " +
                                 Switch::getId()));
     }
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // My data members
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  public:
-    Force *geForceFunction() {
-      return &ForceFunction;
-    }
-
-    Switch &geSwitch() {return SwitchFunction;}
-
   private:
     mutable TopologyType *realTopo;
     const Vector3DBlock *positions;
