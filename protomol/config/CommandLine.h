@@ -44,6 +44,6 @@ namespace ProtoMol {
     int enableStackTraceAction(const std::vector<std::string> &args);
 #endif
   };
-};
+}
 
 #endif // COMMAND_LINE_H

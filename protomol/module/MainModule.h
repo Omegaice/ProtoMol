@@ -7,28 +7,28 @@
 namespace ProtoMol {
   class ProtoMolApp;
   
-  declareInputValue(InputNumsteps, INT, NOTNEGATIVE);
-  declareInputValue(InputFirststep, INT, NOCONSTRAINTS);
-  declareInputValue(InputRealfirststep, INT, NOCONSTRAINTS);
-  declareInputValue(InputSeed, INT, NOTNEGATIVE);
-  declareInputValue(InputRandomType, INT, NOTNEGATIVE);
-  declareInputValue(InputDebug, INT, NOCONSTRAINTS);
-  declareInputValue(InputIntegrator, INTEGRATOR, NOTEMPTY);
-  declareInputValue(InputReducedImage, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputTemperature, REAL, NOTNEGATIVE);
-  declareInputValue(InputDoSCPISM, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputMolVirialCalc, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputVirialCalc, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputOutputfreq, INT, NOTNEGATIVE);
-  declareInputValue(InputOutput, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputMinimalImage, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputDoGBSAObc, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputDebugLimit, INT, NOCONSTRAINTS);
+  declareInputValue(InputNumsteps, INT, NOTNEGATIVE)
+  declareInputValue(InputFirststep, INT, NOCONSTRAINTS)
+  declareInputValue(InputRealfirststep, INT, NOCONSTRAINTS)
+  declareInputValue(InputSeed, INT, NOTNEGATIVE)
+  declareInputValue(InputRandomType, INT, NOTNEGATIVE)
+  declareInputValue(InputDebug, INT, NOCONSTRAINTS)
+  declareInputValue(InputIntegrator, INTEGRATOR, NOTEMPTY)
+  declareInputValue(InputReducedImage, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputTemperature, REAL, NOTNEGATIVE)
+  declareInputValue(InputDoSCPISM, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputMolVirialCalc, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputVirialCalc, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputOutputfreq, INT, NOTNEGATIVE)
+  declareInputValue(InputOutput, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputMinimalImage, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputDoGBSAObc, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputDebugLimit, INT, NOCONSTRAINTS)
   //parallel
-  declareInputValue(InputUseBarrier, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputParallelMode, STRING,NOTEMPTY);
-  declareInputValue(InputParallelPipe, INT, NOCONSTRAINTS);
-  declareInputValue(InputMaxPackages, INT, NOCONSTRAINTS);
+  declareInputValue(InputUseBarrier, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputParallelMode, STRING,NOTEMPTY)
+  declareInputValue(InputParallelPipe, INT, NOCONSTRAINTS)
+  declareInputValue(InputMaxPackages, INT, NOCONSTRAINTS)
 
 
   class MainModule : public Module {
@@ -43,6 +43,6 @@ namespace ProtoMol {
     void configure(ProtoMolApp *app);
     void postBuild(ProtoMolApp *app);
   };
-};
+}
 
 #endif // MAIN_MODULE_H

@@ -18,22 +18,22 @@ using namespace ProtoMol;
 defineInputValueWithAliasesAndText
 (InputRemoveLinearMomentum, "removeLinearMomentum", ("comMotion"),
   "removes linear momentum, where -1 for never, 0 at initialization or at STS "
-  "frequency <n>");
+  "frequency <n>")
 defineInputValueWithAliasesAndText
 (InputRemoveAngularMomentum, "removeAngularMomentum", ("angularMomentum"),
   "removes angular momentum, where -1 for never, 0 at initialization or at STS "
-  "frequency <n>");
-defineInputValue(InputShake, "shake");
-defineInputValue(InputShakeEpsilon, "shakeEpsilon");
-defineInputValue(InputShakeMaxIter, "shakeMaxIter");
-defineInputValue(InputShakeAll, "shakeAll");
-defineInputValue(InputRattle, "rattle");
-defineInputValue(InputRattleEpsilon, "rattleEpsilon");
-defineInputValue(InputRattleMaxIter, "rattleMaxIter");
-defineInputValue(InputRattleAll, "rattleAll");
-defineInputValue(InputShadow, "shadow");
-defineInputValue(InputShadowOrder, "shadoworder");
-defineInputValue(InputShadowFreq, "shadowfreq");
+  "frequency <n>")
+defineInputValue(InputShake, "shake")
+defineInputValue(InputShakeEpsilon, "shakeEpsilon")
+defineInputValue(InputShakeMaxIter, "shakeMaxIter")
+defineInputValue(InputShakeAll, "shakeAll")
+defineInputValue(InputRattle, "rattle")
+defineInputValue(InputRattleEpsilon, "rattleEpsilon")
+defineInputValue(InputRattleMaxIter, "rattleMaxIter")
+defineInputValue(InputRattleAll, "rattleAll")
+defineInputValue(InputShadow, "shadow")
+defineInputValue(InputShadowOrder, "shadoworder")
+defineInputValue(InputShadowFreq, "shadowfreq")
 
 void ModifierModule::init(ProtoMolApp *app) {
   InputRemoveLinearMomentum::registerConfiguration(&app->config, -1);

@@ -13,6 +13,6 @@ namespace ProtoMol {
     const std::string getName() const {return "IntegratorOpenMM";}
     void init(ProtoMolApp *app);
   };
-};
+}
 
 #endif // INTEGRATOR_OPEMM_MODULE_H

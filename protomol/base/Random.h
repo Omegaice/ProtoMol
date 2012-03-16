@@ -58,6 +58,6 @@ namespace ProtoMol {
     static const int SHUFFLE_LEN;
     static const double EPSILON, INVERSE_MODULUS, LESS_THAN_ONE;
   };
-};
+}
 
 #endif // RANDOM_H

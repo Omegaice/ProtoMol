@@ -13,6 +13,6 @@ namespace ProtoMol {
     const std::string getName() const {return "NonbondedCutoffForce";}
     void registerForces(ProtoMolApp *app);
   };
-};
+}
 
 #endif // NONBONDEDCUTOFFFORCE_MODULE_H

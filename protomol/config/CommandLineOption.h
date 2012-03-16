@@ -68,7 +68,6 @@ namespace ProtoMol {
     void addOptionalArg(const std::string &arg) {optionalArgs.push_back(arg);}
     bool match(const std::string &arg) const;
   };
-};
-
+}
 
 #endif // COMMAND_LINE_OPTION_H

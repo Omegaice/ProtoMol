@@ -85,6 +85,6 @@ namespace ProtoMol {
   namespace SystemUtilities {
     bool unlink(const std::string &path);
     void rename(const std::string &src, const std::string &dst);
-  };
+  }
 }
 #endif /* SYSTEMUTILITIES_H */

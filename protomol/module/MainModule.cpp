@@ -13,35 +13,35 @@ using namespace ProtoMol;
 using namespace ProtoMol::Report;
 
 
-defineInputValue(InputSeed, "seed");
-defineInputValue(InputRandomType, "randomtype");
-defineInputValue(InputFirststep, "firststep");
-defineInputValue(InputRealfirststep, "realfirststep");
-defineInputValue(InputNumsteps, "numsteps");
+defineInputValue(InputSeed, "seed")
+defineInputValue(InputRandomType, "randomtype")
+defineInputValue(InputFirststep, "firststep")
+defineInputValue(InputRealfirststep, "realfirststep")
+defineInputValue(InputNumsteps, "numsteps")
 defineInputValueAndText(InputDebug, "debug", "report level, suppresses all "
-                        "output with higher output level");
-defineInputValue(InputIntegrator, "integrator");
-defineInputValue(InputReducedImage, "reducedImage");
-defineInputValue(InputTemperature, "temperature");
-defineInputValue(InputDoSCPISM, "doscpism");
-defineInputValue(InputDoGBSAObc, "doGBSAObc");
+                        "output with higher output level")
+defineInputValue(InputIntegrator, "integrator")
+defineInputValue(InputReducedImage, "reducedImage")
+defineInputValue(InputTemperature, "temperature")
+defineInputValue(InputDoSCPISM, "doscpism")
+defineInputValue(InputDoGBSAObc, "doGBSAObc")
 defineInputValueAndText(InputVirialCalc, "virialCalc",
-                        "Required for constant pressure simulations.");
+                        "Required for constant pressure simulations.")
 defineInputValueAndText(InputMolVirialCalc, "molVirialCalc",
-                        "Required for constant pressure simulations.");
+                        "Required for constant pressure simulations.")
 // TODO These should be in output module
-defineInputValue(InputOutputfreq,"outputfreq");
-defineInputValue(InputOutput,"output");
+defineInputValue(InputOutputfreq,"outputfreq")
+defineInputValue(InputOutput,"output")
 defineInputValueAndText(InputMinimalImage, "minimalImage",
                         "global default flag whether the coordinates should be "
-                        "transformed to minimal image or not");
-defineInputValue(InputDebugLimit, "debugstart");
+                        "transformed to minimal image or not")
+defineInputValue(InputDebugLimit, "debugstart")
 
 // Parallel (no parallel module)
-defineInputValue(InputUseBarrier,"useBarrier");
-defineInputValue(InputParallelPipe,"parallelPipe");
-defineInputValue(InputParallelMode,"parallelMode");
-defineInputValue(InputMaxPackages,"maxPackages");
+defineInputValue(InputUseBarrier,"useBarrier")
+defineInputValue(InputParallelPipe,"parallelPipe")
+defineInputValue(InputParallelMode,"parallelMode")
+defineInputValue(InputMaxPackages,"maxPackages")
 
 
 void MainModule::init(ProtoMolApp *app) {

@@ -11,7 +11,7 @@ namespace ProtoMol {
   class ProtoMolApp;
   class Configuration;
 
-  declareInputValue(InputConfig, STRING, NOTEMPTY);
+  declareInputValue(InputConfig, STRING, NOTEMPTY)
 
   class ConfigurationModule : public Module {
     Configuration *config;
@@ -30,6 +30,6 @@ namespace ProtoMol {
     int listKeywords();
     int configure(const std::vector<std::string> &args);
   };
-};
+}
 
 #endif // CONFIGURATION_MODULE_H

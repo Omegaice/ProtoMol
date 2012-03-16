@@ -9,19 +9,19 @@
 namespace ProtoMol {
   class ProtoMolApp;
 
-  declareInputValue(InputPositions, STRING, NOTEMPTY);
-  declareInputValue(InputVelocities, STRING, NOTEMPTY);
-  declareInputValue(InputPSF, STRING, NOTEMPTY);
-  declareInputValue(InputPAR, STRING, NOTEMPTY);
-  declareInputValue(InputPDBScaling, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputDihedralMultPSF, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputSCPISM, STRING, NOTEMPTY);
+  declareInputValue(InputPositions, STRING, NOTEMPTY)
+  declareInputValue(InputVelocities, STRING, NOTEMPTY)
+  declareInputValue(InputPSF, STRING, NOTEMPTY)
+  declareInputValue(InputPAR, STRING, NOTEMPTY)
+  declareInputValue(InputPDBScaling, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputDihedralMultPSF, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputSCPISM, STRING, NOTEMPTY)
 
-  declareInputValue(InputGromacsTopo, STRING, NOTEMPTY);
-  declareInputValue(InputGromacsParamPath, STRING, NOTEMPTY);
-  declareInputValue(InputGromacsGBParameterFile, STRING, NOTEMPTY);
+  declareInputValue(InputGromacsTopo, STRING, NOTEMPTY)
+  declareInputValue(InputGromacsParamPath, STRING, NOTEMPTY)
+  declareInputValue(InputGromacsGBParameterFile, STRING, NOTEMPTY)
 
-  declareInputValue(InputGromacsTprFile, STRING, NOTEMPTY);
+  declareInputValue(InputGromacsTprFile, STRING, NOTEMPTY)
 
   class IOModule : public Module {
   public:
@@ -32,6 +32,6 @@ namespace ProtoMol {
     void init(ProtoMolApp *app);
     void read(ProtoMolApp *app);
   };
-};
+}
 
 #endif // IO_MODULE_H

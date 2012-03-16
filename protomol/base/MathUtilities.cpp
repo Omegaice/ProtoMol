@@ -6,7 +6,7 @@ using namespace std;
 namespace ProtoMol {
   namespace Rand{
     bool isSeeded = false;
-  };
+  }
 
 //____ erf
   Real myerf(Real x) {

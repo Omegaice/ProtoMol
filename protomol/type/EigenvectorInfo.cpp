@@ -27,7 +27,7 @@ EigenvectorInfo::~EigenvectorInfo() {
 	if( mySingleEigs ) {
 		delete [] mySingleEigs;
 	}
-};
+}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // New methods of class EigenvectorInfo

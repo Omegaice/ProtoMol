@@ -15,6 +15,6 @@ namespace ProtoMol {
     {return "NonbondedFullElectrostaticForce";}
     void registerForces(ProtoMolApp *app);
   };
-};
+}
 
 #endif // NONBONDEDFULLELECTROSTATICFORCE_MODULE_H

@@ -32,6 +32,6 @@ namespace ProtoMol {
 
     int listAction();
   };
-};
+}
 
 #endif // MODULE_MANAGER_H

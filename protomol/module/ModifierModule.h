@@ -9,21 +9,21 @@
 namespace ProtoMol {
   class ProtoMolApp;
 
-  declareInputValue(InputRemoveAngularMomentum, INT, NOCONSTRAINTS);
-  declareInputValue(InputRemoveLinearMomentum, INT, NOCONSTRAINTS);
-  declareInputValue(InputRattle, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputRattleEpsilon, REAL, NOTNEGATIVE);
-  declareInputValue(InputRattleMaxIter, INT, NOTNEGATIVE);
-  declareInputValue(InputRattleAll, BOOL, NOCONSTRAINTS);
+  declareInputValue(InputRemoveAngularMomentum, INT, NOCONSTRAINTS)
+  declareInputValue(InputRemoveLinearMomentum, INT, NOCONSTRAINTS)
+  declareInputValue(InputRattle, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputRattleEpsilon, REAL, NOTNEGATIVE)
+  declareInputValue(InputRattleMaxIter, INT, NOTNEGATIVE)
+  declareInputValue(InputRattleAll, BOOL, NOCONSTRAINTS)
 
-  declareInputValue(InputShake, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputShakeEpsilon, REAL, NOTNEGATIVE);
-  declareInputValue(InputShakeMaxIter, INT, NOTNEGATIVE);
-  declareInputValue(InputShakeAll, BOOL, NOCONSTRAINTS);
+  declareInputValue(InputShake, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputShakeEpsilon, REAL, NOTNEGATIVE)
+  declareInputValue(InputShakeMaxIter, INT, NOTNEGATIVE)
+  declareInputValue(InputShakeAll, BOOL, NOCONSTRAINTS)
 
-  declareInputValue(InputShadow, BOOL, NOCONSTRAINTS);
-  declareInputValue(InputShadowOrder, INT, NOTNEGATIVE);
-  declareInputValue(InputShadowFreq, INT, NOTNEGATIVE);
+  declareInputValue(InputShadow, BOOL, NOCONSTRAINTS)
+  declareInputValue(InputShadowOrder, INT, NOTNEGATIVE)
+  declareInputValue(InputShadowFreq, INT, NOTNEGATIVE)
 
   class ModifierModule : public Module {
   public:
@@ -35,6 +35,6 @@ namespace ProtoMol {
     void postBuild(ProtoMolApp *app);
     void addModifiers(ProtoMolApp *app);
   };
-};
+}
 
 #endif // MODIFIER_MODULE_H

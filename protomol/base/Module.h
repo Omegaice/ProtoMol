@@ -44,6 +44,6 @@ namespace ProtoMol {
       return m1->getName() < m2->getName();
     }
   };
-};
+}
 
 #endif // MODULE_H

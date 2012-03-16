@@ -17,6 +17,6 @@ namespace ProtoMol {
     void init(ProtoMolApp *app);
     void registerForces(ProtoMolApp *app);
   };
-};
+}
 
 #endif // BONDEDFORCES_MODULE_H

@@ -12,7 +12,7 @@
 using namespace std;
 using namespace ProtoMol;
 
-defineInputValueAndText(InputConfig, "config", "The configuration file name.");
+defineInputValueAndText(InputConfig, "config", "The configuration file name.")
 
 void ConfigurationModule::init(ProtoMolApp *app) {
   config = &app->config;

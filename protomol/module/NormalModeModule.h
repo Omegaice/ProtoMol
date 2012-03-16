@@ -9,9 +9,9 @@
 namespace ProtoMol {
   class ProtoMolApp;
 
-  declareInputValue(InputEigenVectors, STRING, NOTEMPTY);
-  declareInputValue(InputEigTextFile, STRING, NOTEMPTY);
-  declareInputValue(InputEigenValues, STRING, NOTEMPTY);
+  declareInputValue(InputEigenVectors, STRING, NOTEMPTY)
+  declareInputValue(InputEigTextFile, STRING, NOTEMPTY)
+  declareInputValue(InputEigenValues, STRING, NOTEMPTY)
 
   class NormalModeModule : public Module {
 
@@ -24,6 +24,6 @@ namespace ProtoMol {
     void init(ProtoMolApp *app);
     void read(ProtoMolApp *app);
   };
-};
+}
 
 #endif // NORMALMODE_MODULE_H

@@ -30,7 +30,7 @@ namespace ProtoMol {
     void dtrsm(char *sideA, char *ulA, char *transA, char *diagA,
                int *m, int *n, double *alpha, double *A, int *lda,
                double *B, int *ldb);
-  };
+  }
 }
 
 #endif // PROTOMOL_LAPACK_H

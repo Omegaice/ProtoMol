@@ -13,6 +13,6 @@ namespace ProtoMol {
     const std::string getName() const {return "Leapfrog";}
     void init(ProtoMolApp *app);
   };
-};
+}
 
 #endif // LEAPFROG_MODULE_H

@@ -17,6 +17,6 @@ namespace ProtoMol {
 
     void init(ProtoMolApp *app);
   };
-};
+}
 
 #endif // OUTPUT_MODULE_H

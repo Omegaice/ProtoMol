@@ -154,6 +154,6 @@ namespace ProtoMol {
   private:
     Value myValue;
   };
+}
 
-};
 #endif

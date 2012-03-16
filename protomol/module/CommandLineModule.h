@@ -32,6 +32,6 @@ namespace ProtoMol {
     int listForces(const std::vector<std::string> &args);
     int listOutputs(const std::vector<std::string> &args);
   };
-};
+}
 
 #endif // COMMAND_LINE_MODULE_H

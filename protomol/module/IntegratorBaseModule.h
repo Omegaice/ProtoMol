@@ -13,6 +13,6 @@ namespace ProtoMol {
     const std::string getName() const {return "IntegratorBase";}
     void init(ProtoMolApp *app);
   };
-};
+}
 
 #endif // INTEGRATOR_BASE_MODULE_H

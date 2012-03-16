@@ -24,21 +24,21 @@ using namespace ProtoMol;
 using namespace ProtoMol::Report;
 using namespace ProtoMol::Constant;
 
-defineInputValue(InputVelocities, "velfile");
+defineInputValue(InputVelocities, "velfile")
 defineInputValueWithAliases(InputPositions, "posfile",
-  ("coords")("coordinates"));
-defineInputValueWithAliases(InputPSF, "psffile", ("structure"));
-defineInputValueWithAliases(InputPAR, "parfile", ("parameters"));
-defineInputValue(InputPDBScaling, "pdbScaling");
-defineInputValue(InputDihedralMultPSF, "dihedralMultPSF");
-defineInputValue(InputSCPISM, "scpismfile");
+  ("coords")("coordinates"))
+defineInputValueWithAliases(InputPSF, "psffile", ("structure"))
+defineInputValueWithAliases(InputPAR, "parfile", ("parameters"))
+defineInputValue(InputPDBScaling, "pdbScaling")
+defineInputValue(InputDihedralMultPSF, "dihedralMultPSF")
+defineInputValue(InputSCPISM, "scpismfile")
 
 //for GROMACS
-defineInputValue(InputGromacsTopo, "gromacstopologyfile");
-defineInputValue(InputGromacsParamPath, "gromacsparameterpath");
-defineInputValue(InputGromacsGBParameterFile, "gromacsGBparameterfile");
+defineInputValue(InputGromacsTopo, "gromacstopologyfile")
+defineInputValue(InputGromacsParamPath, "gromacsparameterpath")
+defineInputValue(InputGromacsGBParameterFile, "gromacsGBparameterfile")
 
-defineInputValue(InputGromacsTprFile, "gromacstprfile");
+defineInputValue(InputGromacsTprFile, "gromacstprfile")
 
 void IOModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;

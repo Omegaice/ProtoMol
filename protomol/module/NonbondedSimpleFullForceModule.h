@@ -14,6 +14,6 @@ namespace ProtoMol {
     const std::string getName() const {return "NonbondedSimpleFullForce";}
     void registerForces(ProtoMolApp *app);
   };
-};
+}
 
 #endif // NONBONDEDSIMPLEFULLFORCE_MODULE_H

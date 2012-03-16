@@ -21,9 +21,9 @@ using namespace std;
 using namespace ProtoMol;
 using namespace ProtoMol::Report;
 
-defineInputValue(InputEigenVectors, "eigfile");
-defineInputValue(InputEigTextFile, "eigtextfile");
-defineInputValue(InputEigenValues, "eigvaluefile");
+defineInputValue(InputEigenVectors, "eigfile")
+defineInputValue(InputEigTextFile, "eigtextfile")
+defineInputValue(InputEigenValues, "eigvaluefile")
 
 void NormalModeModule::init(ProtoMolApp *app) {
   InputEigenVectors::registerConfiguration(&app->config);

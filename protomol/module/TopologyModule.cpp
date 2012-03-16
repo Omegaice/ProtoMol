@@ -13,8 +13,8 @@
 using namespace std;
 using namespace ProtoMol;
 
-defineInputValue(InputBoundaryConditions, "boundaryConditions");
-defineInputValue(InputCellManager, "cellManager");
+defineInputValue(InputBoundaryConditions, "boundaryConditions")
+defineInputValue(InputCellManager, "cellManager")
 
 void TopologyModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;

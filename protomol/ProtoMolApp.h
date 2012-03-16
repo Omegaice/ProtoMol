@@ -72,5 +72,6 @@ namespace ProtoMol {
     bool step(unsigned inc = 0);
     void finalize();
   };
-};
+}
+
 #endif // PROTOMOLAPP_H

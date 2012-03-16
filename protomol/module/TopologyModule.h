@@ -10,8 +10,8 @@
 namespace ProtoMol {
   class ProtoMolApp;
 
-  declareInputValue(InputBoundaryConditions, STRING, NOTEMPTY);
-  declareInputValue(InputCellManager, STRING, NOTEMPTY);
+  declareInputValue(InputBoundaryConditions, STRING, NOTEMPTY)
+  declareInputValue(InputCellManager, STRING, NOTEMPTY)
 
   class TopologyModule : public Module {
   public:
@@ -25,6 +25,6 @@ namespace ProtoMol {
     void init(ProtoMolApp *app);
     void configure(ProtoMolApp *app);
   };
-};
+}
 
 #endif // TOPOLOGY_MODULE_H

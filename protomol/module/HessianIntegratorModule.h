@@ -13,6 +13,6 @@ namespace ProtoMol {
     const std::string getName() const {return "HessianIntegrator";}
     void init(ProtoMolApp *app);
   };
-};
+}
 
 #endif // HESSIANINTEGRATOR_MODULE_H
