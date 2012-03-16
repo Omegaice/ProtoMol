@@ -245,7 +245,10 @@ Parallel::Parallel() {
   myIsParallel = Parallel::isMPI;
   myIAmMaster = true;
   myIAmSlave = true;
-  myMode = ParallelType::DYNAMIC;
+  
+  //changed default to static
+  myMode = ParallelType::STATIC;
+  //myMode = ParallelType::DYNAMIC;
 
   myPipeSize = 1;
   myUseBarrier = false;
