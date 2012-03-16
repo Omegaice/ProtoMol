@@ -176,7 +176,7 @@ namespace ProtoMol {
 
       static std::string getId() {
         return Constraint::getPrefixId() + Force::getId() + Constraint::getPostfixId() +
-          std::string((!Switch::USE) ? std::string("") : std::string(" -SwitchFunction " + Switch::getId()));
+          std::string((!Switch::USE) ? std::string("") : std::string(" -switchingFunction " + Switch::getId()));
       }
     private:
       const std::vector<Vector3D> *lattice;

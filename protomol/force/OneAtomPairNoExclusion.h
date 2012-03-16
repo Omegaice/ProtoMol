@@ -147,7 +147,7 @@ namespace ProtoMol {
       return Constraint::getPrefixId() + Force::getId() +
         Constraint::getPostfixId() +
         std::string((!Switch::USE) ? std::string("") :
-                    std::string(" -SwitchFunction " +
+                    std::string(" -switchingFunction " +
                                 Switch::getId()));
     }
   private:
