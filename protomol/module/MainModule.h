@@ -24,6 +24,11 @@ namespace ProtoMol {
   declareInputValue(InputMinimalImage, BOOL, NOCONSTRAINTS);
   declareInputValue(InputDoGBSAObc, BOOL, NOCONSTRAINTS);
   declareInputValue(InputDebugLimit, INT, NOCONSTRAINTS);
+  //parallel
+  declareInputValue(InputUseBarrier, BOOL, NOCONSTRAINTS);
+  declareInputValue(InputParallelMode, STRING,NOTEMPTY);
+  declareInputValue(InputParallelPipe, INT, NOCONSTRAINTS);
+  declareInputValue(InputMaxPackages, INT, NOCONSTRAINTS);
 
 
   class MainModule : public Module {

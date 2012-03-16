@@ -156,6 +156,24 @@ bool ProtoMolApp::configure(const vector<string> &args) {
 
 
 void ProtoMolApp::build() {
+  
+  //Set parallel parameters
+  if( Parallel::isParallel() ){
+    //mode
+    if (config[InputParallelMode::keyword].valid())
+      Parallel::setMode(config[InputParallelMode::keyword].getString());
+    //barrier
+    if (config[InputUseBarrier::keyword].valid())
+      Parallel::setBarrier(config[InputUseBarrier::keyword]);
+    //pipe size
+    if (config[InputParallelPipe::keyword].valid())
+      Parallel::setPipeSize(config[InputParallelPipe::keyword]);
+    //max pacjkages
+    if (config[InputMaxPackages::keyword].valid())
+      Parallel::setMaxPackages(config[InputMaxPackages::keyword]);
+    
+  }
+  
   // TPR input for topology, positions and velocities?
   // Then check for Gromacs support
 #if !defined(HAVE_GROMACS)

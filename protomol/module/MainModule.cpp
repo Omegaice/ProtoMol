@@ -37,6 +37,12 @@ defineInputValueAndText(InputMinimalImage, "minimalImage",
                         "transformed to minimal image or not");
 defineInputValue(InputDebugLimit, "debugstart");
 
+// Parallel (no parallel module)
+defineInputValue(InputUseBarrier,"useBarrier");
+defineInputValue(InputParallelPipe,"parallelPipe");
+defineInputValue(InputParallelMode,"parallelMode");
+defineInputValue(InputMaxPackages,"maxPackages");
+
 
 void MainModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;
@@ -58,6 +64,12 @@ void MainModule::init(ProtoMolApp *app) {
   InputMinimalImage::registerConfiguration(&app->config, false);
   InputDoGBSAObc::registerConfiguration(config, 0);
   InputDebugLimit::registerConfiguration(config, 0);
+  //lel, no defaults
+  InputUseBarrier::registerConfiguration(config);
+  InputParallelPipe::registerConfiguration(config);
+  InputParallelMode::registerConfiguration(config);
+  InputMaxPackages::registerConfiguration(config);
+
 }
 
 
