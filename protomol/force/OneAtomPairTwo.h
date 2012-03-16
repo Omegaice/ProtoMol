@@ -14,15 +14,15 @@ namespace ProtoMol {
    * template arguments defining the boundary conditions, two switching 
    * functions, two potentials and optional constraint.
    */
-  template<class TBoundaryConditions, class TSwitchingFunctionFirst,
-           class TNonbondedForceFirst, class TSwitchingFunctionSecond,
-           class TNonbondedForceSecond, class TConstraint = NoConstraint>
+  template<typename Boundary, typename SwitchA,
+           typename ForceA, typename SwitchB,
+           typename ForceB, typename Constraint = NoConstraint>
   class OneAtomPairTwo {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Typedef & sub classes
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    typedef TBoundaryConditions BoundaryConditions;
+    typedef Boundary BoundaryConditions;
     // Make the boundary conditions visible
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,20 +31,20 @@ namespace ProtoMol {
   public:
     OneAtomPairTwo() {}
 
-    OneAtomPairTwo(TNonbondedForceFirst f1, TSwitchingFunctionFirst sF1,
-                   TNonbondedForceSecond f2, TSwitchingFunctionSecond sF2) :
+    OneAtomPairTwo(ForceA f1, SwitchA sF1,
+                   ForceB f2, SwitchB sF2) :
       switchingFunctionFirst(sF1), nonbondedForceFunctionFirst(f1),
       switchingFunctionSecond(sF2), nonbondedForceFunctionSecond(f2),
       mySquaredCutoff(std::max
-                      (Cutoff<TNonbondedForceFirst::CUTOFF>::cutoff(sF1, f1),
-                       Cutoff<TNonbondedForceSecond::CUTOFF>::cutoff(sF2, f2)))
+                      (Cutoff<ForceA::CUTOFF>::cutoff(sF1, f1),
+                       Cutoff<ForceB::CUTOFF>::cutoff(sF2, f2)))
     {}
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class OneAtomPairTwo
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    void initialize(const SemiGenericTopology<TBoundaryConditions> *topo,
+    void initialize(const SemiGenericTopology<Boundary> *topo,
                     const Vector3DBlock *pos, Vector3DBlock *f,
                     ScalarStructure *e) {
       realTopo = topo;
@@ -55,8 +55,8 @@ namespace ProtoMol {
 
     // Computes the force and energy for atom i and j.
     void doOneAtomPair(const int i, const int j) {
-      if (TConstraint::PRE_CHECK)
-        if (!TConstraint::check(realTopo, i, j))
+      if (Constraint::PRE_CHECK)
+        if (!Constraint::check(realTopo, i, j))
           return;
 
       // Get atom distance.
@@ -65,9 +65,9 @@ namespace ProtoMol {
                     minimalDifference((*positions)[i], (*positions)[j],
                                       distSquared));
       // Do switching function rough test, if necessary.
-      if ((TSwitchingFunctionFirst::USE || TSwitchingFunctionSecond::USE ||
-           TNonbondedForceFirst::CUTOFF ||
-           TNonbondedForceSecond::CUTOFF) && distSquared > mySquaredCutoff)
+      if ((SwitchA::USE || SwitchB::USE ||
+           ForceA::CUTOFF ||
+           ForceB::CUTOFF) && distSquared > mySquaredCutoff)
         return;
 
       // Check for an exclusion.
@@ -81,8 +81,8 @@ namespace ProtoMol {
 
       // Calculate the force and energy.
       Real rDistSquared =
-        ((TNonbondedForceFirst::DIST_R2 ||
-          TNonbondedForceSecond::DIST_R2) ? 1.0 / distSquared : 1.0);
+        ((ForceA::DIST_R2 ||
+          ForceB::DIST_R2) ? 1.0 / distSquared : 1.0);
       Real energy1, force1, energy2 = 0, force2 = 0;
       nonbondedForceFunctionFirst(energy1, force1, distSquared, rDistSquared,
                                   diff, realTopo, i, j, excl);
@@ -90,7 +90,7 @@ namespace ProtoMol {
                                    diff, realTopo, i, j, excl);
       //Report::report << "\t"<<i << "\t"<<j<<Report::endr;
       // Calculate the switched force and energy.
-      if (TSwitchingFunctionFirst::MODIFY || TSwitchingFunctionSecond::MODIFY) {
+      if (SwitchA::MODIFY || SwitchB::MODIFY) {
         Real switchingValue, switchingDeriv;
 
         switchingFunctionFirst(switchingValue, switchingDeriv, distSquared);
@@ -120,8 +120,8 @@ namespace ProtoMol {
       else if (energies->virial())
         energies->addVirial(fij, diff);
       // End of force computation.
-      if (TConstraint::POST_CHECK)
-        TConstraint::check(realTopo, i, j, diff, energy1 + energy2, fij);
+      if (Constraint::POST_CHECK)
+        Constraint::check(realTopo, i, j, diff, energy1 + energy2, fij);
     }
 
     void getParameters(std::vector<Parameter> &parameters) const {
@@ -143,10 +143,10 @@ namespace ProtoMol {
 
     static unsigned int getParameterSize() {
       return
-        TNonbondedForceFirst::getParameterSize() +
-        TSwitchingFunctionFirst::getParameterSize() +
-        TNonbondedForceSecond::getParameterSize() +
-        TSwitchingFunctionSecond::getParameterSize();
+        ForceA::getParameterSize() +
+        SwitchA::getParameterSize() +
+        ForceB::getParameterSize() +
+        SwitchB::getParameterSize();
     }
 
     bool doParallelPostProcess(){
@@ -155,9 +155,9 @@ namespace ProtoMol {
           || nonbondedForceFunctionSecond.doParallelPostProcess();
 	  }
     static OneAtomPairTwo make(std::vector<Value> values) {
-      unsigned int l1 = TNonbondedForceFirst::getParameterSize();
-      unsigned int l2 = TSwitchingFunctionFirst::getParameterSize() + l1;
-      unsigned int l3 = TNonbondedForceSecond::getParameterSize() + l2;
+      unsigned int l1 = ForceA::getParameterSize();
+      unsigned int l2 = SwitchA::getParameterSize() + l1;
+      unsigned int l3 = ForceB::getParameterSize() + l2;
 
       std::vector<Value> F1(values.begin(), values.begin() + l1);
       std::vector<Value> S1(values.begin() + l1, values.begin() + l2);
@@ -165,43 +165,43 @@ namespace ProtoMol {
       std::vector<Value> S2(values.begin() + l3, values.end());
 
       return OneAtomPairTwo
-        (TNonbondedForceFirst::make(F1), TSwitchingFunctionFirst::make(S1),
-         TNonbondedForceSecond::make(F2), TSwitchingFunctionSecond::make(S2));
+        (ForceA::make(F1), SwitchA::make(S1),
+         ForceB::make(F2), SwitchB::make(S2));
     }
 
     static std::string getId() {
       return
-        TConstraint::getPrefixId() +
-        headString(TNonbondedForceFirst::getId()) +
-        TConstraint::getPostfixId() + " " + TConstraint::getPrefixId() +
-        headString(TNonbondedForceSecond::getId()) +
-        TConstraint::getPostfixId() +
-        (tailString(TNonbondedForceFirst::getId()).empty() ? "" : " ") +
-        tailString(TNonbondedForceFirst::getId()) +
-        (tailString(TNonbondedForceSecond::getId()).empty() ? "" : " ") +
-        tailString(TNonbondedForceSecond::getId()) +
-        std::string((!TSwitchingFunctionFirst::USE) ?
+        Constraint::getPrefixId() +
+        headString(ForceA::getId()) +
+        Constraint::getPostfixId() + " " + Constraint::getPrefixId() +
+        headString(ForceB::getId()) +
+        Constraint::getPostfixId() +
+        (tailString(ForceA::getId()).empty() ? "" : " ") +
+        tailString(ForceA::getId()) +
+        (tailString(ForceB::getId()).empty() ? "" : " ") +
+        tailString(ForceB::getId()) +
+        std::string((!SwitchA::USE) ?
                     std::string("") :
                     std::string(" -switchingFunction " +
-                                TSwitchingFunctionFirst::getId())) +
-        std::string((!TSwitchingFunctionSecond::USE) ?
+                                SwitchA::getId())) +
+        std::string((!SwitchB::USE) ?
                     std::string("") :
                     std::string(" -switchingFunction " +
-                                TSwitchingFunctionSecond::getId()));
+                                SwitchB::getId()));
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // My data members
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private:
-    const SemiGenericTopology<TBoundaryConditions> *realTopo;
+    const SemiGenericTopology<Boundary> *realTopo;
     const Vector3DBlock *positions;
     Vector3DBlock *forces;
     ScalarStructure *energies;
-    TSwitchingFunctionFirst switchingFunctionFirst;
-    TNonbondedForceFirst nonbondedForceFunctionFirst;
-    TSwitchingFunctionSecond switchingFunctionSecond;
-    TNonbondedForceSecond nonbondedForceFunctionSecond;
+    SwitchA switchingFunctionFirst;
+    ForceA nonbondedForceFunctionFirst;
+    SwitchB switchingFunctionSecond;
+    ForceB nonbondedForceFunctionSecond;
     Real mySquaredCutoff;
   };
 }

@@ -9,8 +9,8 @@
 namespace ProtoMol {
   //____ OneAtomPairFull
 
-  template<class TBoundaryConditions, class TSwitchingFunction,
-           class TNonbondedForce, class TConstraint = NoConstraint>
+  template<typename Boundary, typename Switch,
+           typename Force, typename Constraint = NoConstraint>
   class OneAtomPairFull {
     // Computes the interaction for a given force between two atoms.
 
@@ -18,7 +18,7 @@ namespace ProtoMol {
     // Typedef
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    typedef TBoundaryConditions BoundaryConditions;
+    typedef Boundary BoundaryConditions;
     // Make the boundary conditions visible
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -26,14 +26,14 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     OneAtomPairFull() : switchingFunction(), nonbondedForceFunction() {};
-    OneAtomPairFull(TNonbondedForce nF, TSwitchingFunction sF) :
+    OneAtomPairFull(Force nF, Switch sF) :
       switchingFunction(sF), nonbondedForceFunction(nF) {};
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class OneAtomPairFull
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    void initialize(const SemiGenericTopology<TBoundaryConditions> *topo,
+    void initialize(const SemiGenericTopology<Boundary> *topo,
                     const Vector3DBlock *pos, Vector3DBlock *f,
                     ScalarStructure *e, const std::vector<Vector3D> *l) {
       realTopo = topo;
@@ -45,8 +45,8 @@ namespace ProtoMol {
 
     // Computes the force and energy for atom i and j.
     void doOneAtomPair(const int i, const int j) {
-      if (TConstraint::PRE_CHECK)
-        if (!TConstraint::check(realTopo, i, j))
+      if (Constraint::PRE_CHECK)
+        if (!Constraint::check(realTopo, i, j))
           return;
 
       // Do we have something to do?
@@ -61,7 +61,7 @@ namespace ProtoMol {
         // Get atom distance.
         Real distSquared = diffMinimal.normSquared();
         // Do switching function rough test, if necessary.
-        if (TSwitchingFunction::USE &&
+        if (Switch::USE &&
             !switchingFunction.roughTest(distSquared))
           return;
 
@@ -75,7 +75,7 @@ namespace ProtoMol {
                                  diffMinimal, realTopo, i, j, excl);
           // Calculate the switched force and energy.
           Real energy, force;
-          if (TSwitchingFunction::USE) {
+          if (Switch::USE) {
             Real switchingValue, switchingDeriv;
             switchingFunction(switchingValue, switchingDeriv, distSquared);
             energy = rawEnergy * switchingValue;
@@ -107,8 +107,8 @@ namespace ProtoMol {
             energies->addVirial(fij, -diffMinimal, -molDiff);
           } else
             energies->addVirial(fij, -diffMinimal);
-          if (TConstraint::POST_CHECK)
-            TConstraint::check(realTopo, i, j, diffMinimal, energy, fij);
+          if (Constraint::POST_CHECK)
+            Constraint::check(realTopo, i, j, diffMinimal, energy, fij);
         }
       }
 
@@ -117,7 +117,7 @@ namespace ProtoMol {
         // Get atom distance.
         Real distSquared = diff.normSquared();
         // Do switching function rough test, if necessary.
-        if (TSwitchingFunction::USE &&
+        if (Switch::USE &&
             !switchingFunction.roughTest(distSquared))
           continue;
 
@@ -128,7 +128,7 @@ namespace ProtoMol {
                                diff, realTopo, i, j, EXCLUSION_NONE);
         // Calculate the switched force and energy.
         Real energy, force;
-        if (TSwitchingFunction::USE) {
+        if (Switch::USE) {
           Real switchingValue, switchingDeriv;
           switchingFunction(switchingValue, switchingDeriv, distSquared);
           energy = rawEnergy * switchingValue;
@@ -166,8 +166,8 @@ namespace ProtoMol {
         }
         // Add this energy into the total system energy.
         nonbondedForceFunction.accumulateEnergy(energies, energy);
-        if (TConstraint::POST_CHECK)
-          TConstraint::check(realTopo, i, j, diff, energy, -diff * force);
+        if (Constraint::POST_CHECK)
+          Constraint::check(realTopo, i, j, diff, energy, -diff * force);
       }
     }
 
@@ -190,38 +190,38 @@ namespace ProtoMol {
 	  }
     
     static unsigned int getParameterSize() {
-      return TNonbondedForce::getParameterSize() +
-        TSwitchingFunction::getParameterSize();
+      return Force::getParameterSize() +
+        Switch::getParameterSize();
     }
 
     static OneAtomPairFull make(std::vector<Value> values) {
-      unsigned int n = TNonbondedForce::getParameterSize();
+      unsigned int n = Force::getParameterSize();
 
       std::vector<Value> F(values.begin(), values.begin() + n);
       std::vector<Value> S(values.begin() + n, values.end());
 
-      return OneAtomPairFull(TNonbondedForce::make(F),
-                             TSwitchingFunction::make(S));
+      return OneAtomPairFull(Force::make(F),
+                             Switch::make(S));
     }
 
     static std::string getId() {
-      return TConstraint::getPrefixId() + TNonbondedForce::getId() +
-        TConstraint::getPostfixId() +
-        std::string((!TSwitchingFunction::USE) ? std::string("") :
+      return Constraint::getPrefixId() + Force::getId() +
+        Constraint::getPostfixId() +
+        std::string((!Switch::USE) ? std::string("") :
                     std::string(" -switchingFunction " +
-                                TSwitchingFunction::getId()));
+                                Switch::getId()));
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // My data members
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   private:
-    const SemiGenericTopology<TBoundaryConditions> *realTopo;
+    const SemiGenericTopology<Boundary> *realTopo;
     const Vector3DBlock *positions;
     Vector3DBlock *forces;
     ScalarStructure *energies;
-    TSwitchingFunction switchingFunction;
-    TNonbondedForce nonbondedForceFunction;
+    Switch switchingFunction;
+    Force nonbondedForceFunction;
     const std::vector<Vector3D> *lattice;
   };
 }

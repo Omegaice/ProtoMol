@@ -15,15 +15,15 @@ namespace ProtoMol {
    * template arguments defining the boundary conditions, switching function,
    * potential and optional constraint.
    */
-  template<class TBoundaryConditions, class TSwitchingFunction,
-           class TNonbondedForce, class TConstraint = NoConstraint>
+  template<typename Boundary, typename Switch,
+           typename Force, typename Constraint = NoConstraint>
   class OneAtomPairNoExclusion {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Typedef & sub classes
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    typedef TBoundaryConditions BoundaryConditions;
-    typedef SemiGenericTopology<TBoundaryConditions> TopologyType;
+    typedef Boundary BoundaryConditions;
+    typedef SemiGenericTopology<Boundary> TopologyType;
     // Make the boundary conditions visible
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,9 +31,9 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     OneAtomPairNoExclusion() : switchingFunction(), nonbondedForceFunction() {};
-    OneAtomPairNoExclusion(TNonbondedForce nF, TSwitchingFunction sF) :
+    OneAtomPairNoExclusion(Force nF, Switch sF) :
       switchingFunction(sF), nonbondedForceFunction(nF),
-      mySquaredCutoff(Cutoff<TNonbondedForce::CUTOFF>::cutoff(sF, nF)) {}
+      mySquaredCutoff(Cutoff<Force::CUTOFF>::cutoff(sF, nF)) {}
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class OneAtomPairNoExclusion
@@ -54,8 +54,8 @@ namespace ProtoMol {
 
     // Computes the force and energy for atom i and j.
     void doOneAtomPair(const int i, const int j) {
-      if (TConstraint::PRE_CHECK)
-        if (!TConstraint::check(realTopo, i, j))
+      if (Constraint::PRE_CHECK)
+        if (!Constraint::check(realTopo, i, j))
           return;
 
       // Get atom distance.
@@ -66,7 +66,7 @@ namespace ProtoMol {
                                              distSquared);
       //      cout << "DIFF: " << diff << endl;
       // Do switching function rough test, if necessary.
-      if (TSwitchingFunction::USE || TNonbondedForce::CUTOFF)
+      if (Switch::USE || Force::CUTOFF)
         if (distSquared > mySquaredCutoff)
           return;
       // Don't Check for an exclusion.
@@ -80,12 +80,12 @@ namespace ProtoMol {
 
       // Calculate the force and energy.
       Real energy = 0, force = 0;
-      Real rDistSquared = (TNonbondedForce::DIST_R2 ? 1.0 / distSquared : 1.0);
+      Real rDistSquared = (Force::DIST_R2 ? 1.0 / distSquared : 1.0);
       nonbondedForceFunction(energy, force, distSquared, rDistSquared, diff,
                              realTopo, i, j, excl);
       //      cout << "EN: " << energy << " FO: " << force << endl;
       // Calculate the switched force and energy.
-      if (TSwitchingFunction::MODIFY) {
+      if (Switch::MODIFY) {
         Real switchingValue, switchingDeriv;
         switchingFunction(switchingValue, switchingDeriv, distSquared);
         // This has a - sign because the force is the negative of the
@@ -111,8 +111,8 @@ namespace ProtoMol {
       else if (energies->virial())
         energies->addVirial(fij, diff);
       // End of force computation.
-      if (TConstraint::POST_CHECK)
-        TConstraint::check(realTopo, i, j, diff, energy, fij);
+      if (Constraint::POST_CHECK)
+        Constraint::check(realTopo, i, j, diff, energy, fij);
     }
 
     void getParameters(std::vector<Parameter> &parameters) const {
@@ -134,40 +134,40 @@ namespace ProtoMol {
 	  }
     
     static OneAtomPairNoExclusion make(std::vector<Value> values) {
-      unsigned int n = TNonbondedForce::getParameterSize();
+      unsigned int n = Force::getParameterSize();
 
       std::vector<Value> parmsNF(values.begin(), values.begin() + n);
       std::vector<Value> parmsSF(values.begin() + n, values.end());
 
-      return OneAtomPairNoExclusion(TNonbondedForce::make(parmsNF),
-                         TSwitchingFunction::make(parmsSF));
+      return OneAtomPairNoExclusion(Force::make(parmsNF),
+                         Switch::make(parmsSF));
     }
 
     static std::string getId() {
-      return TConstraint::getPrefixId() + TNonbondedForce::getId() +
-        TConstraint::getPostfixId() +
-        std::string((!TSwitchingFunction::USE) ? std::string("") :
+      return Constraint::getPrefixId() + Force::getId() +
+        Constraint::getPostfixId() +
+        std::string((!Switch::USE) ? std::string("") :
                     std::string(" -switchingFunction " +
-                                TSwitchingFunction::getId()));
+                                Switch::getId()));
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // My data members
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    TNonbondedForce *getNonbondedForceFunction() {
+    Force *geForceFunction() {
       return &nonbondedForceFunction;
     }
 
-    TSwitchingFunction &getSwitchingFunction() {return switchingFunction;}
+    Switch &geSwitch() {return switchingFunction;}
 
   private:
     mutable TopologyType *realTopo;
     const Vector3DBlock *positions;
     Vector3DBlock *forces;
     ScalarStructure *energies;
-    TSwitchingFunction switchingFunction;
-    TNonbondedForce nonbondedForceFunction;
+    Switch switchingFunction;
+    Force nonbondedForceFunction;
     Real mySquaredCutoff;
   };
 }
