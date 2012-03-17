@@ -6,10 +6,6 @@ using namespace ProtoMol;
 //____ CoulombForce with DiElectric Term for Implicit Solvation
 
 const string CoulombForceDiElec::keyword("CoulombDiElec");
-const string CoulombForceDiElec::C1::keyword("C1");
-const string CoulombForceDiElec::C2::keyword("C2");
-const string CoulombForceDiElec::C3::keyword("C3");
-const string CoulombForceDiElec::C4::keyword("C4");
 
 // Default constructor
 CoulombForceDiElec::CoulombForceDiElec() : EPS(1), D(53), S(0.25) {}
