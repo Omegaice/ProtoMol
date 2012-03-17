@@ -414,6 +414,7 @@ protomol/output/OutputXYZTrajectoryVel.cpp -text
 protomol/output/OutputXYZTrajectoryVel.h -text
 protomol/output/SConscript -text
 protomol/output/stdtypes.h -text
+protomol/package.h.cmake -text
 protomol/parallel/FFTComplex.cpp -text
 protomol/parallel/FFTComplex.h -text
 protomol/parallel/Parallel.cpp -text
