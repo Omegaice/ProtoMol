@@ -273,6 +273,7 @@ bool NormalModeDiagonalize::Minimize(){
 		if( itrs <= 2 ) {
 			return true;
 		}
+		return false;
 	}
 	
 	return true;
