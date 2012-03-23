@@ -31,6 +31,8 @@
 //GB
 #include <protomol/force/GB/GBForce.h>
 #include <protomol/force/GB/GBACEForce.h>
+#include <protomol/force/GB/GBBornRadii.h>
+#include <protomol/force/GB/GBPartialSum.h>
 
 using namespace std;
 using namespace ProtoMol;
@@ -159,6 +161,8 @@ void NonbondedCutoffForceModule::registerForces(ProtoMolApp *app) {
     f.reg(new CutoffSystem<CCM, OneAtomPairNoExclusion<VBC, C2, GBACEForce> >());
     f.reg(new CutoffSystem<CCM, OneAtomPairNoExclusion<VBC, Cn, GBForce> >());
     f.reg(new CutoffSystem<CCM, OneAtomPairNoExclusion<VBC, Cn, GBACEForce> >());
+    f.reg(new CutoffSystem<CCM, OneAtomPairNoExclusion<VBC, Universal, GBBornRadii> >());
+    f.reg(new CutoffSystem<CCM, OneAtomPairNoExclusion<VBC, Universal, GBPartialSum> >());
     
     // OneAtomPairThree (forces): LennardJonesForce CoulombSCPISMForce BornRadii
 
