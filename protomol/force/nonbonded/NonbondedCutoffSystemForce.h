@@ -66,7 +66,7 @@ namespace ProtoMol {
       this->enumerator.initialize(realTopo, this->myCutoff);
       
       unsigned int n = realTopo->cellLists.size();
-      unsigned int count = numberOfBlocks(realTopo, positions);
+      unsigned int count = this->numberOfBlocks(realTopo, positions);
       
       for (unsigned int i = 0; i < count; i++) {
         unsigned int l = (n * (i + 1)) / count - (n * i) / count;

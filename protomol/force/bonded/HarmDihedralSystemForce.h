@@ -125,7 +125,7 @@ namespace ProtoMol {
     // Examine each dihedral
     for (unsigned int i = 0; i < topo->dihedrals.size(); i++) {
       if (computeOthers)
-        calcTorsion(boundary, topo->dihedrals[i], positions, forces,
+        this->calcTorsion(boundary, topo->dihedrals[i], positions, forces,
                     (*energies)[ScalarStructure::DIHEDRAL],
                     energies);
       if (static_cast<int>(i) == myDihedral)
@@ -153,7 +153,7 @@ namespace ProtoMol {
         int from = (n * i) / count;
         for (int j = from; j < to; j++)
           if (j != myDihedral)
-            calcTorsion(boundary, topo->dihedrals[j], positions, forces,
+            this->calcTorsion(boundary, topo->dihedrals[j], positions, forces,
                         (*energies)[ScalarStructure::DIHEDRAL], energies);
           else
             harmCalcTorsion(topo, boundary, topo->dihedrals[j], positions,

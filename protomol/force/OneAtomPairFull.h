@@ -25,17 +25,17 @@ namespace ProtoMol {
       void initialize(const SemiGenericTopology<Boundary> *topo,
                       const Vector3DBlock *pos, Vector3DBlock *f,
                       ScalarStructure *e, const std::vector<Vector3D> *l) {
-        Base::realTopo = (SemiGenericTopology<Boundary> *)topo;
-        Base::positions = pos;
-        Base::forces = f;
-        Base::energies = e;
+        this->realTopo = (SemiGenericTopology<Boundary> *)topo;
+        this->positions = pos;
+        this->forces = f;
+        this->energies = e;
         lattice = l;
       }
 
       // Computes the force and energy for atom i and j.
       void doOneAtomPair(const int i, const int j) {
         if (Constraint::PRE_CHECK)
-          if (!Constraint::check(Base::realTopo, i, j))
+          if (!Constraint::check(this->realTopo, i, j))
             return;
 
         // Do we have something to do?
@@ -44,29 +44,29 @@ namespace ProtoMol {
           return;
 
         Vector3D diffMinimal
-          (Base::realTopo->boundaryConditions.minimalDifference((*Base::positions)[i],
-                                                          (*Base::positions)[j]));
+          (this->realTopo->boundaryConditions.minimalDifference((*this->positions)[i],
+                                                          (*this->positions)[j]));
         if (!same) {
           // Get atom distance.
           Real distSquared = diffMinimal.normSquared();
           // Do switching function rough test, if necessary.
           if (Switch::USE &&
-              !Base::SwitchFunction.roughTest(distSquared))
+              !this->SwitchFunction.roughTest(distSquared))
             return;
 
           // Check for an exclusion.
-          ExclusionClass excl = Base::realTopo->exclusions.check(i, j);
+          ExclusionClass excl = this->realTopo->exclusions.check(i, j);
           if (excl != EXCLUSION_FULL) {
             // Calculate the force and energy.
             Real rawEnergy, rawForce;
             Real rDistSquared = 1.0 / distSquared;
-            ForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
-                                   diffMinimal, Base::realTopo, i, j, excl);
+            this->ForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
+                                   diffMinimal, this->realTopo, i, j, excl);
             // Calculate the switched force and energy.
             Real energy, force;
             if (Switch::USE) {
               Real switchingValue, switchingDeriv;
-              Base::SwitchFunction(switchingValue, switchingDeriv, distSquared);
+              this->SwitchFunction(switchingValue, switchingDeriv, distSquared);
               energy = rawEnergy * switchingValue;
               // This has a - sign because the force is the negative of the
               // derivative of the energy (divided by the distance between the
@@ -77,28 +77,28 @@ namespace ProtoMol {
               force = rawForce;
             }
             // Add this energy into the total system energy.
-            Base::ForceFunction.accumulateEnergy(Base::energies, energy);
+            this->ForceFunction.accumulateEnergy(this->energies, energy);
             
             // Add this force into the atom forces.
             Vector3D fij = -diffMinimal * force;
-            (*Base::forces)[i] += fij;
-            (*Base::forces)[j] -= fij;
+            (*this->forces)[i] += fij;
+            (*this->forces)[j] -= fij;
 
             // compute the vector between molecular centers of mass
-            int mi = Base::realTopo->atoms[i].molecule;
-            int mj = Base::realTopo->atoms[j].molecule;
+            int mi = this->realTopo->atoms[i].molecule;
+            int mj = this->realTopo->atoms[j].molecule;
             if (mi != mj) {
               Vector3D molDiff =
-                Base::realTopo->boundaryConditions.minimalDifference
-                (Base::realTopo->molecules[mi].position,
-                 Base::realTopo->molecules[mj].position);
+                this->realTopo->boundaryConditions.minimalDifference
+                (this->realTopo->molecules[mi].position,
+                 this->realTopo->molecules[mj].position);
 
               // Add to the atomic and molecular virials
-              Base::energies->addVirial(fij, -diffMinimal, -molDiff);
+              this->energies->addVirial(fij, -diffMinimal, -molDiff);
             } else
-              Base::energies->addVirial(fij, -diffMinimal);
+              this->energies->addVirial(fij, -diffMinimal);
             if (Constraint::POST_CHECK)
-              Constraint::check(Base::realTopo, i, j, diffMinimal, energy, fij);
+              Constraint::check(this->realTopo, i, j, diffMinimal, energy, fij);
           }
         }
 
@@ -108,19 +108,19 @@ namespace ProtoMol {
           Real distSquared = diff.normSquared();
           // Do switching function rough test, if necessary.
           if (Switch::USE &&
-              !Base::SwitchFunction.roughTest(distSquared))
+              !this->SwitchFunction.roughTest(distSquared))
             continue;
 
           // Calculate the force and energy.
           Real rawEnergy, rawForce;
           Real rDistSquared = 1.0 / distSquared;
-          Base::ForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
-                                 diff, Base::realTopo, i, j, EXCLUSION_NONE);
+          this->ForceFunction(rawEnergy, rawForce, distSquared, rDistSquared,
+                                 diff, this->realTopo, i, j, EXCLUSION_NONE);
           // Calculate the switched force and energy.
           Real energy, force;
           if (Switch::USE) {
             Real switchingValue, switchingDeriv;
-            Base::SwitchFunction(switchingValue, switchingDeriv, distSquared);
+            this->SwitchFunction(switchingValue, switchingDeriv, distSquared);
             energy = rawEnergy * switchingValue;
             // This has a - sign because the force is the negative of the
             // derivative of the energy (divided by the distance between the
@@ -137,27 +137,27 @@ namespace ProtoMol {
           else {
             // Add this force into the atom forces.
             Vector3D fij = -diff * force;
-            (*Base::forces)[i] += fij;
-            (*Base::forces)[j] -= fij;
+            (*this->forces)[i] += fij;
+            (*this->forces)[j] -= fij;
 
             // compute the vector between molecular centers of mass
-            int mi = Base::realTopo->atoms[i].molecule;
-            int mj = Base::realTopo->atoms[j].molecule;
+            int mi = this->realTopo->atoms[i].molecule;
+            int mj = this->realTopo->atoms[j].molecule;
             if (mi != mj) {
               Vector3D molDiff =
-                Base::realTopo->boundaryConditions.minimalDifference
-                (Base::realTopo->molecules[mi].position,
-                 Base::realTopo->molecules[mj].position);
+                this->realTopo->boundaryConditions.minimalDifference
+                (this->realTopo->molecules[mi].position,
+                 this->realTopo->molecules[mj].position);
 
               // Add to the atomic and molecular virials
-              Base::energies->addVirial(fij, -diff, -molDiff);
+              this->energies->addVirial(fij, -diff, -molDiff);
             } else
-              Base::energies->addVirial(fij, -diff);
+              this->energies->addVirial(fij, -diff);
           }
           // Add this energy into the total system energy.
-          Base::ForceFunction.accumulateEnergy(Base::energies, energy);
+          this->ForceFunction.accumulateEnergy(this->energies, energy);
           if (Constraint::POST_CHECK)
-            Constraint::check(Base::realTopo, i, j, diff, energy, -diff * force);
+            Constraint::check(this->realTopo, i, j, diff, energy, -diff * force);
         }
       }
     

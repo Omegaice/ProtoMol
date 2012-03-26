@@ -73,7 +73,7 @@ namespace ProtoMol {
       ((SemiGenericTopology<TBoundaryConditions> &)(*topo)).
         boundaryConditions;
     for (unsigned int i = 0; i < topo->dihedrals.size(); i++)
-      calcTorsion(boundary, topo->dihedrals[i], positions, forces,
+      this->calcTorsion(boundary, topo->dihedrals[i], positions, forces,
                   (*energies)[ScalarStructure::DIHEDRAL], energies);
   }
 
@@ -95,7 +95,7 @@ namespace ProtoMol {
           to = n;
         int from = (n * i) / count;
         for (int j = from; j < to; j++)
-          calcTorsion(boundary, topo->dihedrals[j], positions, forces,
+          this->calcTorsion(boundary, topo->dihedrals[j], positions, forces,
                       (*energies)[ScalarStructure::DIHEDRAL], energies);
       }
   }
