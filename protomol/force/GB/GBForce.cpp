@@ -43,14 +43,14 @@ void GBForce::operator()(Real &energy, Real &force, Real distSquared,
   bornRad_j = topo->atoms[atom2].myGBSA_T->bornRad;
   
   //Equation (17)
-  Real expterm = ((dist*dist)/(4*bornRad_i*bornRad_j));
-  Real fGB_ij = sqrt(dist*dist + bornRad_i*bornRad_j*exp(-expterm));
+  Real expterm = std::exp( -(dist*dist)/(4*bornRad_i*bornRad_j) );
+  Real fGB = sqrt(dist*dist + bornRad_i*bornRad_j*expterm);
   
   Real scaledCharge_i = topo->atoms[atom1].scaledCharge;
   Real scaledCharge_j = topo->atoms[atom2].scaledCharge;
   
   //Equation (16)
-  energy = -(scaledCharge_i*scaledCharge_j)*(1/fGB_ij)*((1/soluteDielec) - (1/solventDielec));
+  energy = -(scaledCharge_i*scaledCharge_j)*(1/fGB)*((1/soluteDielec) - (1/solventDielec));
   
   //self terms (Equation (18))
   if (!topo->atoms[atom1].myGBSA_T->selfEnergyCount) {
@@ -141,18 +141,13 @@ void GBForce::operator()(Real &energy, Real &force, Real distSquared,
   
   Real dRjdrji = power(bornRad_j,2)*offsetRadius_j*(1-tanh_j*tanh_j)*tanhparam_derv_j*(1/radius_j)*dBTjdrji;
   
-  Real expterm_ij = (dist*dist)/(4*bornRad_i*bornRad_j);
-  Real fGBij = sqrt(dist*dist + bornRad_i*bornRad_j*exp(-expterm_ij));
-  
   //force due to pairwise i-j term
   //Check Equation (19-20). Next line only finds the pairwise terms.
-  force -= scaledCharge_i*scaledCharge_j*(1/(fGBij*fGBij))*0.5*(1/fGBij)*((2*dist - 0.5*exp(-expterm_ij)*dist) + exp(-expterm_ij)*dRidrij*(bornRad_j + (dist*dist)/(4*bornRad_i)) + exp(-expterm_ij)*dRjdrji*(bornRad_i + (dist*dist)/(4*bornRad_j)))*(1/dist);
+  force -= scaledCharge_i*scaledCharge_j*(1/(fGB*fGB))*0.5*(1/fGB)*((2*dist - 0.5*expterm*dist) + expterm*dRidrij*(bornRad_j + (dist*dist)/(4*bornRad_i)) + expterm*dRjdrji*(bornRad_i + (dist*dist)/(4*bornRad_j)))*(1/dist);
   
   // calculation of self (i-i and j-j) terms
   force -= 0.5 * scaledCharge_i * scaledCharge_i * dRidrij / (bornRad_i * bornRad_i) / dist;
-  
   force -= 0.5 * scaledCharge_j * scaledCharge_j * dRjdrji / (bornRad_j * bornRad_j) / dist;
-  //
   
   //new N^2 handeling of interaction with other atoms
   if (!topo->atoms[atom1].myGBSA_T->havePartialGBForceTerms) {
@@ -183,37 +178,21 @@ void GBForce::operator()(Real &energy, Real &force, Real distSquared,
 //estimate the force term for the sum over k,l where k=i,j and l {\neq} j if 
 //k=i and l {\neq}i if k=j
 Real GBForce::Force_i_term(const GenericTopology *topo, int atom1) const{
-  
-  Real scaledCharge_i, scaledCharge_l;
-  
-  Real bornRad_i, bornRad_l;
-  
-  Real filGB, expterm;
-  
-  bornRad_i = topo->atoms[atom1].myGBSA_T->bornRad;
-  
-  scaledCharge_i = topo->atoms[atom1].scaledCharge;
+  Real bornRad_i = topo->atoms[atom1].myGBSA_T->bornRad;
+  Real scaledCharge_i = topo->atoms[atom1].scaledCharge;
   
   Real force = 0;
-  
-  Real ril;
-  
-  unsigned int sz = topo->atoms.size();
-  
-  for (unsigned int l = 0; l<sz ; l++) {
+  for (unsigned int l = 0; l < topo->atoms.size(); l++) {
+    if( l != (unsigned int) atom1 ){
+      Real ril = topo->atoms[atom1].myGBSA_T->distij[l];
     
-    if (l == (unsigned)atom1) ril = 0;
-    else ril = topo->atoms[atom1].myGBSA_T->distij[l];
+      Real bornRad_l = topo->atoms[l].myGBSA_T->bornRad;
+      Real scaledCharge_l = topo->atoms[l].scaledCharge;
     
-    bornRad_l = topo->atoms[l].myGBSA_T->bornRad;
-    scaledCharge_l = topo->atoms[l].scaledCharge;
-    
-    expterm = (ril*ril)/(4.0*bornRad_i*bornRad_l);
-    filGB = sqrt(ril*ril + bornRad_i*bornRad_l*exp(-expterm));
-    
-    if (l != (unsigned)atom1) {
-      //Equation (24)
-      force += scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*exp(-expterm)*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
+      Real expterm = std::exp( -(ril*ril)/(4.0*bornRad_i*bornRad_l) );
+      Real filGB = sqrt(ril*ril + bornRad_i*bornRad_l*expterm);
+      
+      force += scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*expterm*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
     }
   }
   
@@ -233,10 +212,10 @@ Real GBForce::Force_i_j_term(const GenericTopology *topo, const int atom1, const
   const Real bornRad_l = topo->atoms[atom2].myGBSA_T->bornRad;
   const Real scaledCharge_l = topo->atoms[atom2].scaledCharge;
   
-  const Real expterm = (ril*ril)/(4.0*bornRad_i*bornRad_l);
-  const Real filGB = sqrt(ril*ril + bornRad_i*bornRad_l*exp(-expterm));
+  const Real expterm = std::exp( -(ril*ril)/(4.0*bornRad_i*bornRad_l) );
+  const Real filGB = sqrt(ril*ril + bornRad_i*bornRad_l*expterm);
   
-  return scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*exp(-expterm)*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
+  return scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*expterm*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
   
 }
 
