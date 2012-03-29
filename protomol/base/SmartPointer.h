@@ -28,6 +28,7 @@
 #define SMARTPOINTER_H
 
 #include "Counter.h"
+#include <protomol/base/Report.h>
 
 #include <stdlib.h>
 
@@ -258,9 +259,9 @@ namespace ProtoMol {
      * @return The value of the internal pointer.
      */
     T *adopt() {
-      if (refCounter && refCounter->getCount() > 1)
-        throw Exception
-          ("SmartPointer: Cannot adopt a pointer with multiple references!");
+      if (refCounter && refCounter->getCount() > 1){
+        Report::report << Report::error << "SmartPointer: Cannot adopt a pointer with multiple references!" << Report::endr;
+      }
 
       if (refCounter) {
         delete refCounter;
@@ -291,8 +292,9 @@ namespace ProtoMol {
 
   protected:
     void checkPtr() const {
-      if (!ptr)
-        throw Exception("SmartPointer: Can't dereference a NULL pointer!");
+      if (!ptr){
+        Report::report << Report::error << "SmartPointer: Can't dereference a NULL pointer" << Report::endr;
+      }
     }
   };
 }
