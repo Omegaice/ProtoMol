@@ -919,6 +919,10 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
 
       if (!tempatom->myGBSA_T->distij)
         tempatom->myGBSA_T->SetSpaceDistij(atomsSize);
+      
+      tempatom->myGBSA_T->expTerm.resize( atomsSize );
+      tempatom->myGBSA_T->filTerm.resize( atomsSize );
+      tempatom->myGBSA_T->partialTerm.resize( atomsSize );
     }
   }
 

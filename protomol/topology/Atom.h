@@ -131,6 +131,7 @@ namespace ProtoMol {
     // force needs to be computed.
     bool havePartialGBForceTerms;
     Real partialGBForceTerms;
+    std::vector<Real> partialTerm, expTerm, filTerm;
     
     //the same for the Hessian calculations
     bool havePartialGBHessianTerms;

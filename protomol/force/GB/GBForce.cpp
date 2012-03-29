@@ -43,8 +43,8 @@ void GBForce::operator()(Real &energy, Real &force, Real distSquared,
   bornRad_j = topo->atoms[atom2].myGBSA_T->bornRad;
   
   //Equation (17)
-  Real expterm = std::exp( -(dist*dist)/(4*bornRad_i*bornRad_j) );
-  Real fGB = sqrt(dist*dist + bornRad_i*bornRad_j*expterm);
+  Real expterm = topo->atoms[atom1].myGBSA_T->expTerm[atom2]; //std::exp( -(dist*dist)/(4*bornRad_i*bornRad_j) );
+  Real fGB = topo->atoms[atom1].myGBSA_T->filTerm[atom2];//sqrt(dist*dist + bornRad_i*bornRad_j*expterm);
   
   Real scaledCharge_i = topo->atoms[atom1].scaledCharge;
   Real scaledCharge_j = topo->atoms[atom2].scaledCharge;
@@ -158,7 +158,7 @@ void GBForce::operator()(Real &energy, Real &force, Real distSquared,
     topo->atoms[atom1].myGBSA_T->havePartialGBForceTerms = true;
   }
   
-  force -= (topo->atoms[atom1].myGBSA_T->partialGBForceTerms - Force_i_j_term(topo, atom1, atom2, dist)) *(dRidrij/dist);
+  force -= (topo->atoms[atom1].myGBSA_T->partialGBForceTerms - topo->atoms[atom1].myGBSA_T->partialTerm[atom2]) *(dRidrij/dist);
   
   if (!topo->atoms[atom2].myGBSA_T->havePartialGBForceTerms) {
     //if here we should not be //lel
@@ -168,7 +168,7 @@ void GBForce::operator()(Real &energy, Real &force, Real distSquared,
     topo->atoms[atom2].myGBSA_T->havePartialGBForceTerms = true;
   }
   
-  force -= (topo->atoms[atom2].myGBSA_T->partialGBForceTerms - Force_i_j_term(topo, atom2, atom1, dist))*(dRjdrji/dist);
+  force -= (topo->atoms[atom2].myGBSA_T->partialGBForceTerms - topo->atoms[atom2].myGBSA_T->partialTerm[atom1])*(dRjdrji/dist);
   //end
   
   force *= ((1/soluteDielec) - (1/solventDielec));

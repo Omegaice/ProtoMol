@@ -22,12 +22,23 @@ void GBPartialSum::operator()(Real &energy, Real &force,
   Real ril = std::sqrt(distSquared);
   
   Real expterm = std::exp( -(ril*ril)/(4.0*bornRad_i*bornRad_l) );
+  topo->atoms[atom1].myGBSA_T->expTerm[atom2] = expterm;
+  topo->atoms[atom2].myGBSA_T->expTerm[atom1] = expterm;
+  
   Real filGB = std::sqrt(ril*ril + bornRad_i*bornRad_l*expterm);
+  topo->atoms[atom1].myGBSA_T->filTerm[atom2] = filGB;
+  topo->atoms[atom2].myGBSA_T->filTerm[atom1] = filGB;
   
   Real part = scaledCharge_i*scaledCharge_l*(1/(filGB*filGB))*0.5*(1/filGB)*expterm;
   
-  topo->atoms[atom1].myGBSA_T->partialGBForceTerms += part*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
-  topo->atoms[atom2].myGBSA_T->partialGBForceTerms += part*(bornRad_i + (ril*ril)/(4.0*bornRad_l));
+  Real aTerm = part*(bornRad_l + (ril*ril)/(4.0*bornRad_i));
+  Real bTerm = part*(bornRad_i + (ril*ril)/(4.0*bornRad_l));
+  
+  topo->atoms[atom1].myGBSA_T->partialGBForceTerms += aTerm;
+  topo->atoms[atom2].myGBSA_T->partialGBForceTerms += bTerm;
+  
+  topo->atoms[atom1].myGBSA_T->partialTerm[atom2] = aTerm;
+  topo->atoms[atom2].myGBSA_T->partialTerm[atom1] = bTerm;
 }
 
 void GBPartialSum::accumulateEnergy(ScalarStructure *energies, Real energy) {

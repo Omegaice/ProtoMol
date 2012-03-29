@@ -869,6 +869,10 @@ void ProtoMol::buildTopology(GenericTopology *topo, const PSF &psf,
     if (tempatom->myGBSA_T->distij == NULL) {
        tempatom->myGBSA_T->SetSpaceDistij(atomsSize);
     }
+    
+    tempatom->myGBSA_T->expTerm.resize( atomsSize );
+    tempatom->myGBSA_T->filTerm.resize( atomsSize );
+    tempatom->myGBSA_T->partialTerm.resize( atomsSize );
 
     // Van der Waal Radii can differ for two atoms of the same type. As part
     // of an incremental fix, we've created a new field in Atom for use with GB.
