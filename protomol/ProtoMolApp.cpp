@@ -396,6 +396,13 @@ bool ProtoMolApp::step(unsigned inc) {
 
 
 void ProtoMolApp::finalize() {
+  float nanoSeconds = ( currentStep * integrator->getTimestep() ) / 1000000;
+  float secondsPerNanosecond = TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() / nanoSeconds;
+  float nanoSecondsPerDay = 86400 / secondsPerNanosecond;
+  
+  report.setf( std::ios::fixed );
+  report << plain << "Performance: " << nanoSeconds << "ns in " << TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() << "s = " << nanoSecondsPerDay << "ns/day" << std::endl;
+  
   outputs->finalize(currentStep);
 
   // Clean up
