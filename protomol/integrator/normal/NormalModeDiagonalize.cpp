@@ -347,8 +347,9 @@ namespace ProtoMol
 
         //post diag minimize?
         if(postDiagonalizeMinimize){
-          
           Real lastLambda; int forceCalc = 0; //diagnostic/effective gamma
+          
+          app->eigenInfo.havePositionsChanged = true;
 
           //do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
           int itrs = minimizer(minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology);
