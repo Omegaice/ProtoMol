@@ -16,6 +16,7 @@
 #include <protomol/integrator/normal/NormalModeBrownian.h>
 #include <protomol/integrator/normal/NormalModeDamping.h>
 #include <protomol/integrator/normal/NormalModeQuadratic.h>
+#include <protomol/integrator/normal/NormalModeSubspaceSampling.h>
 #include <protomol/integrator/normal/NormalModeCompLang.h>
 
 using namespace std;
@@ -40,6 +41,7 @@ void NormalModeModule::init(ProtoMolApp *app) {
   app->integratorFactory.registerExemplar(new NormalModeBrownian());
   app->integratorFactory.registerExemplar(new NormalModeDamping());
   app->integratorFactory.registerExemplar(new NormalModeQuadratic());
+  app->integratorFactory.registerExemplar(new NormalModeSubspaceSampling());
   app->integratorFactory.registerExemplar(new NormalModeCompLang());
 }
 
