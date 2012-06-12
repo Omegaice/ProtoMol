@@ -232,6 +232,8 @@ protomol/integrator/leapfrog/SConscript -text
 protomol/integrator/normal/ModifierForceProjection.h -text
 protomol/integrator/normal/NormalModeBrownian.cpp -text
 protomol/integrator/normal/NormalModeBrownian.h -text
+protomol/integrator/normal/NormalModeCompLang.cpp -text
+protomol/integrator/normal/NormalModeCompLang.h -text
 protomol/integrator/normal/NormalModeDamping.cpp -text
 protomol/integrator/normal/NormalModeDamping.h -text
 protomol/integrator/normal/NormalModeDiagonalize.cpp -text
