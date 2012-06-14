@@ -14,7 +14,8 @@ namespace ProtoMol {
   //build topo from TPR file
   void buildTopologyFromTpr(GenericTopology *topo, 
                                 Vector3DBlock &pos, Vector3DBlock &vel,
-                                const string &fname);
+                                const string &fname,
+                                bool gromacsnewpositions);
   //struct for saving functions
   struct function{
     string name;

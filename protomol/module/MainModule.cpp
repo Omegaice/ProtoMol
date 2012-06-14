@@ -135,7 +135,7 @@ void MainModule::postBuild(ProtoMolApp *app) {
   }
 
    // Fix velocities
-  if (!app->config.valid(InputVelocities::keyword)) {
+  if (!app->config.valid(InputVelocities::keyword) && app->config.valid(InputTemperature::keyword) ) {
     randomVelocity(app->config[InputTemperature::keyword],
                    app->topology, &app->velocities,
                    app->config[InputSeed::keyword]);

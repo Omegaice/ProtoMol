@@ -14,7 +14,7 @@
 #include <protomol/integrator/normal/NormalModeMori.h>
 #include <protomol/integrator/normal/NormalModeRelax.h>
 #include <protomol/integrator/normal/NormalModeBrownian.h>
-#include <protomol/integrator/normal/NormalModeDamping.h>
+#include <protomol/integrator/normal/NormalModeDamping.h> 
 #include <protomol/integrator/normal/NormalModeQuadratic.h>
 #include <protomol/integrator/normal/NormalModeSubspaceSampling.h>
 #include <protomol/integrator/normal/NormalModeCompLang.h>

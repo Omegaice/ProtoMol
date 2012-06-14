@@ -184,12 +184,16 @@ void ProtoMolApp::build() {
 
   //floag for TPR
   bool GROMACRTPR(false);
+  bool GROMACSNEWPOSITIONS(false);
 
   //test TPR file
-  if( config.valid(InputGromacsTprFile::keyword) ) GROMACRTPR = true;
+  if( config.valid(InputGromacsTprFile::keyword) ){
+    GROMACRTPR = true;
+    if( config.valid(InputPositions::keyword) ) GROMACSNEWPOSITIONS = true;
+  }
 
-  // Read data if not TPR
-  if( !GROMACRTPR ) modManager->read(this);
+  // Read data if not TPR unless positions defined
+  if( !GROMACRTPR || GROMACSNEWPOSITIONS ) modManager->read(this);
 
   // Build topology
   try {
@@ -287,7 +291,8 @@ void ProtoMolApp::build() {
 
     // Build the topology from the tpr file
     buildTopologyFromTpr( topology, positions, velocities,
-                          config[InputGromacsTprFile::keyword].getString() );
+                          config[InputGromacsTprFile::keyword].getString(),
+                           GROMACSNEWPOSITIONS);
   }
 
   // Register Forces

@@ -170,7 +170,8 @@ bool ProtoMol::parse_iparams(function &func, void *ft, void *ip,
 
 // main build topology
 void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
-                                    Vector3DBlock &vel, const string &fname) {
+                                    Vector3DBlock &vel, const string &fname,
+                                    bool gromacsnewpositions) {
   // define versions of TPR file
   // Version 4.5.3 has tpx_version=73 and includes gb_radius in the tpr file
   enum {GB_RADII_IN_TPR = 73};
@@ -216,25 +217,28 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
   // Load positions and velocities from TPR/Gromacs topology
   // ----------------------------------------------------------------------
 
-  // test positions/velocities available
-  if (!tpx.bX || !tpx.bV) THROW("No Position or Velocity data.");
+  //test if we are over writing positions and velocities
+  if( !gromacsnewpositions ){
+    // test positions/velocities available
+    if (!tpx.bX || !tpx.bV) THROW("No Position or Velocity data.");
 
-  const unsigned num_atoms = state.natoms;
+    const unsigned num_atoms = state.natoms;
 
-  // resize the position and velocity arrays
-  pos.resize(num_atoms);
-  vel.resize(num_atoms);
+    // resize the position and velocity arrays
+    pos.resize(num_atoms);
+    vel.resize(num_atoms);
 
-  // report atom types
-  report << debug(810) << "Tpr atom number = " << num_atoms << endr;
+    // report atom types
+    report << debug(810) << "Tpr atom number = " << num_atoms << endr;
 
-  // loop over each atom
-  for (unsigned i = 0; i < num_atoms * 3; i++) {
-    pos.c[i] = state.x[i/3][i%3] * Constant::NM_ANGSTROM; // nm to A; // tpx.bX?
-    vel.c[i] = state.v[i/3][i%3] * Constant::NM_ANGSTROM *
-      Constant::TIMEFACTOR * Constant::FS_PS; // nm/ps to A/fs?; // tpx.bV?
+    // loop over each atom
+    for (unsigned i = 0; i < num_atoms * 3; i++) {
+      pos.c[i] = state.x[i/3][i%3] * Constant::NM_ANGSTROM; // nm to A; // tpx.bX?
+      vel.c[i] = state.v[i/3][i%3] * Constant::NM_ANGSTROM *
+        Constant::TIMEFACTOR * Constant::FS_PS; // nm/ps to A/fs?; // tpx.bV?
+    }
   }
-
+  
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // First, generate the array of atomtypes
   // Each time a new atom comes up, we need to check if it is

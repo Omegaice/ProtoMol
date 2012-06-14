@@ -63,6 +63,11 @@ void IOModule::init(ProtoMolApp *app) {
 void IOModule::read(ProtoMolApp *app) {
   Configuration &config = app->config;
 
+  
+  //test if TPR file as only velocities and positions allowed
+  bool GROMACSTPR = false;
+  if( config.valid(InputGromacsTprFile::keyword) ) GROMACSTPR = true;
+
   // Positions
   PosVelReader reader;
   if (!reader.open(config[InputPositions::keyword]))
@@ -133,88 +138,99 @@ void IOModule::read(ProtoMolApp *app) {
 
   } else THROW("Neither temperature nor velocity file specified.");
 
-  // Gromacs/AMBER input files
-  if (config.valid(InputGromacsTopo::keyword) && 
-        config.valid(InputGromacsParamPath::keyword)){
-     GromacsTopology gTopo;
-     GromacsParameters gParams;
-     PortGromacsParameters gromacs_port;
-       
-     if (!gromacs_port.Read_Basic_Gromacs_Parameters
-         (app->psf,app->par, gTopo, gParams, 
-          (const string)config[InputGromacsTopo::keyword],
-          (const string)config[InputGromacsParamPath::keyword])){
-       THROW(string("Cant read GROMACS parameters into PSF and PAR"));
-     }
+  //if not TPR
+  if(!GROMACSTPR){
+    // Gromacs/AMBER input files
+    if (config.valid(InputGromacsTopo::keyword) && 
+          config.valid(InputGromacsParamPath::keyword)){
+       GromacsTopology gTopo;
+       GromacsParameters gParams;
+       PortGromacsParameters gromacs_port;
+         
+       if (!gromacs_port.Read_Basic_Gromacs_Parameters
+           (app->psf,app->par, gTopo, gParams, 
+            (const string)config[InputGromacsTopo::keyword],
+            (const string)config[InputGromacsParamPath::keyword])){
+         THROW(string("Cant read GROMACS parameters into PSF and PAR"));
+       }
 
-     //check if Generalized Born Parameter file has been passed
-     if (config.valid(InputGromacsGBParameterFile::keyword)) {
-         if (!gromacs_port.Read_Gromacs_GB_Parameters
-             ((const string)config[InputGromacsGBParameterFile::keyword])){
-           THROW(string("Cant read Gromacs parameters for Generalized Born"));
-         }
-     }
+       //check if Generalized Born Parameter file has been passed
+       if (config.valid(InputGromacsGBParameterFile::keyword)) {
+           if (!gromacs_port.Read_Gromacs_GB_Parameters
+               ((const string)config[InputGromacsGBParameterFile::keyword])){
+             THROW(string("Cant read Gromacs parameters for Generalized Born"));
+           }
+       }
 
-  } else {
-    // PSF
-    PSFReader psfReader;
-    if (!psfReader.open(config[InputPSF::keyword]))
-      THROWS("Can't open PSF file '"
-             << (string)config[InputPSF::keyword] << "'.");
+    } else {
+      // PSF
+      PSFReader psfReader;
+      if (!psfReader.open(config[InputPSF::keyword]))
+        THROWS("Can't open PSF file '"
+               << (string)config[InputPSF::keyword] << "'.");
 
-    if (!(psfReader >> app->psf))
-      THROWS("Could not parse PSF file '"
-             << (string)config[InputPSF::keyword] << "'.");
+      if (!(psfReader >> app->psf))
+        THROWS("Could not parse PSF file '"
+               << (string)config[InputPSF::keyword] << "'.");
 
-    report << plain << "Using PSF file '" << (string)config[InputPSF::keyword]
-           << "' (" << app->psf.atoms.size() << ")." << endr;
+      report << plain << "Using PSF file '" << (string)config[InputPSF::keyword]
+             << "' (" << app->psf.atoms.size() << ")." << endr;
 
-    // PAR
-    PARReader parReader;
-    if (!parReader.open(config[InputPAR::keyword]))
-      THROW(string("Can't open PAR file '") +
-        config[InputPAR::keyword].getString() + "'.");
+      // PAR
+      PARReader parReader;
+      if (!parReader.open(config[InputPAR::keyword]))
+        THROW(string("Can't open PAR file '") +
+          config[InputPAR::keyword].getString() + "'.");
 
-    if (!(parReader >> app->par))
-      THROW(string("Could not parse PAR file '") +
-        config[InputPAR::keyword].getString() + "'.");
+      if (!(parReader >> app->par))
+        THROW(string("Could not parse PAR file '") +
+          config[InputPAR::keyword].getString() + "'.");
 
-    report << plain << "Using PAR file '" << config[InputPAR::keyword]
-           << "', " << (parReader.getCharmmTypeDetected() != PAR::CHARMM28 ?
-                        "old" : "new") << " charmm force field.";
+      report << plain << "Using PAR file '" << config[InputPAR::keyword]
+             << "', " << (parReader.getCharmmTypeDetected() != PAR::CHARMM28 ?
+                          "old" : "new") << " charmm force field.";
 
-    if (!config[InputDihedralMultPSF::keyword].valid())
-      config[InputDihedralMultPSF::keyword] =
-        (parReader.getCharmmTypeDetected() != PAR::CHARMM28);
+      if (!config[InputDihedralMultPSF::keyword].valid())
+        config[InputDihedralMultPSF::keyword] =
+          (parReader.getCharmmTypeDetected() != PAR::CHARMM28);
 
-    if (config[InputDihedralMultPSF::keyword])
-      report << " Dihedral multiplictity defined by PSF.";
-    report << endr;
+      if (config[InputDihedralMultPSF::keyword])
+        report << " Dihedral multiplictity defined by PSF.";
+      report << endr;
 
-  }
+    }
 
-  //SCPISM
-  if (config.valid(InputSCPISM::keyword)) {
+    //SCPISM
+    if (config.valid(InputSCPISM::keyword)) {
 
-    app->SCPISMParameters = new CoulombSCPISMParameterTable;
+      app->SCPISMParameters = new CoulombSCPISMParameterTable;
 
-    SCPISMReader mReader(config[InputSCPISM::keyword]);
+      SCPISMReader mReader(config[InputSCPISM::keyword]);
 
-    if(!mReader.read( app->SCPISMParameters->myData ))
-      report << error << "Invalid SCPISM parameter file "
-             << config[InputSCPISM::keyword] << "." << endr;
+      if(!mReader.read( app->SCPISMParameters->myData ))
+        report << error << "Invalid SCPISM parameter file "
+               << config[InputSCPISM::keyword] << "." << endr;
 
-    report << plain << "Using SCPISM file '" << config[InputSCPISM::keyword]
-           << "'." << endr;
+      report << plain << "Using SCPISM file '" << config[InputSCPISM::keyword]
+             << "'." << endr;
 
 
-  }
-
-  // Test input
-  if (app->positions.size() != app->velocities.size() ||
-      app->positions.size() != app->psf.atoms.size())
-    THROWS("Positions, velocities and PSF input have different number "
+    }
+    
+    // Test input if normal topology
+    if (app->positions.size() != app->velocities.size() ||
+        app->positions.size() != app->psf.atoms.size())
+      THROWS("Positions, velocities and PSF input have different number "
+             "of atoms. positions=" << app->positions.size()
+             << " velocities=" << app->velocities.size()
+             << " atoms=" << app->psf.atoms.size());
+  }else{
+  
+    // Test input for positions and velocities only if TPR
+    if (app->positions.size() != app->velocities.size() )
+      THROWS("Positions, velocities and PSF input have different number "
            "of atoms. positions=" << app->positions.size()
-           << " velocities=" << app->velocities.size()
-           << " atoms=" << app->psf.atoms.size());
+             << " velocities=" << app->velocities.size());
+    
+  }
 }
