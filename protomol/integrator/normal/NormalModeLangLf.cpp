@@ -61,12 +61,10 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  void NormalModeLangLf::run(int numTimesteps) {
-    //Real h = getTimestep() * Constant::INV_TIMEFACTOR;
+  const long NormalModeLangLf::run(const long numTimesteps) {
     Real actTime;
 
-    if( numTimesteps < 1 )
-      return;
+    if( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors
     if(*Q == NULL)
@@ -92,7 +90,7 @@ namespace ProtoMol {
             app->topology->time = actTime + (i - numTimesteps) * getTimestep();
             if(myPreviousIntegrator == NULL) 
                 report << error << "[NormalModeLangLf::Run] Re-diagonalization forced with NormalModeLangLf as outermost Integrator. Aborting."<<endr;
-            return;
+            return i;
       }
       //calculate sub space forces
       app->energies.clear();
@@ -105,7 +103,8 @@ namespace ProtoMol {
     }
     //fix time
     app->topology->time = actTime;
-    //
+    
+    return numTimesteps;
   }  
 
   void NormalModeLangLf::doDrift() {

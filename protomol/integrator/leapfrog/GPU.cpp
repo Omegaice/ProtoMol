@@ -127,9 +127,8 @@ void GPU::initialize(ProtoMolApp *app) {
 }
 
 
-void GPU::run(int numTimesteps) {
-  if (numTimesteps < 1)
-    return;
+const long GPU::run(const long numTimesteps) {
+  if (numTimesteps < 1) return 0;
 
   preStepModify();
   //start timer
@@ -140,7 +139,8 @@ void GPU::run(int numTimesteps) {
   //stop timer
   gpuTime.stop();
   postStepModify();  
-
+  
+  return numTimesteps;
 }
 
 //####GPU code######################################################################

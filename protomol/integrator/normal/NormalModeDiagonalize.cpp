@@ -10,8 +10,10 @@
 #include <protomol/ProtoMolApp.h>
 #include <protomol/integrator/STSIntegrator.h>
 
-#include<iostream>
-#include<fstream>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <algorithm>
 
 #include <protomol/base/Lapack.h>
 
@@ -183,13 +185,9 @@ namespace ProtoMol
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  void NormalModeDiagonalize::run( int numTimesteps )
-  {
-
-    if ( numTimesteps < 1 ) {
-      return;
-    }
-
+  const long NormalModeDiagonalize::run( const long numTimesteps ) {
+    if ( numTimesteps < 1 ) return 0;
+    
     //Current step at start
     int currentStepNum = app->currentStep; 
 
@@ -386,16 +384,17 @@ namespace ProtoMol
       }
 
       //run integrator
-      int stepsToRun = min(nextRediag - currentStepNum, numTimesteps - i);
-
-      myNextIntegrator->run( stepsToRun );
-      i += stepsToRun;
-      currentStepNum += stepsToRun;
+      int stepsToRun = std::min((long)(nextRediag - currentStepNum), numTimesteps - i);
+      
+      const long completed = myNextIntegrator->run( stepsToRun );
+      i += completed;
+      currentStepNum += completed;
 
       //remove diagonalization flags after inner integrator call
       newDiag = false;
     }
 
+    return numTimesteps;
   }
 
   //********************************************************************************************************************************************

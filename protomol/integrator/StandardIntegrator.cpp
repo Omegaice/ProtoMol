@@ -24,8 +24,8 @@ StandardIntegrator::StandardIntegrator() :
 StandardIntegrator::StandardIntegrator(ForceGroup *forceGroup) :
   Integrator(forceGroup), myPreviousIntegrator(NULL) {}
 
-void StandardIntegrator::run(int numTimesteps) {
-  for (int i = 0; i < numTimesteps; i++) {
+const long StandardIntegrator::run(const long numTimesteps) {
+  for(int i = 0; i < numTimesteps; i++) {
     preStepModify();
     doHalfKick();
     doDriftOrNextIntegrator();
@@ -33,6 +33,7 @@ void StandardIntegrator::run(int numTimesteps) {
     doHalfKick();
     postStepModify();
   }
+  return numTimesteps;
 }
 
 void StandardIntegrator::initializeForces() {

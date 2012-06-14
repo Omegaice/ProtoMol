@@ -133,7 +133,7 @@ void LangevinVVVRIntegrator::doSecondHalfKick() {
     buildMolecularMomentum(&app->velocities, app->topology);
 }
 
-void LangevinVVVRIntegrator::run(int numTimesteps) {
+const long LangevinVVVRIntegrator::run(const long numTimesteps) {
   for (int i = 0; i < numTimesteps; i++) {
     preStepModify();
     doFirstHalfKick();
@@ -142,6 +142,7 @@ void LangevinVVVRIntegrator::run(int numTimesteps) {
     doSecondHalfKick();
     postStepModify();
   }
+  return numTimesteps;
 }
 
 

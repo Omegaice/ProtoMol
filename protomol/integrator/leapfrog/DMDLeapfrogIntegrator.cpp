@@ -204,7 +204,7 @@ void DMDLeapfrogIntegrator::calculateDissipativeAndRandomForces() {
   }
 }
 
-void DMDLeapfrogIntegrator::run(int numTimesteps) {
+const long DMDLeapfrogIntegrator::run(const long numTimesteps) {
   for (int i = 0; i < numTimesteps; i++) {
     preStepModify();
     doHalfKick();
@@ -216,6 +216,8 @@ void DMDLeapfrogIntegrator::run(int numTimesteps) {
     doHalfKickIterate();
     postStepModify();
   }
+  
+  return numTimesteps;
 }
 
 STSIntegrator *DMDLeapfrogIntegrator::doMake(const vector<Value> &values,

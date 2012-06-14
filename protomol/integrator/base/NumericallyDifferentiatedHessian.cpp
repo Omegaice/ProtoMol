@@ -38,12 +38,12 @@ void NumericallyDifferentiatedHessian::initialize(ProtoMolApp *app) {
   //
 }
 
-void NumericallyDifferentiatedHessian::run(int numTimesteps) {
+const long NumericallyDifferentiatedHessian::run(const long numTimesteps) {
   double *numHess;
   Real maxHessError = 0.0;
 
-  if (numTimesteps < 1) return;
-
+  if( numTimesteps < 0 ) return 0;
+  
   preStepModify();
   calculateForces();
   //true for mass re-weight;
@@ -144,6 +144,8 @@ void NumericallyDifferentiatedHessian::run(int numTimesteps) {
 
   //
   postStepModify();
+  
+  return numTimesteps;
 }
 
 void NumericallyDifferentiatedHessian::

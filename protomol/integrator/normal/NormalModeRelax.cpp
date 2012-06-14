@@ -65,10 +65,8 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  void NormalModeRelax::run(int numTimesteps) {
-
-    if( numTimesteps < 1 )
-      return;
+  const long NormalModeRelax::run(const long numTimesteps) {
+    if( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors
     if(*Q == NULL)
@@ -85,11 +83,12 @@ namespace ProtoMol {
     if(*Q == NULL){	//rediagonalize?
         if(myPreviousIntegrator == NULL) 
             report << error << "[NormalModeRelax::Run] Re-diagonalization forced with NormalModeRelax as outermost Integrator. Aborting."<<endr;
-        return;
+        return numTimesteps;
     }
     //
     postStepModify();
-    //
+    
+    return numTimesteps;
   }  
 
   //*************************************************************************************

@@ -42,7 +42,7 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     virtual void initialize(ProtoMolApp* app);
-    virtual void run(int numTimesteps);
+    virtual const long run(const long numTimesteps);
   protected:
     //virtual void addModifierAfterInitialize();
 

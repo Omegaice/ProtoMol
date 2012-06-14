@@ -104,10 +104,8 @@ namespace ProtoMol {
 
     }
 
-    void NormalModeDamping::run(int numTimesteps) {
-
-        if( numTimesteps < 1 )
-            return;
+    const long NormalModeDamping::run(const long numTimesteps) {
+        if( numTimesteps < 1 ) return 0;
 
         //check valid eigenvectors
         if(*Q == NULL)
@@ -159,6 +157,8 @@ namespace ProtoMol {
             postStepModify();
         }	
         //
+      
+        return numTimesteps;
     }  
 
     void NormalModeDamping::modeProjector(Vector3DBlock *inp, double *tmpc, bool forcep){

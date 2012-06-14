@@ -49,10 +49,9 @@ void LeapfrogDataAcquisition::initialize(ProtoMolApp *app) {
   nonWaterV = new Vector3DBlock(numNonWaters);
 }
 
-void LeapfrogDataAcquisition::run(int numTimesteps) {
-
-  if (numTimesteps < 1)
-    return;
+const long LeapfrogDataAcquisition::run(const long numTimesteps) {
+  if (numTimesteps < 1) return 0;
+  
   preStepModify();
   doHalfKickdoDrift();
   calculateForces();
@@ -66,6 +65,7 @@ void LeapfrogDataAcquisition::run(int numTimesteps) {
   doHalfKick();
   postStepModify();
 
+  return numTimesteps;
 }
 
 void LeapfrogDataAcquisition::writeDCD()

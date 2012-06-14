@@ -79,12 +79,11 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  void NormalModeMori::run(int numTimesteps) {
+  const long NormalModeMori::run(const long numTimesteps) {
     Real h = getTimestep() * Constant::INV_TIMEFACTOR;
     Real actTime;
 
-    if( numTimesteps < 1 )
-      return;
+    if( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors
     if(*Q == NULL)
@@ -108,7 +107,7 @@ namespace ProtoMol {
             app->topology->time = actTime - (i - numTimesteps) * getTimestep();
             if(myPreviousIntegrator == NULL) 
                 report << error << "[NormalModeMori::Run] Re-diagonalization forced with NormalModeMori as outermost Integrator. Aborting."<<endr;
-            return;
+            return i;
       }
       //#################Put averaged force code here##############################
       //calculate sub space forces, just do this for the energy
@@ -143,7 +142,8 @@ namespace ProtoMol {
     //####
     //fix time
     app->topology->time = actTime;
-    //
+    
+    return numTimesteps;
   }  
 
   //*************************************************************************************

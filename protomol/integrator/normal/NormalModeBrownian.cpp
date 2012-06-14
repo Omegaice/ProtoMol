@@ -77,12 +77,11 @@ namespace ProtoMol {
 
 	}
 
-	void NormalModeBrownian::run(int numTimesteps) {
+	const long NormalModeBrownian::run(const long numTimesteps) {
 		Real h = getTimestep() * Constant::INV_TIMEFACTOR;
 		Real actTime;
 
-		if( numTimesteps < 1 )
-			return;
+		if( numTimesteps < 1 ) return 0;
 
 		//check valid eigenvectors
 		if(*Q == NULL)
@@ -124,6 +123,8 @@ namespace ProtoMol {
 		//fix time
 		app->topology->time = actTime;
 		//
+    
+    return numTimesteps;
 	}  
 
 	void NormalModeBrownian::getParameters(vector<Parameter>& parameters) const {

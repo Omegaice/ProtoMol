@@ -62,12 +62,11 @@ void NormalModeLangevin::initialize(ProtoMolApp *app) {
 //****Normal run routine********************************************************
 //******************************************************************************
 
-void NormalModeLangevin::run(int numTimesteps) {
+const long NormalModeLangevin::run(const long numTimesteps) {
   Real h = getTimestep() * Constant::INV_TIMEFACTOR;
   Real actTime;
 
-  if (numTimesteps < 1)
-    return;
+  if (numTimesteps < 1) return 0;
 
   //check valid eigenvectors
   if (*Q == 0)
@@ -96,7 +95,7 @@ void NormalModeLangevin::run(int numTimesteps) {
           << error << "[NormalModeLangevin::Run] Re-diagonalization forced "
           "with NormalModeLangevin as outermost Integrator. Aborting."
           << endr;
-      return;
+      return i;
     }
     //calculate sub space forces
     app->energies.clear();
@@ -109,7 +108,8 @@ void NormalModeLangevin::run(int numTimesteps) {
 
   //fix time
   app->topology->time = actTime;
-  //
+  
+  return numTimesteps;
 }
 
 //******************************************************************************

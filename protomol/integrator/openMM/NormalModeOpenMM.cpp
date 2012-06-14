@@ -75,15 +75,7 @@ namespace ProtoMol {
 			mLTMDParameters.ShouldForceRediagOnMinFail = false;
 			std::cout << "Failure Rediagonalization: False" << std::endl;
 		}
-		
-		if( mRediagOnQuadratic ){
-			mLTMDParameters.ShouldForceRediagOnQuadratic = true;
-			std::cout << "Force Rediagonalization on Quadratic Minimization: True" << std::endl;
-		}else{
-			mLTMDParameters.ShouldForceRediagOnQuadratic = false;
-			std::cout << "Force Rediagonalization on Quadratic Minimization: False" << std::endl;
-		}
-		
+				
 		if( !mProtomolDiagonalize ){
 			switch( mBlockPlatform ){
 				case 0: // Reference
@@ -125,10 +117,8 @@ namespace ProtoMol {
 
 	typedef std::vector<OpenMM::Vec3> EigenVector;
 
-	void NormalModeOpenMM::run( int numTimesteps ) {
-		if( numTimesteps < 1 ) {
-			return;
-		}
+	const long NormalModeOpenMM::run( const long numTimesteps ) {
+		if( numTimesteps < 1 ) return 0;
 
 		//check valid eigenvectors
 		if( mProtomolDiagonalize && *Q == NULL ) {
@@ -190,12 +180,13 @@ namespace ProtoMol {
 					//fix time as no forces calculated
 					app->topology->time -= remaining * getTimestep();
 					
-					//Fix steps
-					app->currentStep -= remaining;
 					std::cout << "OpenMM Failed Minimization" << std::endl;
+          return completed;
 				}
 			}
 		}
+    
+    return numTimesteps;
 	}
 
 	void NormalModeOpenMM::getParameters( vector<Parameter>& parameters ) const {

@@ -34,7 +34,7 @@ namespace ProtoMol {
     // From class Integrator
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    virtual void run(int numTimesteps);
+    virtual const long run(const long numTimesteps);
     virtual Integrator *previous();
     virtual const Integrator *previous() const;
 

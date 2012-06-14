@@ -173,9 +173,8 @@ void HessianInt::initialize(ProtoMolApp *app) {
   totStep = 0;
 }
 
-void HessianInt::run(int numTimesteps) {
-  if (numTimesteps < 1)
-    return;
+const long HessianInt::run(const long numTimesteps) {
+  if (numTimesteps < 1) return 0;
 
   if (totStep) {
     preStepModify();
@@ -238,6 +237,8 @@ void HessianInt::run(int numTimesteps) {
     report << hint << "[HessianInt::Find Hessian] Hessian found!" << endr;
   }
   //
+  
+  return numTimesteps;
 }
 
 //Nose mass calculation based on Chris Sweet's Thesis

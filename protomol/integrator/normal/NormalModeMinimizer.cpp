@@ -76,9 +76,8 @@ namespace ProtoMol {
     gaussRandCoord1.zero(-1); //zero vector for use as random force
   }
 
-  void NormalModeMinimizer::run(int numTimesteps) {
-    if( numTimesteps < 1 )
-        return;
+  const long NormalModeMinimizer::run(const long numTimesteps) {
+    if( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors
     if(*Q == NULL)
@@ -149,6 +148,8 @@ namespace ProtoMol {
 
     //
     postStepModify();
+    
+    return numTimesteps;
   }  
 
   void NormalModeMinimizer::getParameters(vector<Parameter>& parameters) const {

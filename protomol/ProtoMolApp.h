@@ -52,8 +52,8 @@ namespace ProtoMol {
     GenericTopology *topology;
 
     // Run
-    int currentStep;
-    int lastStep;
+    long currentStep;
+    long lastStep;
 
     ProtoMolApp() {}
     ProtoMolApp(ModuleManager *modManager);

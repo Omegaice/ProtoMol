@@ -91,11 +91,10 @@ namespace ProtoMol {
     avKE = avKEsq = 0.0;
   }
 
-  void RMTIntegrator::run(int numTimesteps) {
-  int step;
+  const long RMTIntegrator::run(const long numTimesteps) {
+    int step;
 
-    if( numTimesteps < 1 )
-      return;
+    if( numTimesteps < 1 ) return 0;
     //
     preStepModify();
     //
@@ -121,6 +120,8 @@ namespace ProtoMol {
     }
     //
     postStepModify();
+    
+    return numTimesteps;
   }
 
   void RMTIntegrator::getParameters(vector<Parameter>& parameters) const {

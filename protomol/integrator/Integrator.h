@@ -38,7 +38,7 @@ namespace ProtoMol {
     ///  Run the integrator for the certain number of timesteps.  It can
     ///  be assumed that the topology and forces have not changed since
     ///  the last time the integrator was initialized.
-    virtual void run(int numTimesteps) = 0;
+    virtual const long run( const long numTimesteps) = 0;
 
     ///  Set the integrator up.  This method can be called at any time,
     ///  and should perform any starting force evaluations the

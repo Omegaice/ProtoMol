@@ -81,8 +81,8 @@ namespace ProtoMol
     total_time = 0.0;
   }
 
-  void NormalModeQuadratic::run( int numTimesteps )
-  {
+  const long NormalModeQuadratic::run( const long numTimesteps ) {
+    if ( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors
     if ( *Q == NULL ){
@@ -93,11 +93,7 @@ namespace ProtoMol
          (unsigned)firstMode + numMode - 1 ){
       report << error << "Insufficient Eigenvalues for Quadratic integrator (" << app->eigenInfo.myEigenvalues.size() << "." << endr;
     }
-
-    if ( numTimesteps < 1 ){
-      return;
-    }
-
+    
     //timestep
     Real h = getTimestep() * Constant::INV_TIMEFACTOR;
 
@@ -166,6 +162,7 @@ namespace ProtoMol
     //fix time
     app->topology->time = actTime;
 
+    return numTimesteps;
   }
 
   //Project from subspace to 3D space

@@ -226,7 +226,7 @@ void LeapfrogTruncatedShadow::doKickdoDrift() {
   }
 }
 
-void LeapfrogTruncatedShadow::run(int numTimesteps) {
+const long LeapfrogTruncatedShadow::run(const long numTimesteps) {
   preStepModify();
   doHalfKickdoDrift();
   calculateForces();
@@ -240,6 +240,8 @@ void LeapfrogTruncatedShadow::run(int numTimesteps) {
   calculateForces();
   app->energies[ScalarStructure::SHADOW] = calcNearHamiltonian();
   //
+  
+  return numTimesteps;
 }
 
 STSIntegrator *LeapfrogTruncatedShadow::doMake(const vector<Value> &values,

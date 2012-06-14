@@ -86,9 +86,9 @@ void LeapfrogIntegrator::doKickdoDrift() {
   }
 }
 
-void LeapfrogIntegrator::run(int numTimesteps) {
-  if (numTimesteps < 1)
-    return;
+const long LeapfrogIntegrator::run(const long numTimesteps) {
+  if (numTimesteps < 1) return 0;
+  
   preStepModify();
   doHalfKickdoDrift();
   calculateForces();
@@ -99,6 +99,8 @@ void LeapfrogIntegrator::run(int numTimesteps) {
 
   doHalfKick();
   postStepModify();
+  
+  return numTimesteps;
 }
 
 STSIntegrator *LeapfrogIntegrator::doMake(const vector<Value> &values,

@@ -303,7 +303,7 @@ void ProtoMolApp::build() {
     integratorFactory.make(config[InputIntegrator::keyword], &forceFactory);
 
   // Setup run parameters (used for GUI so required here)
-  currentStep = config[InputFirststep::keyword];
+  currentStep = (long)(int)config[InputFirststep::keyword];
   lastStep = currentStep + (int)config[InputNumsteps::keyword];
 
   // Create outputs
@@ -383,16 +383,19 @@ bool ProtoMolApp::step(unsigned inc) {
   }
 
   if (!inc) inc = outputs->getNext() - currentStep;
-  inc = std::min(lastStep, (int)(currentStep + inc)) - currentStep;
+  inc = std::min(lastStep, (long int)(currentStep + inc)) - currentStep;
 
   TimerStatistic::timer[TimerStatistic::INTEGRATOR].start();
 
-  integrator->run(inc);
+  const long completed = integrator->run(inc);
 
   TimerStatistic::timer[TimerStatistic::INTEGRATOR].stop();
 
   // moved here so that current step is valid in integrator
-  currentStep += inc;
+  if( completed != inc ) {
+    report << plain << "Did not complete all steps: " << completed << " of " << inc << std::endl;
+  }
+  currentStep += completed;
 
   TimerStatistic::timer[TimerStatistic::RUN].stop();
 

@@ -93,9 +93,8 @@ void PLeapfrogIntegrator::doHalfDrift() {
   buildMolecularCenterOfMass(&app->positions, app->topology);
 }
 
-void PLeapfrogIntegrator::run(int numTimesteps) {
-  if (numTimesteps < 1)
-    return;
+const long PLeapfrogIntegrator::run(const long numTimesteps) {
+  if (numTimesteps < 1) return 0;
 
   preStepModify();
   doHalfDrift();
@@ -117,6 +116,8 @@ void PLeapfrogIntegrator::run(int numTimesteps) {
   myForces = temp;
 
   postStepModify();
+  
+  return numTimesteps;
 }
 
 STSIntegrator *PLeapfrogIntegrator::doMake(const vector<Value> &values,
