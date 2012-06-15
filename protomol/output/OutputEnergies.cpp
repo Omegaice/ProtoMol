@@ -18,7 +18,7 @@ using namespace ProtoMol;
 const string OutputEnergies::keyword("allEnergiesFile");
 
 
-OutputEnergies::OutputEnergies(const string &filename, int freq,
+OutputEnergies::OutputEnergies(const string &filename, long freq,
                                bool doMolTemp) :
   Output(freq), filename(filename), doMolecularTemperature(doMolTemp) {}
 
@@ -70,7 +70,7 @@ void OutputEnergies::doInitialize() {
 }
 
 
-void OutputEnergies::doRun(int) {
+void OutputEnergies::doRun(long) {
   file
     << resetiosflags(ios::showpoint | ios::fixed | ios::floatfield)
     << setw(14) << setprecision(2) << setiosflags(ios::showpoint | ios::fixed)
@@ -106,7 +106,7 @@ void OutputEnergies::doRun(int) {
 }
 
 
-void OutputEnergies::doFinalize(int step) {
+void OutputEnergies::doFinalize(long step) {
   file.close();
 }
 

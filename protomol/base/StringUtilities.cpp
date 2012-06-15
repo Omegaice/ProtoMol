@@ -238,6 +238,13 @@ namespace ProtoMol {
     }
     return false;
   }
+  
+  //____ toUInt
+  long toLong(const string &word) {
+    long i = 0;
+    toLong(word, i);
+    return i;
+  }
 
   //____ toLong
   //____ http://www.dinkumware.com/htm_cpl/stdlib.html#strtol

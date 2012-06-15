@@ -69,7 +69,7 @@ namespace ProtoMol {
     bool configure(const std::vector<std::string> &args);
     void build();
     void print(std::ostream &stream);
-    bool step(unsigned inc = 0);
+    bool step(long inc = 0);
     void finalize();
   };
 }

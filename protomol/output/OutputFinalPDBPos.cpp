@@ -22,7 +22,7 @@ OutputFinalPDBPos::OutputFinalPDBPos(const string &filename, bool minimal) :
   Output(-1), filename(filename), minimalImage(minimal) {}
 
 
-void OutputFinalPDBPos::doFinalize(int step) {
+void OutputFinalPDBPos::doFinalize(long step) {
   PDBWriter writer;
   if (!writer.open(filename))
     THROWS("Can't open " << getId() << " '" << filename << "'.");

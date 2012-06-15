@@ -23,8 +23,8 @@ namespace ProtoMol {
     //   From class Output
     Output *doMake(const std::vector<Value> &values) const;
     void doInitialize();
-    void doRun(int step);
-    void doFinalize(int step);
+    void doRun(long step);
+    void doFinalize(long step);
 
     //  From class Makeabl
   public:

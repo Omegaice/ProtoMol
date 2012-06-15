@@ -27,16 +27,16 @@ namespace ProtoMol {
 
   public:
     OutputEnergies() : doMolecularTemperature(false) {}
-    OutputEnergies(const std::string &filename, int freq, bool doMolTemp);
+    OutputEnergies(const std::string &filename, long freq, bool doMolTemp);
 
   private:
     //   From class OutputFile
-    void doRunCached(int step);
+    void doRunCached(long step);
 
     //   From class Output
     void doInitialize();
-    void doRun(int step);
-    void doFinalize(int step);
+    void doRun(long step);
+    void doFinalize(long step);
 
   public:
     //  From class Makeable

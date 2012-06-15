@@ -7,8 +7,8 @@
 namespace ProtoMol {
   class ProtoMolApp;
   
-  declareInputValue(InputNumsteps, INT, NOTNEGATIVE)
-  declareInputValue(InputFirststep, INT, NOCONSTRAINTS)
+  declareInputValue(InputNumsteps, LONG, NOTNEGATIVE)
+  declareInputValue(InputFirststep, LONG, NOCONSTRAINTS)
   declareInputValue(InputRealfirststep, INT, NOCONSTRAINTS)
   declareInputValue(InputSeed, INT, NOTNEGATIVE)
   declareInputValue(InputRandomType, INT, NOTNEGATIVE)
@@ -19,7 +19,7 @@ namespace ProtoMol {
   declareInputValue(InputDoSCPISM, BOOL, NOCONSTRAINTS)
   declareInputValue(InputMolVirialCalc, BOOL, NOCONSTRAINTS)
   declareInputValue(InputVirialCalc, BOOL, NOCONSTRAINTS)
-  declareInputValue(InputOutputfreq, INT, NOTNEGATIVE)
+  declareInputValue(InputOutputfreq, LONG, NOTNEGATIVE)
   declareInputValue(InputOutput, BOOL, NOCONSTRAINTS)
   declareInputValue(InputMinimalImage, BOOL, NOCONSTRAINTS)
   declareInputValue(InputDoGBSAObc, BOOL, NOCONSTRAINTS)

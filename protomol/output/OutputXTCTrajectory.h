@@ -21,8 +21,8 @@ namespace ProtoMol {
     //  From Output
     Output *doMake(const std::vector<Value> &values) const;
     void doInitialize();
-    void doRun(int step);
-    void doFinalize(int step);
+    void doRun(long step);
+    void doFinalize(long step);
 
     //  From Makeabl
     std::string getIdNoAlias() const {return keyword;}

@@ -22,7 +22,7 @@ OutputFinalXYZVel::OutputFinalXYZVel(const string &filename) :
   Output(-1), filename(filename) {}
 
 
-void OutputFinalXYZVel::doFinalize(int step) {
+void OutputFinalXYZVel::doFinalize(long step) {
   XYZWriter writer;
   if (!writer.open(filename))
     THROWS("Can't open " << getId() << " '" << filename << "'.");

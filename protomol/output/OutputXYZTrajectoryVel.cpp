@@ -35,7 +35,7 @@ void OutputXYZTrajectoryVel::doInitialize() {
 }
 
 
-void OutputXYZTrajectoryVel::doRun(int) {
+void OutputXYZTrajectoryVel::doRun(long) {
   if (!xYZ->write(*&app->velocities, app->topology->atoms,
                     app->topology->atomTypes))
     THROWS("Could not write " << getId() << " '" << xYZ->getFilename()
@@ -43,7 +43,7 @@ void OutputXYZTrajectoryVel::doRun(int) {
 }
 
 
-void OutputXYZTrajectoryVel::doFinalize(int) {
+void OutputXYZTrajectoryVel::doFinalize(long) {
   xYZ->close();
 }
 

@@ -62,7 +62,7 @@ void OutputDCDTrajectory::doInitialize() {
 }
 
 
-void OutputDCDTrajectory::doRun(int) {
+void OutputDCDTrajectory::doRun(long) {
   const Vector3DBlock *pos =
     (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
 
@@ -71,7 +71,7 @@ void OutputDCDTrajectory::doRun(int) {
 }
 
 
-void OutputDCDTrajectory::doFinalize(int) {
+void OutputDCDTrajectory::doFinalize(long) {
   dCD->close();
 }
 

@@ -26,13 +26,13 @@ namespace ProtoMol {
     void initialize(const ProtoMolApp *app);
 
     // / Invoke all Output objects with run().  Returns true if an Output ran.
-    bool run(int step);
+    bool run(long step);
 
     // / Finalize all Outout object
-    void finalize(int step);
+    void finalize(long step);
 
     // / Add new Output object to the collection
-    int getNext() const;
+    long getNext() const;
 
     void adoptOutput(Output *output);
 

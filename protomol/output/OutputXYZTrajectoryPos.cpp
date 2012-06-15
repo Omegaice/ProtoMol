@@ -37,7 +37,7 @@ void OutputXYZTrajectoryPos::doInitialize() {
 }
 
 
-void OutputXYZTrajectoryPos::doRun(int) {
+void OutputXYZTrajectoryPos::doRun(long) {
   const Vector3DBlock *pos =
     (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
 
@@ -47,7 +47,7 @@ void OutputXYZTrajectoryPos::doRun(int) {
 }
 
 
-void OutputXYZTrajectoryPos::doFinalize(int) {
+void OutputXYZTrajectoryPos::doFinalize(long) {
   xYZ->close();
 }
 

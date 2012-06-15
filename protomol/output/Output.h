@@ -25,25 +25,25 @@ namespace ProtoMol {
     const ProtoMolApp *app;
 
   protected:
-    int firstStep;
-    int nextStep;
-    int lastStep;
-    int outputFreq; // /< Output freqeuncy
+    long firstStep;
+    long nextStep;
+    long lastStep;
+    long outputFreq; // /< Output freqeuncy
 
   public:
-    Output(int freq = 0);
+    Output(long freq = 0);
 
     // / To initialize the object, before the simulation starts.
     virtual void initialize(const ProtoMolApp *app);
 
     // / Called at each step (e.g., printing total energy on the screen),
     // / takes care of the output frequency.  Returns true if it ran.
-    virtual bool run(int step);
+    virtual bool run(long step);
 
     // / At the end of the simulation (e.g., writing final positions), and
     // / calls first run() to ensure that run is called for the last
     // / step, if needed.
-    virtual void finalize(int step);
+    virtual void finalize(long step);
 
     // / Factory method to create a complete output object from its prototy
     virtual Output *make(const std::vector<Value> &values) const;
@@ -57,19 +57,19 @@ namespace ProtoMol {
     // / the output.
     virtual bool addDoKeyword() const {return true;}
 
-    int getFirstStep() const {return firstStep;}
-    int getLastStep() const {return lastStep;}
-    int getOutputFreq() const {return outputFreq;}
-    int getNext() const {return nextStep;}
+    long getFirstStep() const {return firstStep;}
+    long getLastStep() const {return lastStep;}
+    long getOutputFreq() const {return outputFreq;}
+    long getNext() const {return nextStep;}
 
   private:
     // / Hook method of initialize, implemented in the concrete cl
     virtual void doInitialize() = 0;
 
     // / Hook method of run, implemented in the concrete cl
-    virtual void doRun(int step) = 0;
+    virtual void doRun(long step) = 0;
 
-    virtual void doFinalize(int step) {};
+    virtual void doFinalize(long step) {};
 
     //  From class Makabl
   public:

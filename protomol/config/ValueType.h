@@ -276,6 +276,9 @@ protected:
                       RepType v) {return 0L == v;}
     static bool check(const ConstraintValueType::Positive &,
                       RepType v) {return v > 0L;}
+    static bool check(const ConstraintValueType::NotNegative &,
+                      RepType v) {return v >= 0L;}
+
   };
   
   template<>

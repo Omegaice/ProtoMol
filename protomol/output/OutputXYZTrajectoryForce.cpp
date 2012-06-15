@@ -36,7 +36,7 @@ void OutputXYZTrajectoryForce::doInitialize() {
 }
 
 
-void OutputXYZTrajectoryForce::doRun(int) {
+void OutputXYZTrajectoryForce::doRun(long) {
   if (!xYZ->write(*(app->integrator->getForces()), app->topology->atoms,
                     app->topology->atomTypes))
     THROWS("Could not write " << getId() << " '" << xYZ->getFilename()
@@ -44,7 +44,7 @@ void OutputXYZTrajectoryForce::doRun(int) {
 }
 
 
-void OutputXYZTrajectoryForce::doFinalize(int) {
+void OutputXYZTrajectoryForce::doFinalize(long) {
   xYZ->close();
 }
 

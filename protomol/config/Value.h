@@ -15,6 +15,7 @@ namespace ProtoMol {
    * - string
    * - int
    * - unsigned int
+   * - long
    * - Real
    * - bool
    * - Vector3D

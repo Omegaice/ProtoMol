@@ -55,7 +55,7 @@ void OutputCheckpoint::doInitialize() {
 }
 
 
-void OutputCheckpoint::doIt(int step) {
+void OutputCheckpoint::doIt(long step) {
   cout << "Checkpointing: Step " << step << ". . ." << flush;
 
   WritePositions(step);
@@ -72,9 +72,9 @@ void OutputCheckpoint::doIt(int step) {
 }
 
 
-void OutputCheckpoint::doRun(int step) {
-  const int firstStep = toInt(app->config["firststep"]);
-  const int finalStep = firstStep + toInt(app->config["numsteps"]);
+void OutputCheckpoint::doRun(long step) {
+  const long firstStep = toLong(app->config["firststep"]);
+  const long finalStep = firstStep + toLong(app->config["numsteps"]);
 
   if (step != firstStep && step != finalStep) {
     if (getOutputFreq() > 0 && (step % getOutputFreq()) == 0)
@@ -134,7 +134,7 @@ adjustWithDefaultParameters(vector<Value> &values,
 }
 
 
-void OutputCheckpoint::WritePositions(int step) {
+void OutputCheckpoint::WritePositions(long step) {
   string posFile = Append(Append(posBase, current), ".pos");
 
   XYZWriter posWriter;
@@ -150,7 +150,7 @@ void OutputCheckpoint::WritePositions(int step) {
 }
 
 
-void OutputCheckpoint::WriteVelocities(int step) {
+void OutputCheckpoint::WriteVelocities(long step) {
   string velFile = Append(Append(velBase, current), ".vel");
 
   XYZWriter velWriter;
@@ -166,7 +166,7 @@ void OutputCheckpoint::WriteVelocities(int step) {
 }
 
 
-void OutputCheckpoint::WriteConfig(int step) {
+void OutputCheckpoint::WriteConfig(long step) {
   string confFile = name + ".tmp";
 
   {

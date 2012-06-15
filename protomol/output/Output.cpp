@@ -11,7 +11,7 @@ using namespace ProtoMol;
 const string Output::scope("Output");
 
 
-Output::Output(int freq) :
+Output::Output(long freq) :
   app(0), firstStep(0), nextStep(0), lastStep(0), outputFreq(freq) {}
 
 
@@ -37,7 +37,7 @@ void Output::initialize(const ProtoMolApp *app) {
 }
 
 
-bool Output::run(int step) {
+bool Output::run(long step) {
   if (step >= nextStep) {
     int n = (step - nextStep) / outputFreq;
     nextStep += max(n, 1) * outputFreq;
@@ -49,7 +49,7 @@ bool Output::run(int step) {
   return false;
 }
 
-void Output::finalize(int step) {
+void Output::finalize(long step) {
   doRun(step);
   doFinalize(step);
 }

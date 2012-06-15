@@ -24,19 +24,19 @@ namespace ProtoMol {
                       const std::string &posbase, const std::string &velbase);
 
   private:
-    void WritePositions(int step);
-    void WriteVelocities(int step);
-    void WriteConfig(int step);
+    void WritePositions(long step);
+    void WriteVelocities(long step);
+    void WriteConfig(long step);
 
   public:
-    void doIt(int step);
+    void doIt(long step);
 
   private:
     //  From class Output
     Output *doMake(const std::vector<Value> &values) const;
     void doInitialize();
-    void doRun(int step);
-    void doFinalize(int) {}
+    void doRun(long step);
+    void doFinalize(long) {}
     bool isIdDefined(const Configuration *config) const;
     bool addDoKeyword() const {return false;}
 

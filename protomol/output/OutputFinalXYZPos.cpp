@@ -23,7 +23,7 @@ OutputFinalXYZPos::OutputFinalXYZPos(const string &filename, bool minimal) :
   Output(-1), filename(filename), minimalImage(minimal) {}
 
 
-void OutputFinalXYZPos::doFinalize(int step) {
+void OutputFinalXYZPos::doFinalize(long step) {
   XYZWriter writer;
   if (!writer.open(filename))
     THROWS("Can't open " << getId() << " '" << filename << "'.");

@@ -89,6 +89,7 @@ void ProtoMolApp::splash(ostream &stream) {
 		<< setw(w) << "Checksumming: "
 		<< "Enabled for Folding@Home file protection." << endl
 #endif // HAVE_LIBFAH
+    << setw(w) << "Long/Int size: " << sizeof(long) << "/" << sizeof(int) << endl
 #ifdef HAVE_PACKAGE_H
 		<< setw(w) << "Please cite: ";
 		fillFormat(stream, PACKAGE_CITE, w, w);
@@ -371,7 +372,7 @@ void ProtoMolApp::build() {
 }
 
 
-bool ProtoMolApp::step(unsigned inc) {
+bool ProtoMolApp::step(long inc) {
   if (currentStep >= lastStep) return false;
 
   TimerStatistic::timer[TimerStatistic::RUN].start();
@@ -384,7 +385,7 @@ bool ProtoMolApp::step(unsigned inc) {
   }
 
   if (!inc) inc = outputs->getNext() - currentStep;
-  inc = std::min(lastStep, (long int)(currentStep + inc)) - currentStep;
+  inc = std::min(lastStep, currentStep + inc) - currentStep;
 
   TimerStatistic::timer[TimerStatistic::INTEGRATOR].start();
 

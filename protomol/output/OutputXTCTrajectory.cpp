@@ -56,7 +56,7 @@ void OutputXTCTrajectory::doInitialize() {
 }
 
 
-void OutputXTCTrajectory::doRun(int step) {
+void OutputXTCTrajectory::doRun(long step) {
 #ifdef HAVE_GROMACS
   const Vector3DBlock *pos =
     (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
@@ -93,7 +93,7 @@ void OutputXTCTrajectory::doRun(int step) {
 }
 
 
-void OutputXTCTrajectory::doFinalize(int) {
+void OutputXTCTrajectory::doFinalize(long) {
 #ifdef HAVE_GROMACS
   close_xtc((t_fileio *)fxtc);
 #endif

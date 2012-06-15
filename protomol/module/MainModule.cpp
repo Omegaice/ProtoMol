@@ -49,9 +49,9 @@ void MainModule::init(ProtoMolApp *app) {
 
   InputSeed::registerConfiguration(config, getTimerSeed());
   InputRandomType::registerConfiguration(config, 0);
-  InputFirststep::registerConfiguration(config, 0);
+  InputFirststep::registerConfiguration(config, 0L);
   InputRealfirststep::registerConfiguration(config, 0);
-  InputNumsteps::registerConfiguration(config);
+  InputNumsteps::registerConfiguration(config,1L);
   InputDebug::registerConfiguration(config, 1);
   InputIntegrator::registerConfiguration(config);
   InputReducedImage::registerConfiguration(config);
@@ -60,7 +60,7 @@ void MainModule::init(ProtoMolApp *app) {
   InputVirialCalc::registerConfiguration(config, false);
   InputMolVirialCalc::registerConfiguration(config, false);
   InputOutput::registerConfiguration(&app->config, true);
-  InputOutputfreq::registerConfiguration(&app->config, 1);
+  InputOutputfreq::registerConfiguration(&app->config, 1L);
   InputMinimalImage::registerConfiguration(&app->config, false);
   InputDoGBSAObc::registerConfiguration(config, 0);
   InputDebugLimit::registerConfiguration(config, 0);

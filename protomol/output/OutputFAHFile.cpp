@@ -22,7 +22,7 @@ OutputFAHFile::OutputFAHFile(const string &filename, int freq) :
 void OutputFAHFile::doInitialize() {}
 
 
-void OutputFAHFile::doRun(int step) {
+void OutputFAHFile::doRun(long step) {
   open(filename.c_str(), ios::out | ios::trunc);
 
   if (is_open()) {
@@ -46,7 +46,7 @@ void OutputFAHFile::doRun(int step) {
 }
 
 
-void OutputFAHFile::doFinalize(int step) {}
+void OutputFAHFile::doFinalize(long step) {}
 
 
 Output *OutputFAHFile::doMake(const vector<Value> &values) const {

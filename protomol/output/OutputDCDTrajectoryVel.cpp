@@ -37,14 +37,14 @@ void OutputDCDTrajectoryVel::doInitialize() {
            << "' for " << getId() << ".");
 }
 
-void OutputDCDTrajectoryVel::doRun(int) {
+void OutputDCDTrajectoryVel::doRun(long) {
   if (!dCD->write(app->velocities))
     THROWS("Could not write " << getId() << " '" << dCD->getFilename()
            << "'.");
 }
 
 
-void OutputDCDTrajectoryVel::doFinalize(int) {
+void OutputDCDTrajectoryVel::doFinalize(long) {
   dCD->close();
 }
 

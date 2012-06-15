@@ -23,8 +23,8 @@ namespace ProtoMol {
   private:
     Output *doMake(const std::vector<Value> &values) const;
     void doInitialize();
-    void doRun(int step);
-    void doFinalize(int) {}
+    void doRun(long step);
+    void doFinalize(long) {}
     bool isIdDefined(const Configuration *config) const;
     bool addDoKeyword() const {return false;}
 

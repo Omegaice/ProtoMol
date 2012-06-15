@@ -25,7 +25,7 @@ void OutputCollection::initialize(const ProtoMolApp *app) {
 }
 
 
-bool OutputCollection::run(int step) {
+bool OutputCollection::run(long step) {
   bool outputRan = false;
 
   app->outputCache.uncache();
@@ -36,7 +36,7 @@ bool OutputCollection::run(int step) {
 }
 
 
-void OutputCollection::finalize(int step) {
+void OutputCollection::finalize(long step) {
   app->outputCache.uncache();
   for (iterator i = begin(); i != end(); i++) (*i)->finalize(step);
 }
@@ -48,8 +48,8 @@ void OutputCollection::adoptOutput(Output *output) {
 }
 
 
-int OutputCollection::getNext() const {
-  int next = Constant::MAX_INT;
+long OutputCollection::getNext() const {
+  long next = Constant::MAX_INT;
   for (const_iterator i = begin(); i != end(); i++)
     next = min((*i)->getNext(), next);
 

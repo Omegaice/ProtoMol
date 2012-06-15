@@ -24,7 +24,7 @@ OutputScreen::OutputScreen(int freq) : Output(freq), unit("fs"), factor(1) {}
 
 void OutputScreen::doInitialize() {
   Real step = app->integrator->getTimestep() *
-    max(1, getOutputFreq());
+    max(1L, getOutputFreq());
 
   if (step >= 1e13) {
     unit = "s";
@@ -49,7 +49,7 @@ void OutputScreen::doInitialize() {
 }
 
 
-void OutputScreen::doRun(int step) {
+void OutputScreen::doRun(long step) {
   report << plain << "Step : ";
   report.setf(ios::right);
   report.width(7);
