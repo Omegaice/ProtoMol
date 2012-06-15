@@ -24,6 +24,7 @@ namespace ProtoMol {
     extern const Real MINREAL;
     extern const Real REAL_INFINITY;
     extern const Real REAL_NAN;
+    extern const long MAX_LONG;
     extern const int MAX_INT;
     extern const int MAX_INT_2;
     extern const Real EPSILON;

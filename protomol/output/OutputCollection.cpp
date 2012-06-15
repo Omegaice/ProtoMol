@@ -49,7 +49,7 @@ void OutputCollection::adoptOutput(Output *output) {
 
 
 long OutputCollection::getNext() const {
-  long next = Constant::MAX_INT;
+  long next = Constant::MAX_LONG;
   for (const_iterator i = begin(); i != end(); i++)
     next = min((*i)->getNext(), next);
 

@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace ProtoMol;
+using namespace ProtoMol::Report;
 
 const string Output::scope("Output");
 
@@ -31,7 +32,7 @@ void Output::initialize(const ProtoMolApp *app) {
   }
 
   if (app->config.valid(InputNumsteps::keyword))
-    lastStep = lastStep + app->config[InputNumsteps::keyword].operator int();
+    lastStep = lastStep + app->config[InputNumsteps::keyword].operator long();
 
   doInitialize();
 }
@@ -39,9 +40,9 @@ void Output::initialize(const ProtoMolApp *app) {
 
 bool Output::run(long step) {
   if (step >= nextStep) {
-    int n = (step - nextStep) / outputFreq;
-    nextStep += max(n, 1) * outputFreq;
-
+    long n = (step - nextStep) / outputFreq;
+    nextStep += max(n, 1L) * outputFreq;
+    
     doRun(step);
     return true;
   }

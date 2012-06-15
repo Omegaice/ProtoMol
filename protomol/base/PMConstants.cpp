@@ -28,6 +28,7 @@ namespace ProtoMol {
     const Real REAL_NAN = REAL_INFINITY;
     const int MAX_INT = MAXINT;
     const int MAX_INT_2 = MAXINT / 2;
+    const int MAX_INT = 9223372036854775807;    
 
 #else /* HAVE_NO_LIMITS */
     const Real MAXREAL = numeric_limits<Real>::max();
@@ -42,6 +43,8 @@ namespace ProtoMol {
        REAL_INFINITY);
     const int MAX_INT = numeric_limits<int>::max();
     const int MAX_INT_2 = numeric_limits<int>::max() / 2;
+    const long MAX_LONG = numeric_limits<long>::max();
+
 #endif /* HAVE_NO_LIMITS */
 
     const Real EPSILON = 1.0e-14;
