@@ -406,7 +406,7 @@ bool ProtoMolApp::step(long inc) {
 
 
 void ProtoMolApp::finalize() {
-  float nanoSeconds = ( currentStep * integrator->getTimestep() ) / 1000000;
+  float nanoSeconds = ( (currentStep - config[InputFirststep::keyword].operator long()) * integrator->getTimestep() ) / 1000000;
   float secondsPerNanosecond = TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() / nanoSeconds;
   float nanoSecondsPerDay = 86400 / secondsPerNanosecond;
   
