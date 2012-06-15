@@ -21,6 +21,7 @@ public:
       STRING,
       INT,
       UINT,
+      LONG,
       REAL,
       BOOL,
       VECTOR3D,
@@ -232,6 +233,55 @@ protected:
     typedef ValueTraits<unsigned int> Type;
   };
 
+  /// LONG
+  template<>
+  struct ValueTraits<long> {
+    typedef unsigned int Type;
+    typedef long RepType;
+    enum {value = ValueType::LONG};
+    
+    static RepType init() {return 0;}
+    static Type empty() {return 0;}
+    static unsigned int size(RepType) {return 1;}
+    static bool read(std::istream &is, RepType &v)
+    {std::string tmp; is >> tmp; return toLong(tmp, v);}
+    
+    template<typename T> static bool convert(T, RepType &) {return false;}
+    template<typename T> static RepType convert(T v) 
+    {RepType tmp; convert(v, tmp); return tmp;}
+    template<typename T> static bool convertTest(T v)
+    {RepType tmp; return convert(v, tmp);}
+    
+    static bool convert(RepType v, RepType &r) {r = v; return true;}
+    static bool convert(std::string v, RepType &r) {return toLong(v, r);}
+    static bool convert(bool v, RepType &r) {r = (v ? 1 : 0); return true;}
+    static bool convert(int v, RepType &r) {
+      r = static_cast<long>(v);
+      return true;
+    }
+    static bool convert(Real v, RepType &r) {
+      long c = static_cast<long>(v);
+      if (static_cast<Real>(c) == v) {
+        r = c;
+        return true;
+      }
+      return false;
+    }
+    
+    static bool check(const ConstraintValueType::NoConstraints &,
+                      RepType) {return true;}
+    static bool check(const ConstraintValueType::NotZero &,
+                      RepType v) {return 0L != v;}
+    static bool check(const ConstraintValueType::Zero &,
+                      RepType v) {return 0L == v;}
+    static bool check(const ConstraintValueType::Positive &,
+                      RepType v) {return v > 0L;}
+  };
+  
+  template<>
+  struct Enum2ValueTraits<ValueType::LONG> {
+    typedef ValueTraits<long> Type;
+  };
 
   /// REAL
   template<>

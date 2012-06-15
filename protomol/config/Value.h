@@ -61,6 +61,7 @@ namespace ProtoMol {
       virtual bool get(std::string &v) const = 0;
       virtual bool get(int &v) const = 0;
       virtual bool get(unsigned int &v) const = 0;
+      virtual bool get(long &v) const = 0;
       virtual bool get(Real &v) const = 0;
       virtual bool get(bool &v) const = 0;
       virtual bool get(Vector3D &v) const = 0;
@@ -71,6 +72,7 @@ namespace ProtoMol {
       virtual bool set(const std::string &v) = 0;
       virtual bool set(int v) = 0;
       virtual bool set(unsigned int v) = 0;
+      virtual bool set(long v) = 0;
       virtual bool set(Real v) = 0;
       virtual bool set(bool v) = 0;
       virtual bool set(const Vector3D &v) = 0;
@@ -130,6 +132,9 @@ namespace ProtoMol {
       virtual bool get(unsigned int &v) const {
         return ValueTraits<unsigned int>::convert(holder, v) && ok;
       }
+      virtual bool get(long &v) const {
+        return ValueTraits<long>::convert(holder, v) && ok;
+      }
       virtual bool get(Real &v) const {
         return ValueTraits<Real>::convert(holder, v) && ok;
       }
@@ -157,6 +162,11 @@ namespace ProtoMol {
       virtual bool set(unsigned int v) {
         ok = ValueTrait::convert(v, holder) &&
           ValueTrait::check(Constraint(), holder);
+        return ok;
+      }
+      virtual bool set(long v) {
+        ok = ValueTrait::convert(v, holder) &&
+        ValueTrait::check(Constraint(), holder);
         return ok;
       }
       virtual bool set(Real v) {
@@ -226,6 +236,7 @@ namespace ProtoMol {
     explicit Value(const char *value);
     explicit Value(int value);
     explicit Value(unsigned int value);
+    explicit Value(long value);
     explicit Value(Real value);
     explicit Value(bool value);
     explicit Value(const Vector3D &value);
@@ -239,6 +250,7 @@ namespace ProtoMol {
     Value(const char *value, const Undefined *);
     Value(int value, const Undefined *);
     Value(unsigned int value, const Undefined *);
+    Value(long value, const Undefined *);
     Value(Real value, const Undefined *);
     Value(bool value, const Undefined *);
     Value(const Vector3D &value, const Undefined *);
@@ -289,6 +301,7 @@ namespace ProtoMol {
     operator std::string() const;
     operator int() const;
     operator unsigned int() const;
+    operator long() const;
     operator Real() const;
     operator bool() const;
     operator Vector3D() const;

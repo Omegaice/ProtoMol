@@ -12,6 +12,7 @@ const string ValueEnum::str[static_cast<int>(LAST) -
   string("string"),
   string("int"),
   string("uint"),
+  string("long"),
   string("real"),
   string("boolean"),
   string("coordinates"),

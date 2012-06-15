@@ -63,6 +63,8 @@ namespace ProtoMol {
   bool toUInt(const std::string &word, unsigned int &i);
   //_____________________________________________________________________ toUInt
   unsigned int toUInt(const std::string &word);
+  //_____________________________________________________________________ toLong
+  bool toLong(const std::string &word, long &l);
   //_____________________________________________________________________ isBool
   bool isBool(const std::string &word);
   //_____________________________________________________________________ toBool

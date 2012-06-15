@@ -220,7 +220,7 @@ namespace ProtoMol {
     toUInt(word, i);
     return i;
   }
-
+  
 //____ toUInt
 //____ http://www.dinkumware.com/htm_cpl/stdlib.html#strtol
   bool toUInt(const string &word, unsigned int &i) {
@@ -234,6 +234,24 @@ namespace ProtoMol {
     Real r;
     if (toReal(word, r)) {
       i = static_cast<unsigned int> (r);
+      return static_cast<Real> (i) == r;
+    }
+    return false;
+  }
+
+  //____ toLong
+  //____ http://www.dinkumware.com/htm_cpl/stdlib.html#strtol
+  bool toLong(const string &word, long &i) {
+    char *endptr = NULL;
+    unsigned long l = strtoul(word.c_str(), &endptr, 10);
+    i = static_cast<long> (l);
+    if (!word.empty() && static_cast<unsigned long> (i) == l && errno !=
+        ERANGE &&
+        (endptr == NULL || isBlank(string(endptr))) && isPrintable(word))
+      return true;
+    Real r;
+    if (toReal(word, r)) {
+      i = static_cast<long> (r);
       return static_cast<Real> (i) == r;
     }
     return false;

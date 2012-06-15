@@ -32,6 +32,9 @@ Value::Value(int value) :
 Value::Value(unsigned int value) :
   myValue(new Holder<ValueTraits<unsigned int> >(value)) {}
 
+Value::Value(long value) :
+myValue(new Holder<ValueTraits<long> >(value)) {}
+
 Value::Value(Real value) :
   myValue(new Holder<ValueTraits<Real> >(value)) {}
 
@@ -65,6 +68,9 @@ Value::Value(int value, const Undefined *) :
 
 Value::Value(unsigned int value, const Undefined *) :
   myValue(new Holder<ValueTraits<unsigned int> >(value, false)) {}
+
+Value::Value(long value, const Undefined *) :
+myValue(new Holder<ValueTraits<long> >(value, false)) {}
 
 Value::Value(Real value, const Undefined *) :
   myValue(new Holder<ValueTraits<Real> >(value, false)) {}
@@ -111,6 +117,12 @@ Value::operator unsigned int() const {
   unsigned int val = 0;
   if (myValue != NULL) myValue->get(val);
   return val;
+}
+
+Value::operator long() const {
+  long val = 0;
+  if (myValue != NULL) myValue->get(val);
+    return val;
 }
 
 Value::operator Real() const {
@@ -279,6 +291,8 @@ namespace ProtoMol {
       return Value::equal<Real>(v1, v2);
     else if (Value::equalType<int>(v1, v2))
       return Value::equal<int>(v1, v2);
+    else if (Value::equalType<long>(v1, v2))
+      return Value::equal<long>(v1, v2);
     else if (Value::equalType<unsigned int>(v1, v2))
       return Value::equal<unsigned int>(v1, v2);
     else if (Value::equalType<bool>(v1, v2))
@@ -298,6 +312,8 @@ namespace ProtoMol {
       return Value::less<Real>(v1, v2);
     else if (Value::equalType<int>(v1, v2))
       return Value::less<int>(v1, v2);
+    else if (Value::equalType<long>(v1, v2))
+      return Value::less<long>(v1, v2);
     else if (Value::equalType<unsigned int>(v1, v2))
       return Value::less<unsigned int>(v1, v2);
     else if (Value::equalType<bool>(v1, v2))
@@ -317,6 +333,8 @@ namespace ProtoMol {
       return Value::lessEqual<Real>(v1, v2);
     else if (Value::equalType<int>(v1, v2))
       return Value::lessEqual<int>(v1, v2);
+    else if (Value::equalType<long>(v1, v2))
+      return Value::lessEqual<long>(v1, v2);
     else if (Value::equalType<unsigned int>(v1, v2))
       return Value::lessEqual<unsigned int>(v1, v2);
     else if (Value::equalType<bool>(v1, v2))
@@ -336,6 +354,8 @@ namespace ProtoMol {
       return Value::greater<Real>(v1, v2);
     else if (Value::equalType<int>(v1, v2))
       return Value::greater<int>(v1, v2);
+    else if (Value::equalType<long>(v1, v2))
+      return Value::greater<long>(v1, v2);
     else if (Value::equalType<unsigned int>(v1, v2))
       return Value::greater<unsigned int>(v1, v2);
     else if (Value::equalType<bool>(v1, v2))
@@ -355,6 +375,8 @@ namespace ProtoMol {
       return Value::greaterEqual<Real>(v1, v2);
     else if (Value::equalType<int>(v1, v2))
       return Value::greaterEqual<int>(v1, v2);
+    else if (Value::equalType<long>(v1, v2))
+      return Value::greaterEqual<long>(v1, v2);
     else if (Value::equalType<unsigned int>(v1, v2))
       return Value::greaterEqual<unsigned int>(v1, v2);
     else if (Value::equalType<bool>(v1, v2))

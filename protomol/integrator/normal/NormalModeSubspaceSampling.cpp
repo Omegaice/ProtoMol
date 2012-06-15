@@ -76,7 +76,7 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  void NormalModeSubspaceSampling::run(int numTimesteps) {
+  const long NormalModeSubspaceSampling::run(const long numTimesteps) {
     //Real h = getTimestep() * Constant::INV_TIMEFACTOR;
     Real h;
     Real actTime;
@@ -85,7 +85,7 @@ namespace ProtoMol {
     else  h = getTimestep() * Constant::INV_TIMEFACTOR;
 
     if( numTimesteps < 1 )
-      return;
+      return 0;
 
     //check valid eigenvectors
     if(*Q == NULL)
@@ -111,7 +111,7 @@ namespace ProtoMol {
             app->topology->time = actTime - (i - numTimesteps) * getTimestep();
             if(myPreviousIntegrator == NULL) 
                 report << error << "[NormalModeSubspaceSampling::Run] Re-diagonalization forced with NormalModeSubspaceSampling as outermost Integrator. Aborting."<<endr;
-            return;
+            return 0;
       }
       //#################Put averaged force code here##############################
       //calculate sub space forces, just do this for the energy
@@ -152,6 +152,7 @@ namespace ProtoMol {
     //for(int i=0;i<_rfM;i++) std::cout<<tmpC[i]<<" ";
     //std::cout<<std::endl;
     //
+    return numTimesteps;
   }
 
 

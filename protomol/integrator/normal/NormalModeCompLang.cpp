@@ -62,12 +62,12 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  void NormalModeCompLang::run(int numTimesteps) {
+  const long NormalModeCompLang::run(const long numTimesteps) {
     //Real h = getTimestep() * Constant::INV_TIMEFACTOR;
     Real actTime;
 
     if( numTimesteps < 1 )
-      return;
+      return 0;
 
     //
     //time calculated in forces! so fix here
@@ -118,6 +118,7 @@ namespace ProtoMol {
     //fix time
     app->topology->time = actTime;
     //
+    return numTimesteps;
   }  
 
   void NormalModeCompLang::doDrift() {
