@@ -7,7 +7,7 @@
 namespace ProtoMol {
   class ProtoMolApp;
   
-  declareInputValue(InputNumsteps, LONG, NOTNEGATIVE)
+  declareInputValue(InputNumsteps, LONG, NOCONSTRAINTS)
   declareInputValue(InputFirststep, LONG, NOCONSTRAINTS)
   declareInputValue(InputRealfirststep, INT, NOCONSTRAINTS)
   declareInputValue(InputSeed, INT, NOTNEGATIVE)

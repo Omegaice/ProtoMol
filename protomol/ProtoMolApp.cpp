@@ -306,7 +306,9 @@ void ProtoMolApp::build() {
   // Setup run parameters (used for GUI so required here)
   currentStep = config[InputFirststep::keyword];
   lastStep = config[InputNumsteps::keyword];
-  lastStep += currentStep;
+  if( lastStep != -1 ){
+    lastStep += currentStep;
+  }
 
   // Create outputs
   // TODO if !Parallel::iAmMaster() turn off outputs
@@ -373,7 +375,7 @@ void ProtoMolApp::build() {
 
 
 bool ProtoMolApp::step(long inc) {
-  if (currentStep >= lastStep) return false;
+  if (currentStep >= lastStep && lastStep != -1) return false;
 
   TimerStatistic::timer[TimerStatistic::RUN].start();
 
@@ -385,7 +387,11 @@ bool ProtoMolApp::step(long inc) {
   }
 
   if (!inc) inc = outputs->getNext() - currentStep;
-  inc = std::min(lastStep, currentStep + inc) - currentStep;
+
+  //fix inc so do not overrun
+  if( lastStep != -1 ){
+    inc = std::min(lastStep, currentStep + inc) - currentStep;
+  }
 
   TimerStatistic::timer[TimerStatistic::INTEGRATOR].start();
 
