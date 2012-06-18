@@ -86,7 +86,7 @@ void LeapfrogIntegrator::doKickdoDrift() {
   }
 }
 
-const long LeapfrogIntegrator::run(const long numTimesteps) {
+long LeapfrogIntegrator::run(const long numTimesteps) {
   if (numTimesteps < 1) return 0;
   
   preStepModify();

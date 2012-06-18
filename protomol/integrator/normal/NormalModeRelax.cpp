@@ -65,7 +65,7 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  const long NormalModeRelax::run(const long numTimesteps) {
+  long NormalModeRelax::run(const long numTimesteps) {
     if( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors

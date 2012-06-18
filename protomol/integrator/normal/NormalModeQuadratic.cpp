@@ -81,7 +81,7 @@ namespace ProtoMol
     total_time = 0.0;
   }
 
-  const long NormalModeQuadratic::run( const long numTimesteps ) {
+  long NormalModeQuadratic::run( const long numTimesteps ) {
     if ( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors

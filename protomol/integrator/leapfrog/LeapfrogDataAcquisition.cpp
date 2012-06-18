@@ -49,7 +49,7 @@ void LeapfrogDataAcquisition::initialize(ProtoMolApp *app) {
   nonWaterV = new Vector3DBlock(numNonWaters);
 }
 
-const long LeapfrogDataAcquisition::run(const long numTimesteps) {
+long LeapfrogDataAcquisition::run(const long numTimesteps) {
   if (numTimesteps < 1) return 0;
   
   preStepModify();

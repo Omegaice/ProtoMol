@@ -76,7 +76,7 @@ namespace ProtoMol {
     gaussRandCoord1.zero(-1); //zero vector for use as random force
   }
 
-  const long NormalModeMinimizer::run(const long numTimesteps) {
+  long NormalModeMinimizer::run(const long numTimesteps) {
     if( numTimesteps < 1 ) return 0;
 
     //check valid eigenvectors

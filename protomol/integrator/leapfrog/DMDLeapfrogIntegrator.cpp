@@ -204,7 +204,7 @@ void DMDLeapfrogIntegrator::calculateDissipativeAndRandomForces() {
   }
 }
 
-const long DMDLeapfrogIntegrator::run(const long numTimesteps) {
+long DMDLeapfrogIntegrator::run(const long numTimesteps) {
   for (int i = 0; i < numTimesteps; i++) {
     preStepModify();
     doHalfKick();

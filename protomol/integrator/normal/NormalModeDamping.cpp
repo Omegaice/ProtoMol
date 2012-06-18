@@ -104,7 +104,7 @@ namespace ProtoMol {
 
     }
 
-    const long NormalModeDamping::run(const long numTimesteps) {
+    long NormalModeDamping::run(const long numTimesteps) {
         if( numTimesteps < 1 ) return 0;
 
         //check valid eigenvectors

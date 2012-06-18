@@ -127,7 +127,7 @@ void GPU::initialize(ProtoMolApp *app) {
 }
 
 
-const long GPU::run(const long numTimesteps) {
+long GPU::run(const long numTimesteps) {
   if (numTimesteps < 1) return 0;
 
   preStepModify();

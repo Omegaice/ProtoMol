@@ -77,7 +77,7 @@ namespace ProtoMol {
 
 	}
 
-	const long NormalModeBrownian::run(const long numTimesteps) {
+	long NormalModeBrownian::run(const long numTimesteps) {
 		Real h = getTimestep() * Constant::INV_TIMEFACTOR;
 		Real actTime;
 

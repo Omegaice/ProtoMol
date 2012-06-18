@@ -62,7 +62,7 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  const long NormalModeCompLang::run(const long numTimesteps) {
+  long NormalModeCompLang::run(const long numTimesteps) {
     //Real h = getTimestep() * Constant::INV_TIMEFACTOR;
     Real actTime;
 

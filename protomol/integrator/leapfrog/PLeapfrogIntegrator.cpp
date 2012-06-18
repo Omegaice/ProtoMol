@@ -93,7 +93,7 @@ void PLeapfrogIntegrator::doHalfDrift() {
   buildMolecularCenterOfMass(&app->positions, app->topology);
 }
 
-const long PLeapfrogIntegrator::run(const long numTimesteps) {
+long PLeapfrogIntegrator::run(const long numTimesteps) {
   if (numTimesteps < 1) return 0;
 
   preStepModify();

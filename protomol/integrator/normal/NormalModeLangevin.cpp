@@ -62,7 +62,7 @@ void NormalModeLangevin::initialize(ProtoMolApp *app) {
 //****Normal run routine********************************************************
 //******************************************************************************
 
-const long NormalModeLangevin::run(const long numTimesteps) {
+long NormalModeLangevin::run(const long numTimesteps) {
   Real h = getTimestep() * Constant::INV_TIMEFACTOR;
   Real actTime;
 

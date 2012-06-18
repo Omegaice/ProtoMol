@@ -76,7 +76,7 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  const long NormalModeSubspaceSampling::run(const long numTimesteps) {
+  long NormalModeSubspaceSampling::run(const long numTimesteps) {
     //Real h = getTimestep() * Constant::INV_TIMEFACTOR;
     Real h;
     Real actTime;

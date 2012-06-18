@@ -226,7 +226,7 @@ void LeapfrogTruncatedShadow::doKickdoDrift() {
   }
 }
 
-const long LeapfrogTruncatedShadow::run(const long numTimesteps) {
+long LeapfrogTruncatedShadow::run(const long numTimesteps) {
   preStepModify();
   doHalfKickdoDrift();
   calculateForces();

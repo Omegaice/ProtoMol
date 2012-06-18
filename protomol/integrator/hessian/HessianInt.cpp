@@ -173,7 +173,7 @@ void HessianInt::initialize(ProtoMolApp *app) {
   totStep = 0;
 }
 
-const long HessianInt::run(const long numTimesteps) {
+long HessianInt::run(const long numTimesteps) {
   if (numTimesteps < 1) return 0;
 
   if (totStep) {

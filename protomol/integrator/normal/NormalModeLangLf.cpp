@@ -61,7 +61,7 @@ namespace ProtoMol {
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  const long NormalModeLangLf::run(const long numTimesteps) {
+  long NormalModeLangLf::run(const long numTimesteps) {
     Real actTime;
 
     if( numTimesteps < 1 ) return 0;

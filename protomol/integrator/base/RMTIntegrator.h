@@ -56,7 +56,7 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     virtual void initialize(ProtoMolApp *app);
-    virtual const long run(const long numTimesteps);
+    virtual long run(const long numTimesteps);
 
   protected:
     void halfUpdtH2(int typ);

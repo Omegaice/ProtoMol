@@ -117,7 +117,7 @@ namespace ProtoMol {
 
 	typedef std::vector<OpenMM::Vec3> EigenVector;
 
-	const long NormalModeOpenMM::run( const long numTimesteps ) {
+  long NormalModeOpenMM::run( const long numTimesteps ) {
 		if( numTimesteps < 1 ) return 0;
 
 		//check valid eigenvectors

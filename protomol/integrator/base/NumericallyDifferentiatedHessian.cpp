@@ -38,7 +38,7 @@ void NumericallyDifferentiatedHessian::initialize(ProtoMolApp *app) {
   //
 }
 
-const long NumericallyDifferentiatedHessian::run(const long numTimesteps) {
+long NumericallyDifferentiatedHessian::run(const long numTimesteps) {
   double *numHess;
   Real maxHessError = 0.0;
 

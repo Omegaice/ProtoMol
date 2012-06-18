@@ -37,7 +37,7 @@ void NumericalDifferentiation::initialize(ProtoMolApp *app) {
   //
 }
 
-const long NumericalDifferentiation::run(const long numTimesteps) {
+long NumericalDifferentiation::run(const long numTimesteps) {
   Vector3DBlock pmolForces, numForces, num2ndDeriv;
   Real oldPE, forcePE1, forcePE2, hessPE1, hessPE2;
   double *numHess;

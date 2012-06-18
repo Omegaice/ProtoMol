@@ -185,7 +185,7 @@ namespace ProtoMol
   //****Normal run routine***************************************************************
   //*************************************************************************************
 
-  const long NormalModeDiagonalize::run( const long numTimesteps ) {
+  long NormalModeDiagonalize::run( const long numTimesteps ) {
     if ( numTimesteps < 1 ) return 0;
     
     //Current step at start

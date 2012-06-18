@@ -380,7 +380,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 }
 
-const long OpenMMIntegrator::run( const long numTimesteps ) {
+long OpenMMIntegrator::run( const long numTimesteps ) {
 	preStepModify();
   
 	integrator->step( numTimesteps );

@@ -91,7 +91,7 @@ namespace ProtoMol {
     avKE = avKEsq = 0.0;
   }
 
-  const long RMTIntegrator::run(const long numTimesteps) {
+  long RMTIntegrator::run(const long numTimesteps) {
     int step;
 
     if( numTimesteps < 1 ) return 0;

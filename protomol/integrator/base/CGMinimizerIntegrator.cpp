@@ -60,7 +60,7 @@ void CGMinimizerIntegrator::initialize(ProtoMolApp *app) {
 // method to find the root of g_{k+1}^Tp_k which is the slope
 // of the potential energy w.r.t. \lambda, U(\lambda).
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-const long CGMinimizerIntegrator::run(const long numTimesteps) {
+long CGMinimizerIntegrator::run(const long numTimesteps) {
   Real b1, b2, U1, dU, gp, gp1p, gpr, oldGp1p, tempf, oldLambda;
   int i, k;
 
