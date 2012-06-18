@@ -92,16 +92,12 @@ bool Debugger::_getStackTrace(trace_t &trace) {
 
   try {
     Process debugProc;
-    Pipe *inPipe = debugProc.getChildPipe(Process::TO_CHILD, 0);
     Pipe *outPipe = debugProc.getChildPipe(Process::FROM_CHILD, 1);
     Pipe *errPipe = debugProc.getChildPipe(Process::FROM_CHILD, 2);
 
     // Run gdb commands
     string debugCmd =
       string("set width ") + String(BUF_SIZE - 1) + "\nwhere\nquit\n";
-    ssize_t size =
-      write(inPipe->getInFD(), debugCmd.c_str(), debugCmd.length());
-    size = size;
 
     // Execute debugger process
     debugProc.exec((char **)argv);

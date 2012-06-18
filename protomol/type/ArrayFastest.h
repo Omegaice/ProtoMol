@@ -259,7 +259,7 @@ namespace ProtoMol {
 
     void SetupDimensions(const size_type *pNDimensions,
                          const size_type *pSubArrayLen) {
-      assert(pNDimensions && pSubArrayLen); pSubArrayLen = pSubArrayLen;
+      assert(pNDimensions && pSubArrayLen);
       // We found the elements
       assert(pNDimensions[0] > 0 && pSubArrayLen[0] == 1);
 
@@ -297,7 +297,7 @@ namespace ProtoMol {
 
     // Return size of subdimensions
     size_type size(size_t Dim) const {
-      assert(Dim == 1); Dim = Dim;
+      assert(Dim == 1);
       return m_NDimensions;
     }
 
