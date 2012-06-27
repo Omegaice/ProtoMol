@@ -49,7 +49,7 @@ namespace ProtoMol {
 		  
 	  }
 
-    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {
+    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies, Vector3DBlock *forces) {
 		  
 	  }
 

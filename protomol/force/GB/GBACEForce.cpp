@@ -158,7 +158,7 @@ Real GBACEForce::getEnergy(const ScalarStructure *energies) {
   return (*energies)[ScalarStructure::COULOMB];
 }
 
-void GBACEForce::postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+void GBACEForce::postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces) {
   const unsigned int atoms = topo->atoms.size();
   
   Real totalSelfEnergy = 0.0;

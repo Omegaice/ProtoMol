@@ -142,7 +142,7 @@ void GBBornRadii::preProcess(const GenericTopology *apptopo, const Vector3DBlock
     apptopo->atoms[i].myGBSA_T->preForce();
 }
 
-void GBBornRadii::postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+void GBBornRadii::postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces) {
   const unsigned int atomnumber = topo->atoms.size();
   
   //~~~~calculate born radius from burial term~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

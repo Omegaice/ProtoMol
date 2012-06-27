@@ -186,7 +186,7 @@ namespace ProtoMol {
 		  
 	  }
     
-    static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces) {
       
       const unsigned int atoms = topo->atoms.size();
       

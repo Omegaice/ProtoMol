@@ -49,7 +49,7 @@ Real GBPartialSum::getEnergy(const ScalarStructure *energies) {
   return 0;
 }
 
-void GBPartialSum::postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+void GBPartialSum::postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces) {
   const unsigned int atomnumber = topo->atoms.size();
   
   for( unsigned int i=0; i<atomnumber; i++)

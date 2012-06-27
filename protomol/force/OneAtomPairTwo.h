@@ -111,9 +111,9 @@ namespace ProtoMol {
 		  ForceFunctionB.preProcess(apptopo, positions);
     }
     
-    void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
-		  Base::ForceFunction.postProcess(apptopo, appenergies);
-		  ForceFunctionB.postProcess(apptopo, appenergies);
+    void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies, Vector3DBlock *forces){
+		  Base::ForceFunction.postProcess(apptopo, appenergies, forces);
+		  ForceFunctionB.postProcess(apptopo, appenergies, forces);
 	  }
 
     void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){

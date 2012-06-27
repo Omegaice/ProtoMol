@@ -227,7 +227,7 @@ Real GBForce::getEnergy(const ScalarStructure *energies) {
   return (*energies)[ScalarStructure::COULOMB];
 }
 
-void GBForce::postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+void GBForce::postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces) {
   
   const unsigned int atoms = topo->atoms.size();
   

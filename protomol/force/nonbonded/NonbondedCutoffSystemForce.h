@@ -80,8 +80,8 @@ namespace ProtoMol {
       this->myOneAtomPair.preProcess(apptopo, positions);
     }
                                                              
-    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {
-     this->myOneAtomPair.postProcess(apptopo, appenergies);
+    virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies, Vector3DBlock *forces) {
+     this->myOneAtomPair.postProcess(apptopo, appenergies, forces);
     }
                                                              
     virtual void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {

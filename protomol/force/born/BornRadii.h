@@ -127,7 +127,7 @@ namespace ProtoMol {
         apptopo->atoms[i].mySCPISM_A->preForce();
 	  }
     
-    static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
+    static void postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces) {
       
     }
     
