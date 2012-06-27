@@ -48,18 +48,6 @@ void StandardIntegrator::calculateForces() {
 
   myForces->zero();
 
-  //SCPISM pre-force initialize
-  if(app->topology->doSCPISM){
-    for(unsigned int i=0;i<app->topology->atoms.size();i++)
-        app->topology->atoms[i].mySCPISM_A->preForce();
-  }
-
-  //GBSA pre-force initialize
-  if (app->topology->doGBSAOpenMM) {
-    for(unsigned int i=0;i<app->topology->atoms.size();i++)
-        app->topology->atoms[i].myGBSA_T->preForce();
-  }
-
   preForceModify();
 
   if (!anyMediForceModify())

@@ -110,6 +110,10 @@ namespace ProtoMol {
         SwitchFunction.getParameters(parameters);
       }
       
+      virtual void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions){
+        ForceFunction.preProcess(apptopo, positions);
+      }
+    
       virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
         ForceFunction.postProcess(apptopo, appenergies);
       }

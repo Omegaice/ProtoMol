@@ -76,6 +76,10 @@ namespace ProtoMol {
       }
     }
                                                              
+    virtual void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
+      this->myOneAtomPair.preProcess(apptopo, positions);
+    }
+                                                             
     virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies) {
      this->myOneAtomPair.postProcess(apptopo, appenergies);
     }

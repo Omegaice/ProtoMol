@@ -165,6 +165,23 @@ namespace ProtoMol {
         return Force::getParameterSize() + Switch::getParameterSize();
       }
 
+      virtual void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions){
+        this->ForceFunction.preProcess(apptopo, positions);
+      }
+      
+      virtual void postProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
+        this->ForceFunction.postProcess(apptopo, appenergies);
+      }
+      
+      virtual void parallelPostProcess(const GenericTopology *apptopo, ScalarStructure *appenergies){
+        this->ForceFunction.parallelPostProcess(apptopo, appenergies);
+      }
+      
+      virtual bool doParallelPostProcess(){
+        return
+        this->ForceFunction.doParallelPostProcess();
+      }
+    
       static OneAtomPairFull make(std::vector<Value> values) {
         unsigned int n = Force::getParameterSize();
 

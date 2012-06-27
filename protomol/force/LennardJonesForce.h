@@ -68,6 +68,10 @@ namespace ProtoMol {
       return (*energies)[ScalarStructure::LENNARDJONES];
     }
     
+    virtual void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
+		  
+	  }
+    
     static void postProcess(const GenericTopology *topo, ScalarStructure *energies){
 		  
 	  }

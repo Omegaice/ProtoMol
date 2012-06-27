@@ -64,6 +64,7 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
     
     //calculate forces and post process if required
 		for (currentForce = mySystemForcesList.begin(); currentForce != mySystemForcesList.end(); ++currentForce){
+      (*currentForce)->preProcess(app->topology, &app->positions);
       (*currentForce)->evaluate(app->topology, &app->positions, forces, &app->energies);
       (*currentForce)->postProcess(app->topology, &app->energies);
     }
@@ -119,6 +120,11 @@ void ForceGroup::evaluateSystemForces(ProtoMolApp *app,
         TimerStatistic::timer[TimerStatistic::FORCES].start();
         list<SystemForce *>::const_iterator currentForce;
         
+        //batch pre process before parallel
+        for (currentForce = startForce; currentForce != stopAtForce; ++currentForce){
+          (*currentForce)->preProcess(app->topology, &app->positions);
+        }
+
         for (currentForce = startForce; currentForce != stopAtForce; ++currentForce){
 
           (*currentForce)->parallelEvaluate(app->topology, &app->positions, forces, &app->energies);

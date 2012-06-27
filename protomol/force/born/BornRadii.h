@@ -120,6 +120,13 @@ namespace ProtoMol {
 
     static Real getEnergy(const ScalarStructure *energies) {return 0;}
 
+    //reset SCPISM struct before calculating
+    virtual void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
+      const unsigned int atoms = apptopo->atoms.size();
+      for(unsigned int i=0;i<atoms;i++)
+        apptopo->atoms[i].mySCPISM_A->preForce();
+	  }
+    
     static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
       
     }

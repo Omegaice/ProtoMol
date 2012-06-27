@@ -98,6 +98,10 @@ namespace ProtoMol {
 
     static std::string getKeyword() {return "LennardJonesTable";}
       
+    static void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
+      
+    }
+      
     static void postProcess(const GenericTopology *topo, ScalarStructure *energies){
       
     }

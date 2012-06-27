@@ -90,6 +90,10 @@ namespace ProtoMol {
       return (*energies)[ScalarStructure::COULOMB];
     }
     
+    virtual void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
+		  
+	  }
+    
     static void postProcess(const GenericTopology *topo, ScalarStructure *energies) {
       
     }

@@ -135,6 +135,13 @@ Real GBBornRadii::getEnergy(const ScalarStructure *energies) {
   return 0;
 }
 
+//now initialize GB structs here
+void GBBornRadii::preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
+  const unsigned int atoms = apptopo->atoms.size();
+  for(unsigned int i=0;i<atoms;i++)
+    apptopo->atoms[i].myGBSA_T->preForce();
+}
+
 void GBBornRadii::postProcess(const GenericTopology *topo, ScalarStructure *energies) {
   const unsigned int atomnumber = topo->atoms.size();
   

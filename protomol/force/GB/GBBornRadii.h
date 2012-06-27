@@ -22,6 +22,7 @@ namespace ProtoMol {
       static void accumulateEnergy(ScalarStructure *energies, Real energy);
       static Real getEnergy(const ScalarStructure *energies);
       
+      static void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions);
       static void postProcess(const GenericTopology *topo, ScalarStructure *energies);
       static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies);
       static bool doParallelPostProcess();
