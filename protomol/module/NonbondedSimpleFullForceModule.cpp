@@ -11,6 +11,7 @@
 #include <protomol/force/OneAtomPairTwo.h>
 #include <protomol/force/CoulombForce.h>
 #include <protomol/force/LennardJonesForce.h>
+#include <protomol/force/HarmonicRestraintForce.h>
 #include <protomol/force/coulomb/CoulombSCPISMForce.h>
 #include <protomol/force/coulomb/CoulombForceDiElec.h>
 
@@ -208,5 +209,9 @@ void NonbondedSimpleFullForceModule::registerForces(ProtoMolApp *app) {
           C1, CoulombSCPISMForce> >());
     f.reg(new SimpleFullSystem<OneAtomPairTwo<VBC, Cn, LennardJonesForce, C2,
           CoulombSCPISMForce> >());
+    
+    //harmonic restraint
+    f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, CmpCnCn,
+          HarmonicRestraintForce> >());
   }
 }

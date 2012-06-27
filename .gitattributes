@@ -94,6 +94,8 @@ protomol/force/GB/GBForce.h -text
 protomol/force/GB/GBPartialSum.cpp -text
 protomol/force/GB/GBPartialSum.h -text
 protomol/force/GB/SConscript -text
+protomol/force/HarmonicRestraintForce.cpp -text
+protomol/force/HarmonicRestraintForce.h -text
 protomol/force/LennardJonesForce.cpp -text
 protomol/force/LennardJonesForce.h -text
 protomol/force/MetaForce.cpp -text
