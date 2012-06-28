@@ -22,13 +22,13 @@ unsigned int HarmonicRestraintForce::getParameterSize() {
 
 void HarmonicRestraintForce::getParameters(vector<Parameter> &parameters) const {
   parameters.push_back(
-                       Parameter("-sphereconstant",Value(sphereK, ConstraintValueType::NoConstraints()),1.0, Text("Sphere constant parameter")));
+                       Parameter("-sphereconstant",Value(sphereK, ConstraintValueType::NoConstraints()),3.0, Text("Sphere constant parameter")));
   parameters.push_back(
-                       Parameter("-sphereradius",Value(sphereradius, ConstraintValueType::NoConstraints()), 20.0, Text("Sphere radius parameter")));
+                       Parameter("-sphereradius",Value(sphereradius, ConstraintValueType::NoConstraints()), 12.0, Text("Sphere radius parameter")));
   parameters.push_back(
-                       Parameter("-switchstart", Value(mySwitchon, ConstraintValueType::NotNegative()), Text("Switch start=0 < radius")));
+                       Parameter("-switchstart", Value(mySwitchon, ConstraintValueType::NotNegative()), 12.0, Text("Switch start = radius")));
   parameters.push_back(
-                       Parameter("-switchend", Value(myCutoff, ConstraintValueType::Positive()), Text("Switch end=1 > radius")));
+                       Parameter("-switchend", Value(myCutoff, ConstraintValueType::Positive()), 15.0, Text("Switch end=1 > radius")));
 }
 
 HarmonicRestraintForce HarmonicRestraintForce::make(const vector<Value> &values){

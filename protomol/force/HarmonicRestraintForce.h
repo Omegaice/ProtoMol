@@ -106,7 +106,6 @@ namespace ProtoMol {
         //get center of mass
         centerofmass = centerOfMass(positions, apptopo);
         
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~COM " << centerofmass << std::endl;
       }
       
       //reset flags
