@@ -211,7 +211,7 @@ void NonbondedSimpleFullForceModule::registerForces(ProtoMolApp *app) {
           CoulombSCPISMForce> >());
     
     //harmonic restraint
-    f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, CmpCnCn,
+    f.reg(new SimpleFullSystem<OneAtomPairNoExclusion<VBC, Universal,
           HarmonicRestraintForce> >());
   }
 }

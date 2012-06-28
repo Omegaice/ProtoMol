@@ -38,7 +38,7 @@ namespace ProtoMol {
         
         forceCalculated[atom1] = true;
         
-        Vector3D diff = centerofmass - (*pos)[atom1];
+        Vector3D diff = (*pos)[atom1] - centerofmass;
 
         Real distance = diff.norm();
         Real distSquared = distance * distance;
@@ -60,14 +60,11 @@ namespace ProtoMol {
         value = 1.0 - value;
         deriv *= -1.0;
         
-        //Real sphereradius = 20.0;
-        //Real sphereK = 1.0;
-        
+        //calc energy
         energy = sphereK * ( distance - sphereradius ) * ( distance - sphereradius );
         
         //Real myForce = 
         const Real dpotdr = 2.0 * sphereK * (distance - sphereradius);  // Calculate dpot/dr
-        
         
         //chain rule
         const Real combinedForce = dpotdr * value + energy * deriv;
@@ -97,12 +94,25 @@ namespace ProtoMol {
     void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
       const unsigned int size = positions->size();
       
-      //resize and set flags to false
-      forceCalculated.resize(size, false);
-      myForces.resize(size);
+      if( firstEvaluate ){
+        
+        firstEvaluate = false;
+        
+        
+        //resize and set flags to false
+        forceCalculated.resize(size, false);
+        myForces.resize(size);
+        
+        //get center of mass
+        centerofmass = centerOfMass(positions, apptopo);
+        
+        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~COM " << centerofmass << std::endl;
+      }
       
-      //get center of mass
-      centerofmass = centerOfMass(positions, apptopo);
+      //reset flags
+      for(unsigned int i=0; i<size; i++){
+        forceCalculated[i] = false;
+      }
       
       //save position pointer
       pos = positions;
@@ -147,11 +157,13 @@ namespace ProtoMol {
     const Vector3DBlock *pos;
     Real sphereK, sphereradius;
     
+    //"first" flag
+    bool firstEvaluate;
+    
     //switch
     Real mySwitchon, mySwitchon2, myCutoff, myCutoff2, mySwitch1, mySwitch2,
     mySwitch3;
-
-    
+  
   };
   //____ INLINES
 }

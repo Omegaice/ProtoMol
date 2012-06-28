@@ -6,8 +6,8 @@ using namespace std;
 using namespace ProtoMol;
 using namespace ProtoMol::Report;
 
-HarmonicRestraintForce::HarmonicRestraintForce() : sphereK(0), sphereradius(0) {}
-HarmonicRestraintForce::HarmonicRestraintForce(Real k, Real r, Real switchon, Real cutoff) : sphereK(k), sphereradius(r), 
+HarmonicRestraintForce::HarmonicRestraintForce() : sphereK(0), sphereradius(0), firstEvaluate(true) {}
+HarmonicRestraintForce::HarmonicRestraintForce(Real k, Real r, Real switchon, Real cutoff) : sphereK(k), sphereradius(r), firstEvaluate(true),
           mySwitchon(switchon), mySwitchon2(switchon * switchon), myCutoff(cutoff),
           myCutoff2(cutoff * cutoff),
           mySwitch1(1.0 / power<3>(cutoff * cutoff - switchon * switchon)),
