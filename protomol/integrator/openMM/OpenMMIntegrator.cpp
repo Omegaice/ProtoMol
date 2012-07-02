@@ -15,6 +15,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <iostream>
+
 using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
@@ -40,19 +42,22 @@ OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup
 	isUsingPeriodicTorsionForce = params[7];
 	isUsingNonBondedForce = params[8];
 	isUsingGBForce = params[9];
+	isUsingSCPISMForce = params[10];
+	isUsingImproperTorsionForce = params[11];
+	isUsingUreyBradleyForce = params[12];
 
-	mCommonMotionRate = params[10];
-	mGBSAEpsilon = params[11];
-	mGBSASolvent = params[12];
+	mCommonMotionRate = params[13];
+	mGBSAEpsilon = params[14];
+	mGBSASolvent = params[15];
 	
-	mPlatform = params[13];
-	mMinSteps = params[14];
-	mTolerance = params[15];
+	mPlatform = params[16];
+	mMinSteps = params[17];
+	mTolerance = params[18];
 		
-	mNonbondedCutoff = params[16];
-	mGBCutoff = params[17];
+	mNonbondedCutoff = params[19];
+	mGBCutoff = params[20];
 		
-	mDeviceID = params[18];
+	mDeviceID = params[21];
 	
 	system = 0;
 	integrator = 0;
@@ -176,7 +181,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			unsigned int a3 = app->topology->dihedrals[i].atom3;
 			unsigned int a4 = app->topology->dihedrals[i].atom4;
 
-			for( unsigned int j = 0; j < 1; j++ ) {
+			for( unsigned int j = 0; j < app->topology->dihedrals[i].multiplicity; j++ ) {
 				unsigned int mult = app->topology->dihedrals[i].periodicity[j];
 				Real phiA = app->topology->dihedrals[i].phaseShift[j];
 				Real cpA = app->topology->dihedrals[i].forceConstant[j] * Constant::KCAL_KJ;
@@ -210,13 +215,15 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		}
 	}
 
-	if( isUsingNonBondedForce ) {
+	if( isUsingNonBondedForce && !(app->topology->doSCPISM && isUsingSCPISMForce) ) {
 		mForceList.push_back( "Nonbonded" );
+
+		cout << "Nonbonded" << endl;
 
 		//get 1-4 interaction size
 		unsigned int exclSz = app->topology->exclusions.getTable().size();
 
-		OpenMM::NonbondedForce *nonbonded = new OpenMM::NonbondedForce();//0);
+		OpenMM::NonbondedForce *nonbonded = new OpenMM::NonbondedForce();
 		system->addForce( nonbonded );
 
 		//normal interactions
@@ -288,6 +295,241 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			gbsa->setCutoffDistance( mGBCutoff * Constant::ANGSTROM_NM );
 		}
 	}
+
+	// Add SCPISM if needed
+	if (app->topology->doSCPISM && isUsingSCPISMForce) {
+	  cout << "Using SCPISM" << endl;
+	  OpenMM::CustomGBForce *custom = new OpenMM::CustomGBForce();
+	  system->addForce(custom);
+
+	  // global parameter names
+	  custom->addGlobalParameter("epsilon", 80.0); // hard-coded in ProtoMol
+	  custom->addGlobalParameter("pi", 3.14159265); // OpenMM doesn't include pi?
+	  custom->addGlobalParameter("nAtoms", sz); // number of atoms
+	  custom->addGlobalParameter("E", 0.80); // hard-coded in ProtoMol
+	  custom->addGlobalParameter("KCAL_KJ", Constant::KCAL_KJ);
+
+	  // per particle parameter names
+	  custom->addPerParticleParameter("alpha");
+	  custom->addPerParticleParameter("eta");
+	  custom->addPerParticleParameter("C");
+	  custom->addPerParticleParameter("q");
+	  custom->addPerParticleParameter("zeta");
+	  custom->addPerParticleParameter("HBondType");
+	  custom->addPerParticleParameter("residue");
+	  custom->addPerParticleParameter("g");
+	  custom->addPerParticleParameter("isHN");
+	  custom->addPerParticleParameter("isO");
+	  custom->addPerParticleParameter("atomIndex");
+	  
+	  //	  custom->setCutoffDistance(0.5); // 0.5 NM, 5 A
+	  //custom->setNonbondedMethod(OpenMM::CustomGBForce::CutoffNonPeriodic);
+	  
+	  // Per-atom or per-atom-pair computed values -- used to precompute values for energy term (e.g., Born radii)
+	  // Born Radii
+	  custom->addComputedValue("etasum", "eta1 * f * exp(-C1 * rScaled) + polar_term;"
+				   // only add polar term if atoms are H-bonded and not in the same residue
+				   // atom1 must have H-bond of type PH (1) and atom 2 must have
+				   // H-bond type of PA (2)
+				   "polar_term = step(HBondType1 - 1) * step(1 - HBondType1) * "
+				   "step(HBondType2 - 2) * step(2 - HBondType2) *"
+				   "(1 - step(residue1 - residue2) * step(residue2 - residue1) ) * gsum;"
+				   "gsum = g_i * g2 * f * exp(-E * rScaled);"
+				   // g_i = -0.378 if atom1 == HN and atom2 == O
+				   // otherwise stick with given value
+				   "g_i = g1 + isHN1 * isO2 * (-0.378 - g1);"
+				   "f = step(5 - rScaled) * (1 - rScaled^4/625)^4;"
+				   // convert distance from NM to A
+				   // all parameters assume A
+				   "rScaled = 10 * r;",
+				   OpenMM::CustomGBForce::ParticlePair);
+	  custom->addComputedValue("R", "zeta + etasum;",
+	  			   OpenMM::CustomGBForce::SingleParticle);
+	  // Energy terms
+	  // Born Self
+	  custom->addEnergyTerm("KCAL_KJ * 0.5 * q^2 * (1 / D_s - 1) / R;"
+				"D_s = (1 + epsilon) / (1 + K * exp( - alpha * R)) - 1;"
+				"K = 0.5 * (epsilon - 1);",
+				OpenMM::CustomGBForce::SingleParticle);
+	  // SCPISM Coulomb force
+	  custom->addEnergyTerm("KCAL_KJ * q1 * q2 * scalingFactors(atomIndex1 * nAtoms + atomIndex2) / (rScaled * D_s);"
+				"D_s = (1 + epsilon) / (1 + K * exp( - sqrt(alpha1) * sqrt(alpha2) * rScaled)) - 1;"
+				"K = 0.5 * (epsilon - 1);"
+				// all parameters assume A,
+			        // convert distance from A to NM
+				"rScaled = 10 * r;",
+				OpenMM::CustomGBForce::ParticlePair);
+
+	  for(unsigned int i = 0; i < sz; i++)
+	    {
+	      vector<double> parameters(11);
+	      int type = app->topology->atoms[i].type;
+	      parameters[0] = app->topology->atomTypes[type].mySCPISM_T->alpha;
+	      parameters[1] = app->topology->atoms[i].mySCPISM_A->eta;
+	      parameters[2] = app->topology->atomTypes[type].mySCPISM_T->C_i;
+	      parameters[3] = app->topology->atoms[i].scaledCharge;
+	      parameters[4] = app->topology->atoms[i].mySCPISM_A->zeta;
+	      parameters[5] = app->topology->atomTypes[type].mySCPISM_T->isHbonded;
+	      parameters[6] = app->topology->atoms[i].residue_seq;
+	      parameters[7] = app->topology->atomTypes[type].mySCPISM_T->g_i;
+	      parameters[8] = app->topology->atoms[i].name == "HN" ? 1.0 : 0.0;
+	      parameters[9] = app->topology->atoms[i].name == "O" ? 1.0 : 0.0;
+	      parameters[10] = i;
+
+	      custom->addParticle(parameters);
+	    }
+
+	  // default scaling factor is 1.0 (no scaling)
+	  // CustomGBForce doesn't provide a way to control
+	  // modified interactions through the API
+	  // Thus, we're (ab)using the tabulated function to
+	  // provide similar functionality.
+	  vector<double> scalingFactors(sz * sz, 1.0);
+
+	  unsigned int exclSz = app->topology->exclusions.getTable().size();
+	  for( unsigned int i = 0; i < exclSz; i++ ) {
+	    
+	    const unsigned int atom1 = ( app->topology->exclusions.getTable() )[i].a1;
+	    const unsigned int atom2 = ( app->topology->exclusions.getTable() )[i].a2;
+
+	    const ExclusionClass excl = app->topology->exclusions.check(atom1, atom2);
+
+	    if( excl == EXCLUSION_FULL ) {
+	      custom->addExclusion( atom1, atom2);
+	    }
+	    else if ( excl == EXCLUSION_MODIFIED ) {
+	      scalingFactors[atom1 * sz + atom2] = app->topology->coulombScalingFactor;
+	      scalingFactors[atom2 * sz + atom1] = app->topology->coulombScalingFactor;
+	    }
+	  }
+
+	  custom->addFunction("scalingFactors", scalingFactors, 0, sz * sz - 1);
+
+	}
+
+	// LJ as a custom force to go with SCPISM
+	if( isUsingNonBondedForce && app->topology->doSCPISM && isUsingSCPISMForce) {
+	  std::cout << "Performing Custom LJ" << std::endl;
+	  mForceList.push_back( "Nonbonded" );
+
+	  //get 1-4 interaction size
+	  unsigned int exclSz = app->topology->exclusions.getTable().size();
+
+	  string energy = "A / rScaled^12 - B / rScaled^6;"
+	    // scale NM to A to match parameter units
+	    "rScaled = 10.0 * r;"
+	    "A = aTable(atomIndex1 * nAtoms + atomIndex2);"
+	    "B = bTable(atomIndex1 * nAtoms + atomIndex2);";
+	  OpenMM::CustomNonbondedForce *nonbonded = new OpenMM::CustomNonbondedForce(energy);
+	  system->addForce( nonbonded );
+
+	  nonbonded->addGlobalParameter("nAtoms", sz);
+
+	  nonbonded->addPerParticleParameter("atomIndex");
+
+	  const unsigned int numAtomTypes = app->topology->atomTypes.size();
+
+	  // Store A and B parameters as tables
+	  vector<double> aTable(sz * sz, 0.0);
+	  vector<double> bTable(sz * sz, 0.0);
+
+	  unsigned int fullExclusions = 0;
+
+	  for(unsigned int i = 0; i < sz; i++)
+	    {
+	      vector<double> parameters(1);
+
+	      const unsigned int atomType1 = app->topology->atoms[i].type;
+
+	      parameters[0] = i;
+
+	      nonbonded->addParticle(parameters);
+
+	      for(unsigned int j = i+1; j < sz; j++)
+		{
+		  const ExclusionClass excl = app->topology->exclusions.check(i, j);
+
+		  if(excl == EXCLUSION_FULL)
+		    {
+		      nonbonded->addExclusion(i, j);
+		      fullExclusions++;
+		    }
+		  else
+		    {
+		      const unsigned int atomType2 = app->topology->atoms[j].type;
+
+		      const LennardJonesParameters ljParams =
+			app->topology->lennardJonesParameters(atomType1, atomType2);
+
+		      const unsigned int atomIndex1 = i;
+		      const unsigned int atomIndex2 = j;
+
+		      if(excl == EXCLUSION_MODIFIED)
+			{
+			  aTable[atomIndex1 * sz + atomIndex2] = ljParams.A14 * Constant::KCAL_KJ;
+			  aTable[atomIndex2 * sz + atomIndex1] = ljParams.A14 * Constant::KCAL_KJ;
+			  bTable[atomIndex1 * sz + atomIndex2] = ljParams.B14 * Constant::KCAL_KJ;
+			  bTable[atomIndex2 * sz + atomIndex1] = ljParams.B14 * Constant::KCAL_KJ;
+			}
+		      else // no exclusions
+			{
+			  aTable[atomIndex1 * sz + atomIndex2] = ljParams.A * Constant::KCAL_KJ;
+			  aTable[atomIndex2 * sz + atomIndex1] = ljParams.A * Constant::KCAL_KJ;
+			  bTable[atomIndex1 * sz + atomIndex2] = ljParams.B * Constant::KCAL_KJ;
+			  bTable[atomIndex2 * sz + atomIndex1] = ljParams.B * Constant::KCAL_KJ;
+			}
+		      
+		    }
+		}
+	    }
+	  nonbonded->addFunction("aTable", aTable, 0, sz * sz - 1);
+	  nonbonded->addFunction("bTable", bTable, 0, sz * sz - 1);
+	}
+
+	if(isUsingUreyBradleyForce)
+	  {
+	    string energy = "forceConstant * (r - restLength) * (r - restLength);";
+	    OpenMM::CustomBondForce *bondForce = new OpenMM::CustomBondForce(energy);
+	    system->addForce(bondForce);
+
+	    bondForce->addPerBondParameter("forceConstant");
+	    bondForce->addPerBondParameter("restLength");
+
+	    for(unsigned int i = 0; i < app->topology->angles.size(); i++)
+	      {
+		const Angle angle = app->topology->angles[i];
+		
+		vector<double> parameters(2);
+		parameters[0] = angle.ureyBradleyConstant * Constant::KCAL_KJ * Constant::NM_ANGSTROM * Constant::NM_ANGSTROM;
+		parameters[1] = angle.ureyBradleyRestLength * Constant::ANGSTROM_NM;
+
+		bondForce->addBond(angle.atom1, angle.atom3, parameters);
+	      }
+	  }
+
+	if(isUsingImproperTorsionForce && app->topology->impropers.size() > 0)
+	  {
+	    cout << "Impropers" << endl;
+
+	    string energy = "forceConstant * (theta - phaseShift)^2";
+	    OpenMM::CustomTorsionForce *torsion = new OpenMM::CustomTorsionForce(energy);
+	    system->addForce(torsion);
+
+	    torsion->addPerTorsionParameter("forceConstant");
+	    torsion->addPerTorsionParameter("phaseShift");
+
+	    for(unsigned int i = 0; i < app->topology->impropers.size(); i++)
+	      {
+		const Torsion currTorsion = app->topology->impropers[i];
+
+		vector<double> parameters(2);
+		parameters[0] = currTorsion.forceConstant[0] * Constant::KCAL_KJ;
+		parameters[1] = currTorsion.phaseShift[1];
+
+		torsion->addTorsion(currTorsion.atom1, currTorsion.atom2, currTorsion.atom3, currTorsion.atom4, parameters);
+	      }
+	  }
+
 
 	// Set constraints.
 	for( unsigned int i = 0; i < numConstraints; ++i ) {
@@ -380,9 +622,35 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 }
 
-long OpenMMIntegrator::run( const long numTimesteps ) {
+void OpenMMIntegrator::run( int numTimesteps ) {
 	preStepModify();
-  
+	
+	bool execute = true;
+
+/*#ifdef HAVE_OPENMM_LTMD
+	if( mLTMDParameters.ShouldProtoMolDiagonalize && mLTMDParameters.ShouldForceRediagOnMinFail ){
+		if( app->eigenInfo.OpenMMMinimize ){
+			OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
+			
+			bool minimizePassed = ltmd->minimize( 50, 2 );
+			
+			if( minimizePassed || app->eigenInfo.RediagonalizationCount >= 5 ){
+				if( app->eigenInfo.RediagonalizationCount >= 5 ){
+					std::cout << "Maximum Rediagonalizations Reached" << std::endl;
+				}
+				
+				execute = true;
+				app->eigenInfo.OpenMMMinimize = false;
+				app->eigenInfo.RediagonalizationCount = 0;
+				std::cout << "Exiting Rediagonalizations" << std::endl;
+			}else{
+				execute = false;
+				app->eigenInfo.reDiagonalize = true;
+				app->eigenInfo.RediagonalizationCount++;
+			}
+		}
+	}
+#endif */
 	integrator->step( numTimesteps );
 
 	// Retrive data
@@ -422,8 +690,6 @@ long OpenMMIntegrator::run( const long numTimesteps ) {
 	app->topology->time += numTimesteps * getTimestep();
 	
 	postStepModify();
-  
-  return numTimesteps;
 }
 
 void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
@@ -439,6 +705,10 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	parameters.push_back( Parameter( "PeriodicTorsion", Value( isUsingPeriodicTorsionForce, ConstraintValueType::NoConstraints() ), false ) );
 	parameters.push_back( Parameter( "NonbondedForce", Value( isUsingNonBondedForce, ConstraintValueType::NoConstraints() ), false ) );
 	parameters.push_back( Parameter( "GBForce", Value( isUsingGBForce, ConstraintValueType::NoConstraints() ), false ) );
+	parameters.push_back( Parameter( "SCPISMForce", Value ( isUsingSCPISMForce, ConstraintValueType::NoConstraints() ), false) );
+	parameters.push_back( Parameter( "ImproperTorsionForce", Value ( isUsingImproperTorsionForce, ConstraintValueType::NoConstraints() ), false) );
+	parameters.push_back( Parameter( "UreyBradleyForce", Value ( isUsingImproperTorsionForce, ConstraintValueType::NoConstraints() ), false) );
+
 	
 	//Implicit solvent parameters
 	parameters.push_back( Parameter( "commonmotion", Value( mCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ) );

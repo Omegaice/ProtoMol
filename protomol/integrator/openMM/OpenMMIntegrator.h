@@ -26,7 +26,7 @@ namespace ProtoMol {
 			virtual unsigned int getParameterSize() const;
 
 			virtual void initialize( ProtoMolApp *app );
-			virtual long run( const long numTimesteps );
+			virtual void run( int numTimesteps );
 		private:
 			virtual STSIntegrator *doMake( const std::vector<Value> &values, ForceGroup *fg ) const;
 			void getObcScaleFactors( std::vector<Real>& scaleFactors );
@@ -59,7 +59,10 @@ namespace ProtoMol {
 			bool isUsingRBDihedralForce;
 			bool isUsingPeriodicTorsionForce;
 			bool isUsingGBForce;
-			
+			bool isUsingSCPISMForce;
+			bool isUsingImproperTorsionForce;
+			bool isUsingUreyBradleyForce;
+
 			// LTMD Data
 			bool isLTMD;
 			std::vector<std::string> mForceList;
