@@ -217,7 +217,7 @@ namespace ProtoMol {
 	}
 
 	unsigned int NormalModeOpenMM::getParameterSize() const {
-		return OpenMMIntegrator::getParameterSize() + 11;
+		return OpenMMIntegrator::getParameterSize() + 12;
 	}
 }
 

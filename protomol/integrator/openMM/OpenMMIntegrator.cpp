@@ -708,8 +708,9 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup
 	return ( STSIntegrator * ) new OpenMMIntegrator( values, fg );
 }
 
+// 1 for STS Integrator + 21 for OpenMM Integrator
 unsigned int OpenMMIntegrator::getParameterSize() const {
-	return 21;
+	return 1 + 21;
 }
 
 // Figure out OBC scale factors based on the atomic masses.
