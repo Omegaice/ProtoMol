@@ -709,7 +709,7 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup
 }
 
 unsigned int OpenMMIntegrator::getParameterSize() const {
-	return 19;
+	return 21;
 }
 
 // Figure out OBC scale factors based on the atomic masses.
