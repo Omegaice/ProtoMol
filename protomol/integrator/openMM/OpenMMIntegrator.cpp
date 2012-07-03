@@ -45,19 +45,20 @@ OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup
 	isUsingSCPISMForce = params[10];
 	isUsingImproperTorsionForce = params[11];
 	isUsingUreyBradleyForce = params[12];
+	isUsingCHARMMLennardJonesForce = params[13];
 
-	mCommonMotionRate = params[13];
-	mGBSAEpsilon = params[14];
-	mGBSASolvent = params[15];
+	mCommonMotionRate = params[14];
+	mGBSAEpsilon = params[15];
+	mGBSASolvent = params[16];
 	
-	mPlatform = params[16];
-	mMinSteps = params[17];
-	mTolerance = params[18];
+	mPlatform = params[17];
+	mMinSteps = params[18];
+	mTolerance = params[19];
 		
-	mNonbondedCutoff = params[19];
-	mGBCutoff = params[20];
+	mNonbondedCutoff = params[20];
+	mGBCutoff = params[21];
 		
-	mDeviceID = params[21];
+	mDeviceID = params[22];
 	
 	system = 0;
 	integrator = 0;
@@ -215,7 +216,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		}
 	}
 
-	if( isUsingNonBondedForce && !(app->topology->doSCPISM && isUsingSCPISMForce) ) {
+	if( isUsingNonBondedForce) {
 		mForceList.push_back( "Nonbonded" );
 
 		cout << "Nonbonded" << endl;
@@ -408,7 +409,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 
 	// LJ as a custom force to go with SCPISM
-	if( isUsingNonBondedForce && app->topology->doSCPISM && isUsingSCPISMForce) {
+	if( isUsingCHARMMLennardJonesForce) {
 	  std::cout << "Performing Custom LJ" << std::endl;
 	  mForceList.push_back( "Nonbonded" );
 
@@ -433,8 +434,6 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	  vector<double> aTable(sz * sz, 0.0);
 	  vector<double> bTable(sz * sz, 0.0);
 
-	  unsigned int fullExclusions = 0;
-
 	  for(unsigned int i = 0; i < sz; i++)
 	    {
 	      vector<double> parameters(1);
@@ -447,39 +446,49 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 	      for(unsigned int j = i+1; j < sz; j++)
 		{
-		  const ExclusionClass excl = app->topology->exclusions.check(i, j);
+		  const unsigned int atomType2 = app->topology->atoms[j].type;
+		  const LennardJonesParameters ljParams =
+		    app->topology->lennardJonesParameters(atomType1, atomType2);
 
-		  if(excl == EXCLUSION_FULL)
-		    {
-		      nonbonded->addExclusion(i, j);
-		      fullExclusions++;
-		    }
-		  else
-		    {
-		      const unsigned int atomType2 = app->topology->atoms[j].type;
+		  const unsigned int atomIndex1 = i;
+		  const unsigned int atomIndex2 = j;
 
-		      const LennardJonesParameters ljParams =
-			app->topology->lennardJonesParameters(atomType1, atomType2);
+		  aTable[atomIndex1 * sz + atomIndex2] = ljParams.A * Constant::KCAL_KJ;
+		  aTable[atomIndex2 * sz + atomIndex1] = ljParams.A * Constant::KCAL_KJ;
+		  bTable[atomIndex1 * sz + atomIndex2] = ljParams.B * Constant::KCAL_KJ;
+		  bTable[atomIndex2 * sz + atomIndex1] = ljParams.B * Constant::KCAL_KJ;
+		}
+	    }
 
-		      const unsigned int atomIndex1 = i;
-		      const unsigned int atomIndex2 = j;
+	  for( unsigned int i = 0; i < exclSz; i++ )
+	    {
 
-		      if(excl == EXCLUSION_MODIFIED)
-			{
-			  aTable[atomIndex1 * sz + atomIndex2] = ljParams.A14 * Constant::KCAL_KJ;
-			  aTable[atomIndex2 * sz + atomIndex1] = ljParams.A14 * Constant::KCAL_KJ;
-			  bTable[atomIndex1 * sz + atomIndex2] = ljParams.B14 * Constant::KCAL_KJ;
-			  bTable[atomIndex2 * sz + atomIndex1] = ljParams.B14 * Constant::KCAL_KJ;
-			}
-		      else // no exclusions
-			{
-			  aTable[atomIndex1 * sz + atomIndex2] = ljParams.A * Constant::KCAL_KJ;
-			  aTable[atomIndex2 * sz + atomIndex1] = ljParams.A * Constant::KCAL_KJ;
-			  bTable[atomIndex1 * sz + atomIndex2] = ljParams.B * Constant::KCAL_KJ;
-			  bTable[atomIndex2 * sz + atomIndex1] = ljParams.B * Constant::KCAL_KJ;
-			}
-		      
-		    }
+
+	      const unsigned int atomIndex1 = ( app->topology->exclusions.getTable() )[i].a1;
+	      const unsigned int atomIndex2 = ( app->topology->exclusions.getTable() )[i].a2;
+
+	      const ExclusionClass excl = app->topology->exclusions.check(atomIndex1, atomIndex2);
+
+	      if(excl == EXCLUSION_FULL)
+		{
+		  nonbonded->addExclusion(atomIndex1, atomIndex2);
+		  aTable[atomIndex1 * sz + atomIndex2] = 0.0;
+		  aTable[atomIndex2 * sz + atomIndex1] = 0.0;
+		  bTable[atomIndex1 * sz + atomIndex2] = 0.0;
+		  bTable[atomIndex2 * sz + atomIndex1] = 0.0;
+		}
+	      else if(excl == EXCLUSION_MODIFIED)
+		{
+		  const unsigned int atomType1 = app->topology->atoms[atomIndex1].type;
+		  const unsigned int atomType2 = app->topology->atoms[atomIndex2].type;
+		  
+		  const LennardJonesParameters ljParams =
+		    app->topology->lennardJonesParameters(atomType1, atomType2);
+
+		  aTable[atomIndex1 * sz + atomIndex2] = ljParams.A14 * Constant::KCAL_KJ;
+		  aTable[atomIndex2 * sz + atomIndex1] = ljParams.A14 * Constant::KCAL_KJ;
+		  bTable[atomIndex1 * sz + atomIndex2] = ljParams.B14 * Constant::KCAL_KJ;
+		  bTable[atomIndex2 * sz + atomIndex1] = ljParams.B14 * Constant::KCAL_KJ;
 		}
 	    }
 	  nonbonded->addFunction("aTable", aTable, 0, sz * sz - 1);
@@ -683,8 +692,8 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	parameters.push_back( Parameter( "GBForce", Value( isUsingGBForce, ConstraintValueType::NoConstraints() ), false ) );
 	parameters.push_back( Parameter( "SCPISMForce", Value ( isUsingSCPISMForce, ConstraintValueType::NoConstraints() ), false) );
 	parameters.push_back( Parameter( "ImproperTorsionForce", Value ( isUsingImproperTorsionForce, ConstraintValueType::NoConstraints() ), false) );
-	parameters.push_back( Parameter( "UreyBradleyForce", Value ( isUsingImproperTorsionForce, ConstraintValueType::NoConstraints() ), false) );
-
+	parameters.push_back( Parameter( "UreyBradleyForce", Value ( isUsingUreyBradleyForce, ConstraintValueType::NoConstraints() ), false) );
+	parameters.push_back( Parameter( "CHARMMLennardJonesForce", Value ( isUsingCHARMMLennardJonesForce, ConstraintValueType::NoConstraints() ), false) );
 	
 	//Implicit solvent parameters
 	parameters.push_back( Parameter( "commonmotion", Value( mCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ) );
@@ -708,9 +717,9 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup
 	return ( STSIntegrator * ) new OpenMMIntegrator( values, fg );
 }
 
-// 1 for STS Integrator + 21 for OpenMM Integrator
+// 1 for STS Integrator + 22 for OpenMM Integrator
 unsigned int OpenMMIntegrator::getParameterSize() const {
-	return 1 + 21;
+	return 1 + 22;
 }
 
 // Figure out OBC scale factors based on the atomic masses.

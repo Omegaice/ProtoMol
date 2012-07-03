@@ -62,6 +62,7 @@ namespace ProtoMol {
 			bool isUsingSCPISMForce;
 			bool isUsingImproperTorsionForce;
 			bool isUsingUreyBradleyForce;
+			bool isUsingCHARMMLennardJonesForce;
 
 			// LTMD Data
 			bool isLTMD;
