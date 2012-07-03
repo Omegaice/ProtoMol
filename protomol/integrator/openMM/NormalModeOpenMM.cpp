@@ -181,12 +181,12 @@ namespace ProtoMol {
 					app->topology->time -= remaining * getTimestep();
 					
 					std::cout << "OpenMM Failed Minimization" << std::endl;
-          return completed;
+                    return completed;
 				}
 			}
 		}
     
-    return numTimesteps;
+      return numTimesteps;
 	}
 
 	void NormalModeOpenMM::getParameters( vector<Parameter>& parameters ) const {

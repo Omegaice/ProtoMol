@@ -26,7 +26,7 @@ namespace ProtoMol {
 			virtual unsigned int getParameterSize() const;
 
 			virtual void initialize( ProtoMolApp *app );
-			virtual void run( int numTimesteps );
+			virtual long run( const long numTimesteps );
 		private:
 			virtual STSIntegrator *doMake( const std::vector<Value> &values, ForceGroup *fg ) const;
 			void getObcScaleFactors( std::vector<Real>& scaleFactors );

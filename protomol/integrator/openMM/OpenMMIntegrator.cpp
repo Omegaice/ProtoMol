@@ -622,36 +622,10 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 }
 
-void OpenMMIntegrator::run( int numTimesteps ) {
+long OpenMMIntegrator::run( const long numTimesteps ) {
 	preStepModify();
-	
-	bool execute = true;
-
-/*#ifdef HAVE_OPENMM_LTMD
-	if( mLTMDParameters.ShouldProtoMolDiagonalize && mLTMDParameters.ShouldForceRediagOnMinFail ){
-		if( app->eigenInfo.OpenMMMinimize ){
-			OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
-			
-			bool minimizePassed = ltmd->minimize( 50, 2 );
-			
-			if( minimizePassed || app->eigenInfo.RediagonalizationCount >= 5 ){
-				if( app->eigenInfo.RediagonalizationCount >= 5 ){
-					std::cout << "Maximum Rediagonalizations Reached" << std::endl;
-				}
-				
-				execute = true;
-				app->eigenInfo.OpenMMMinimize = false;
-				app->eigenInfo.RediagonalizationCount = 0;
-				std::cout << "Exiting Rediagonalizations" << std::endl;
-			}else{
-				execute = false;
-				app->eigenInfo.reDiagonalize = true;
-				app->eigenInfo.RediagonalizationCount++;
-			}
-		}
-	}
-#endif */
-	integrator->step( numTimesteps );
+    
+    integrator->step( numTimesteps );
 
 	// Retrive data
 	const OpenMM::State state = context->getState( OpenMM::State::Positions |
@@ -690,6 +664,8 @@ void OpenMMIntegrator::run( int numTimesteps ) {
 	app->topology->time += numTimesteps * getTimestep();
 	
 	postStepModify();
+    
+    return numTimesteps;
 }
 
 void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
