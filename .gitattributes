@@ -15,6 +15,7 @@ protomol/base/Makeable.h -text
 protomol/base/MakeableDefinition.h -text
 protomol/base/MathUtilities.cpp -text
 protomol/base/MathUtilities.h -text
+protomol/base/Module.cpp -text
 protomol/base/Module.h -text
 protomol/base/ModuleManager.cpp -text
 protomol/base/ModuleManager.h -text
