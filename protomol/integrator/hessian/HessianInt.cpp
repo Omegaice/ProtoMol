@@ -237,7 +237,7 @@ long HessianInt::run(const long numTimesteps) {
     report << hint << "[HessianInt::Find Hessian] Hessian found!" << endr;
   }
   //
-  
+
   return numTimesteps;
 }
 
@@ -299,7 +299,7 @@ void HessianInt::outputDiagHess(int numModes) {
     int vecpos = sz / 3;
     //
     if (textEig) {
-      myFile << vecnum * vecpos << endl;
+      myFile << vecnum << " " << vecpos << " " << max_eigenvalue << endl;
       myFile << "! eigenvectors from Protomol/Lapack " << endl;
       for (int i = 0; i < vecnum; i++)
         for (int k = 0; k < vecpos; k++) {
@@ -401,27 +401,27 @@ void HessianInt::doKickdoDrift() {
 }
 
 void HessianInt::numericalHessian() {
-    
+
     //set epsilon now a parameter
     //const Real epsilon = 1e-6;
-    
+
     //get current position forces
     calculateForces();
-    
+
     Vector3DBlock orgForce = *myForces;
-    
+
     report << hint << "[HessianInt::numericalHessian] Numerical Hessian calculation." << endr;
-    
+
     //find each column
     for(unsigned int i=0; i<sz; i++){
-        
+
         //perturb
         (app->positions)[i/3][i%3] += epsilon;
-        
+
         calculateForces();
-        
+
         //Vector3DBlock firstForce = *myForces;
-        
+
         //reset positions
         (app->positions)[i/3][i%3] -= epsilon;
 
@@ -431,7 +431,7 @@ void HessianInt::numericalHessian() {
         //(app->positions)[i/3][i%3] += epsilon;
 
         Real divconst = 1.0 / epsilon;
-        
+
         if(massWeight){
             divconst /= sqrt(app->topology->atoms[i/3].scaledMass);
         }
@@ -441,7 +441,7 @@ void HessianInt::numericalHessian() {
 
         //set column
         bool colset = hsn.setHessianColumn( col, i, app->topology, massWeight );
-        
+
         if(!colset) std::cout << "Column " << i << " not set!" << std::endl;
     }
 
@@ -523,7 +523,7 @@ STSIntegrator *HessianInt::doMake(const vector<Value> &values,
                                   ForceGroup *fg) const {
   return new HessianInt(values[0], values[1], values[2], values[3], values[4],
                         values[5], values[6], values[7], values[8], values[9],
-                        values[10], values[11], values[12], values[13], 
+                        values[10], values[11], values[12], values[13],
                         values[14], values[15], values[16], values[17], fg);
 }
 
