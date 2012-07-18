@@ -832,7 +832,7 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
 #endif
 
         //Output matrix
-        int aout[2]={i,j};
+        unsigned aout[2]={i,j};
         for (int ii = 0; ii < 2; ii++){
           for (int kk = 0; kk < 2; kk++) {
             Matrix3By3 rhb;
@@ -1036,7 +1036,7 @@ void BlockHessian::evaluateInterBlocks(const Vector3DBlock *myPositions,
 #endif
 
         //Output matrix
-        int aout[2]={i,j};
+        unsigned aout[2]={i,j};
         for (int ii = 0; ii < 2; ii++){
           for (int kk = 0; kk < 2; kk++) {
             Matrix3By3 rhb;

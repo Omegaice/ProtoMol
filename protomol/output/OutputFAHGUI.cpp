@@ -68,7 +68,7 @@ void OutputFAHGUI::doInitialize() {
 }
 
 
-void OutputFAHGUI::doRun(int step) {
+void OutputFAHGUI::doRun(long step) {
   GUIServer::request_t request = server->getRequest();
 
   // GuiPause?
@@ -116,7 +116,7 @@ void OutputFAHGUI::doRun(int step) {
     THROW("GUI communication timeout.");
 }
 
-void OutputFAHGUI::doFinalize(int step) {
+void OutputFAHGUI::doFinalize(long step) {
   doRun(step);
   if (server) {
     delete server;
