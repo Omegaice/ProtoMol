@@ -30,7 +30,7 @@ namespace ProtoMol {
   public:
     CoulombSCPISMForce();
     CoulombSCPISMForce(Real Dval);
-    virtual ~CoulombSCPISMForce(); // Compiler needs this
+    virtual ~CoulombSCPISMForce() {} // Compiler needs this
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class CoulombSCPISForce
