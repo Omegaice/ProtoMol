@@ -26,14 +26,11 @@ namespace ProtoMol {
   public:
     enum {DIST_R2 = 1};
     enum {CUTOFF = 0};
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // Constructors, destructors, assignment
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   public:
-    // Default constructor
     CoulombSCPISMForce();
-    // Constructor with parameters
     CoulombSCPISMForce(Real Dval);
+    virtual ~CoulombSCPISMForce(); // Compiler needs this
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class CoulombSCPISForce
