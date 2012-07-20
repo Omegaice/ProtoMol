@@ -37,6 +37,7 @@ namespace ProtoMol {
     // eps(0)=1 is insufficient to model solvent polarization effects between
     // near molecules
     // Try 2,3,or 4
+    virtual ~CoulombForceDiElec() {} // Compiler needs this
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class CoulombForce

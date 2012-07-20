@@ -19,17 +19,17 @@ namespace ProtoMol {
   class BornSelfForce {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Born self energy and force.
-    // Equation numbers from "Notes on SCPISM" by C.R.Sweet, based on Hassan's papers.
+    // Equation numbers from "Notes on SCPISM" by C.R.Sweet, based on Hassan's
+    // papers.
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     enum {DIST_R2 = 1};
     enum {CUTOFF = 0};
 
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Constructors, destructors, assignment
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     BornSelfForce() : myBornSwitch(3), myDielecConst(80.0) {};
-    BornSelfForce(int bsw, Real dielec) : myBornSwitch(bsw), myDielecConst(dielec) {};
+    BornSelfForce(int bsw, Real dielec) : myBornSwitch(bsw),
+                                          myDielecConst(dielec) {};
+    virtual ~BornSelfForce() {} // Compiler needs this
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class BornSelfForce

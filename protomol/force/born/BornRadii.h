@@ -20,20 +20,19 @@ namespace ProtoMol {
 
   //____ BornRadii
   class BornRadii {
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Born radii calculation.
-  // Equation numbers from "Notes on SCPISM" by C.R.Sweet, based on Hassan's papers.
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Born radii calculation.
+    // Equation numbers from "Notes on SCPISM" by C.R.Sweet, based on Hassan's
+    // papers.
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   public:
     enum {DIST_R2 = 1};
     enum {CUTOFF = 0};
 
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // Constructors, destructors, assignment
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     BornRadii() : myBornSwitch(3){};
     BornRadii(int bsw) : myBornSwitch(bsw){};
+    virtual ~BornRadii() {} // Compiler needs this
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // New methods of class BornRadii

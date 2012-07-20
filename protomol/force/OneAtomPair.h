@@ -27,6 +27,7 @@ namespace ProtoMol {
       OneAtomPair(Force nF, Switch sF) :
         SwitchFunction(sF), ForceFunction(nF),
         mySquaredCutoff(Cutoff<Force::CUTOFF>::cutoff(sF, nF)) {}
+    virtual ~OneAtomPair() {} // Compiler needs this
 
     public:
       void initialize(const TopologyType *topo, const Vector3DBlock *pos,

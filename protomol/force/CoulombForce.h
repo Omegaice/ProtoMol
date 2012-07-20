@@ -20,6 +20,8 @@ namespace ProtoMol {
     enum {DIST_R2 = 1};
     enum {CUTOFF = 0};
 
+    virtual ~CoulombForce() {} // Compiler needs this
+
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // New methods of class CoulombForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
