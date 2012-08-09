@@ -260,6 +260,8 @@ protomol/integrator/normal/NormalModeUtilities.h -text
 protomol/integrator/normal/SConscript -text
 protomol/integrator/openMM/NormalModeOpenMM.cpp -text
 protomol/integrator/openMM/NormalModeOpenMM.h -text
+protomol/integrator/openMM/OpenMMFBMIntegrator.cpp -text
+protomol/integrator/openMM/OpenMMFBMIntegrator.h -text
 protomol/integrator/openMM/OpenMMIntegrator.cpp -text
 protomol/integrator/openMM/OpenMMIntegrator.h -text
 protomol/integrator/openMM/SConscript -text
