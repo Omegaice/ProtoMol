@@ -88,7 +88,7 @@ using std::ifstream;
     vector<Real> dihedrals = app->outputCache.getDihedralPhis(myDihedrals);
     
     //output data to file
-    for(int i=0; i<dihedrals.size(); i++){
+    for(unsigned i=0; i<dihedrals.size(); i++){
       file << myDihedrals[i] << " " << dihedrals[i] << endl;
     }
 
