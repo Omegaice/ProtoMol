@@ -399,6 +399,8 @@ protomol/output/OutputDCDTrajectory.cpp -text
 protomol/output/OutputDCDTrajectory.h -text
 protomol/output/OutputDCDTrajectoryVel.cpp -text
 protomol/output/OutputDCDTrajectoryVel.h -text
+protomol/output/OutputDihedrals.cpp -text
+protomol/output/OutputDihedrals.h -text
 protomol/output/OutputEnergies.cpp -text
 protomol/output/OutputEnergies.h -text
 protomol/output/OutputFAHFile.cpp -text

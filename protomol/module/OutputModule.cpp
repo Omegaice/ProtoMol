@@ -18,6 +18,7 @@
 #include <protomol/output/OutputFAHFile.h>
 #include <protomol/output/OutputScreen.h>
 #include <protomol/output/OutputXTCTrajectory.h>
+#include <protomol/output/OutputDihedrals.h>
 
 using namespace std;
 using namespace ProtoMol;
@@ -40,5 +41,6 @@ void OutputModule::init(ProtoMolApp *app) {
 #endif
   f.registerExemplar(new OutputFAHFile());
   f.registerExemplar(new OutputXTCTrajectory());
+  f.registerExemplar(new OutputDihedrals());
 
 }
