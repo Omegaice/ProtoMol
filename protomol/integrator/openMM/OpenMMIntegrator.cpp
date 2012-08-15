@@ -549,6 +549,14 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 		system->addConstraint( atom1, atom2, restLength );
 	}
+
+#ifdef HAVE_OPENMM_FBM
+		for( unsigned int i = 0; i < mForceList.size(); i++ ){
+		  cout << "Adding force " << mForceList[i] << " to list." << endl;
+		  mFBMParameters.forces.push_back( OpenMMFBM::Force( mForceList[i], i ) );
+		}
+
+#endif
 	
 	if( isLTMD ){
 #ifdef HAVE_OPENMM_LTMD
@@ -597,8 +605,10 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		}
 	}
 	
+	std::cout << "Creating context" << std::endl;
 	context = new OpenMM::Context( *system, *integrator, platform );
 
+	std::cout << "Initializing positions and velocities" << std::endl;
 	std::vector<OpenMM::Vec3> positions, velocities;
 	positions.reserve( sz );
 	velocities.reserve( sz );

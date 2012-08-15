@@ -10,6 +10,10 @@
 #include <LTMD/Parameters.h>
 #endif
 
+#ifdef HAVE_OPENMM_FBM
+#include <OpenMMFBM/FBMParameters.h>
+#endif
+
 namespace ProtoMol {
 	class ScalarStructure;
 	class ForceGroup;
@@ -71,6 +75,11 @@ namespace ProtoMol {
 #ifdef HAVE_OPENMM_LTMD
 			OpenMM::LTMD::Parameters mLTMDParameters;
 #endif
+
+#ifdef HAVE_OPENMM_FBM
+			OpenMMFBM::FBMParameters mFBMParameters;
+#endif
+
 	};
 }
 
