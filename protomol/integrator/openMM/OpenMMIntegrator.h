@@ -77,7 +77,7 @@ namespace ProtoMol {
 #endif
 
 #ifdef HAVE_OPENMM_FBM
-			OpenMMFBM::FBMParameters mFBMParameters;
+			FBMParameters mFBMParameters;
 #endif
 
 	};

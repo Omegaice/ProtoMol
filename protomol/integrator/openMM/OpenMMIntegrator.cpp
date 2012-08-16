@@ -553,7 +553,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 #ifdef HAVE_OPENMM_FBM
 		for( unsigned int i = 0; i < mForceList.size(); i++ ){
 		  cout << "Adding force " << mForceList[i] << " to list." << endl;
-		  mFBMParameters.forces.push_back( OpenMMFBM::Force( mForceList[i], i ) );
+			mFBMParameters.forces.push_back( FBMForce( mForceList[i], i ) );
 		}
 
 #endif

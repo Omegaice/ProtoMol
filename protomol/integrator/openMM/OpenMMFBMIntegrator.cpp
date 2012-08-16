@@ -8,7 +8,8 @@
 
 #ifdef HAVE_OPENMM_FBM
 #include <OpenMMFBM/FBMParameters.h>
-#include <OpenMMFBM/FlexibleBlockMethod.h>
+#include <OpenMMFBM/FBM.h>
+#include <OpenMMFBM/BlockContextGenerator.h>
 #endif
 
 #include <iostream>
@@ -50,18 +51,18 @@ namespace ProtoMol {
 		mFBMParameters.res_per_block = mResiduesPerBlock;
 		mFBMParameters.modes = mModes;
 		switch( mBlockPlatform ){
-	   			case 0: // Reference
-					std::cout << "OpenMM Block Diagonalization Platform: Reference" << std::endl;
-					mFBMParameters.blockPlatform = OpenMMFBM::Preference::Reference;
-					break;
-				case 1:	// OpenCL
-					std::cout << "OpenMM Block Diagonalization Platform: OpenCL" << std::endl;
-					mFBMParameters.blockPlatform = OpenMMFBM::Preference::OpenCL;
-					break;
-				case 2: // CUDA
-					std::cout << "OpenMM Block Diagonalization Platform: CUDA" << std::endl;
-					mFBMParameters.blockPlatform = OpenMMFBM::Preference::CUDA;
-					break;
+		case 0: // Reference
+		  std::cout << "OpenMM Block Diagonalization Platform: Reference" << std::endl;
+		  mFBMParameters.blockPlatform = Preference::Reference;
+		  break;
+		case 1:	// OpenCL
+		  std::cout << "OpenMM Block Diagonalization Platform: OpenCL" << std::endl;
+		  mFBMParameters.blockPlatform = Preference::OpenCL;
+		  break;
+		case 2: // CUDA
+		  std::cout << "OpenMM Block Diagonalization Platform: CUDA" << std::endl;
+		  mFBMParameters.blockPlatform = Preference::CUDA;
+		  break;
 		}
 		
 		int current_res = app->topology->atoms[0].residue_seq;
@@ -90,9 +91,18 @@ namespace ProtoMol {
 
 		#ifdef HAVE_OPENMM
 		#ifdef HAVE_OPENMM_FBM
+		cout << "Generating block context" << endl;
+		BlockContextGenerator bcg(mFBMParameters);
+		OpenMM::Context *blockContext = bcg.generateBlockContext(*context);
+
 		cout << "Diagonalizing" << endl;
-		OpenMMFBM::FlexibleBlockMethod fbm(mFBMParameters);
-		fbm.diagonalize(*context);
+
+		vector<vector<OpenMM::Vec3> > eigenvectors;
+		vector<double> eigenvalues;
+		FBM fbm(mFBMParameters);
+		string fbmPlatform = "Reference";
+		fbm.run(*context, *blockContext, eigenvectors, eigenvalues, fbmPlatform);
+
 
 		vector<vector<double> > blockHessian;
 		fbm.getBlockHessian(blockHessian);
@@ -111,6 +121,7 @@ namespace ProtoMol {
 		      }
 		  }
 		blockHessianOut.close();
+		
 
 		vector<vector<double> > blockEigenvectors;
 		fbm.getBlockEigenvectors(blockEigenvectors);
@@ -130,11 +141,62 @@ namespace ProtoMol {
 		  }
 		blockEigenvectorsOut.close();
 
+		vector<vector<double> > projMatrix;
+		fbm.getProjectionMatrix(projMatrix);
 		
-		cout << "Retrieving eigenpairs" << endl;
+		fstream projMatrixOut;
+		projMatrixOut.open("projection_matrix.txt", fstream::out);
+		projMatrixOut.precision(10);
+		for(unsigned int col = 0; col < projMatrix[0].size(); col++)
+		  {
+		    for(unsigned int row = 0; row < projMatrix.size(); row++)
+		      {
+			if(projMatrix[row][col] != 0.0)
+			  {
+			    projMatrixOut << (row + 1) << " " << (col + 1) << " " << projMatrix[row][col] << endl;
+			  }
+		      }
+		  }
+		projMatrixOut.close();
 
-		const vector<vector<OpenMM::Vec3> > eigenvectors = fbm.getEigenvectors();
-		const vector<Real> eigenvalues = fbm.getEigenvalues();
+
+		vector<vector<double> > productMatrix;
+		fbm.getHE(productMatrix);
+		
+		fstream productMatrixOut;
+		productMatrixOut.open("he.txt", fstream::out);
+		productMatrixOut.precision(10);
+		for(unsigned int col = 0; col < productMatrix[0].size(); col++)
+		  {
+		    for(unsigned int row = 0; row < productMatrix.size(); row++)
+		      {
+			if(productMatrix[row][col] != 0.0)
+			  {
+			    productMatrixOut << (row + 1) << " " << (col + 1) << " " << productMatrix[row][col] << endl;
+			  }
+		      }
+		  }
+		productMatrixOut.close();
+
+		vector<vector<double> > S;
+		fbm.getCoarseGrainedHessian(S);
+		
+		fstream sOut;
+		sOut.open("s_hessian.txt", fstream::out);
+		sOut.precision(10);
+		for(unsigned int col = 0; col < S[0].size(); col++)
+		  {
+		    for(unsigned int row = 0; row < S.size(); row++)
+		      {
+			if(S[row][col] != 0.0)
+			  {
+			    sOut << (row + 1) << " " << (col + 1) << " " << S[row][col] << endl;
+			  }
+		      }
+		  }
+		sOut.close();
+
+
 
 		cout << "Writing out eigenpairs" << endl;
 		
@@ -158,7 +220,7 @@ namespace ProtoMol {
 		  {
 		    for(unsigned int j = 0; j < eigenvectors[0].size(); j++)
 		      {
-			eigenvectors_out << (j + 1) << " " << (i + 1) << " ";
+			eigenvectors_out << (j + 1) << " " << " ";
 			for(unsigned int k = 0; k < 3; k++)
 			  {
 			    eigenvectors_out << eigenvectors[i][j][k] << " ";
