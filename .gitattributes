@@ -1,5 +1,5 @@
 * text=auto !eol
-protomol/CMakeLists.txt -text
+/CMakeLists.txt -text
 protomol/ProtoMolApp.cpp -text
 protomol/ProtoMolApp.h -text
 protomol/SConscript -text
