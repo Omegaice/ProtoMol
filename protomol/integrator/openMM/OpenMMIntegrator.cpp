@@ -182,7 +182,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			unsigned int a3 = app->topology->dihedrals[i].atom3;
 			unsigned int a4 = app->topology->dihedrals[i].atom4;
 
-			for( unsigned int j = 0; j < app->topology->dihedrals[i].multiplicity; j++ ) {
+			for( int j = 0; j < app->topology->dihedrals[i].multiplicity; j++ ) {
 				unsigned int mult = app->topology->dihedrals[i].periodicity[j];
 				Real phiA = app->topology->dihedrals[i].phaseShift[j];
 				Real cpA = app->topology->dihedrals[i].forceConstant[j] * Constant::KCAL_KJ;
@@ -428,8 +428,6 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 	  nonbonded->addPerParticleParameter("atomIndex");
 
-	  const unsigned int numAtomTypes = app->topology->atomTypes.size();
-
 	  // Store A and B parameters as tables
 	  vector<double> aTable(sz * sz, 0.0);
 	  vector<double> bTable(sz * sz, 0.0);
@@ -594,16 +592,28 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	
 	OpenMM::Platform& platform = OpenMM::Platform::getPlatformByName( sPlatform );
 	
-	if( mPlatform == 2 ){
-		if( mDeviceID != -1 ){
-			std::ostringstream stream;
-			stream << mDeviceID;
-			
-			std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
-			
-			platform.setPropertyDefaultValue("CudaDevice", stream.str() );
-		}
-	}
+    switch( mPlatform ){
+        case 1:
+            if( mDeviceID != -1 ){
+                std::ostringstream stream;
+                stream << mDeviceID;
+                
+                std::cout << "OpenMM Block Device: " << mDeviceID << std::endl;
+                
+                platform.setPropertyDefaultValue("OpenCLDeviceIndex", stream.str() );
+            }
+            break;
+        case 2:
+            if( mDeviceID != -1 ){
+                std::ostringstream stream;
+                stream << mDeviceID;
+                
+                std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
+                
+                platform.setPropertyDefaultValue("CudaDevice", stream.str() );
+            }
+            break;
+    }
 	
 	std::cout << "Creating context" << std::endl;
 	context = new OpenMM::Context( *system, *integrator, platform );
