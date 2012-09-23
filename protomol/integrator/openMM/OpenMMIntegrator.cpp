@@ -589,32 +589,21 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	}
 	
 	std::cout << "OpenMM Propagation Platform: " << sPlatform << std::endl;
-	
 	OpenMM::Platform& platform = OpenMM::Platform::getPlatformByName( sPlatform );
 	
-    switch( mPlatform ){
-        case 1:
-            if( mDeviceID != -1 ){
-                std::ostringstream stream;
-                stream << mDeviceID;
-                
-                std::cout << "OpenMM Block Device: " << mDeviceID << std::endl;
-                
-                platform.setPropertyDefaultValue("OpenCLDeviceIndex", stream.str() );
-            }
-            break;
-        case 2:
-            if( mDeviceID != -1 ){
-                std::ostringstream stream;
-                stream << mDeviceID;
-                
-                std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
-                
-                platform.setPropertyDefaultValue("CudaDevice", stream.str() );
-            }
-            break;
+	if( mPlatform != 0 && mDeviceID != -1 ){
+        std::ostringstream stream;
+        stream << mDeviceID;
+        
+        std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
+        
+        if( mPlatform == 1 ){
+            platform.setPropertyDefaultValue("OpenCLDeviceIndex", stream.str() );
+        }else{
+            platform.setPropertyDefaultValue("CudaDevice", stream.str() );
+        }
     }
-	
+    
 	std::cout << "Creating context" << std::endl;
 	context = new OpenMM::Context( *system, *integrator, platform );
 

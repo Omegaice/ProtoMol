@@ -91,6 +91,8 @@ namespace ProtoMol {
 					mLTMDParameters.BlockDiagonalizePlatform = OpenMM::LTMD::Preference::CUDA;
 					break;
 			}
+
+			mLTMDParameters.DeviceID = mDeviceID;
 		}
 		
 		int current_res = app->topology->atoms[0].residue_seq;
