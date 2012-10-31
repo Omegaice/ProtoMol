@@ -29,13 +29,13 @@ OpenMMIntegrator::OpenMMIntegrator() : STSIntegrator(), isLTMD( false ) {
 	context = 0;
 }
 
-OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup *overloadedForces ) 
+OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup *overloadedForces )
 	: STSIntegrator( params[0], overloadedForces ), isLTMD( false ) {
-	
+
 	mTemperature = params[1];
 	mGamma = params[2];
 	mSeed = params[3];
-	
+
 	isUsingHarmonicBondForce = params[4];
 	isUsingHarmonicAngleForce = params[5];
 	isUsingRBDihedralForce = params[6];
@@ -50,16 +50,17 @@ OpenMMIntegrator::OpenMMIntegrator( const std::vector<Value>& params, ForceGroup
 	mCommonMotionRate = params[14];
 	mGBSAEpsilon = params[15];
 	mGBSASolvent = params[16];
-	
+
 	mPlatform = params[17];
 	mMinSteps = params[18];
 	mTolerance = params[19];
-		
+
 	mNonbondedCutoff = params[20];
 	mGBCutoff = params[21];
-		
-	mDeviceID = params[22];
-	
+
+	mPropagatorDevice = params[22];
+	mBlockDevice = params[23];
+
 	system = 0;
 	integrator = 0;
 	context = 0;
@@ -82,7 +83,7 @@ struct NBForce {
 	bool operator< ( const NBForce &other ) const {
 		if( atom1 < other.atom1 ) return true;
 		if( atom1 == other.atom1 && atom2 < other.atom2 ) return true;
-		
+
 		return false;
 	}
 };
@@ -141,12 +142,12 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 		for( unsigned int i = 0; i < numBonds; ++i ) {
 			unsigned int a1 = app->topology->bonds[i].atom1, a2 = app->topology->bonds[i].atom2;
-			
+
 			Real r_0 = app->topology->bonds[i].restLength  * Constant::ANGSTROM_NM;
 			Real k = app->topology->bonds[i].springConstant
 					 * Constant::KCAL_KJ * Constant::INV_ANGSTROM_NM * Constant::INV_ANGSTROM_NM * 2.0; //times 2 as Amber is 1/2 k(b-b_0)^2
 			if( numConstraints ) {
-				
+
 			} else {
 				bonds->addBond( a1, a2, r_0, k );
 			}
@@ -173,7 +174,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	if( isUsingPeriodicTorsionForce ) {
 		mForceList.push_back( "Dihedral" );
 		unsigned int numPTor = app->topology->dihedrals.size();
-		
+
 		OpenMM::PeriodicTorsionForce *PTorsion = new OpenMM::PeriodicTorsionForce();
 		system->addForce( PTorsion );
 		for( unsigned int i = 0; i < numPTor; i++ ) {
@@ -186,7 +187,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 				unsigned int mult = app->topology->dihedrals[i].periodicity[j];
 				Real phiA = app->topology->dihedrals[i].phaseShift[j];
 				Real cpA = app->topology->dihedrals[i].forceConstant[j] * Constant::KCAL_KJ;
-				
+
 				PTorsion->addTorsion( a1, a2, a3, a4, mult, phiA, cpA );
 			}
 		}
@@ -266,7 +267,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 			}
 		}
-		
+
 		if( mNonbondedCutoff != 0 ){
 			nonbonded->setNonbondedMethod( OpenMM::NonbondedForce::CutoffNonPeriodic );
 			nonbonded->setCutoffDistance( mNonbondedCutoff * Constant::ANGSTROM_NM );
@@ -290,7 +291,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 			gbsa->addParticle( charge, radius, scaleFactors[i] );
 		}
-		
+
 		if( mGBCutoff != 0 ){
 			gbsa->setNonbondedMethod( OpenMM::GBSAOBCForce::CutoffNonPeriodic );
 			gbsa->setCutoffDistance( mGBCutoff * Constant::ANGSTROM_NM );
@@ -322,10 +323,10 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	  custom->addPerParticleParameter("isHN");
 	  custom->addPerParticleParameter("isO");
 	  custom->addPerParticleParameter("atomIndex");
-	  
+
 	  //	  custom->setCutoffDistance(0.5); // 0.5 NM, 5 A
 	  //custom->setNonbondedMethod(OpenMM::CustomGBForce::CutoffNonPeriodic);
-	  
+
 	  // Per-atom or per-atom-pair computed values -- used to precompute values for energy term (e.g., Born radii)
 	  // Born Radii
 	  custom->addComputedValue("etasum", "eta1 * f * exp(-C1 * rScaled) + polar_term;"
@@ -389,7 +390,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 	  unsigned int exclSz = app->topology->exclusions.getTable().size();
 	  for( unsigned int i = 0; i < exclSz; i++ ) {
-	    
+
 	    const unsigned int atom1 = ( app->topology->exclusions.getTable() )[i].a1;
 	    const unsigned int atom2 = ( app->topology->exclusions.getTable() )[i].a2;
 
@@ -479,7 +480,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		{
 		  const unsigned int atomType1 = app->topology->atoms[atomIndex1].type;
 		  const unsigned int atomType2 = app->topology->atoms[atomIndex2].type;
-		  
+
 		  const LennardJonesParameters ljParams =
 		    app->topology->lennardJonesParameters(atomType1, atomType2);
 
@@ -505,7 +506,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	    for(unsigned int i = 0; i < app->topology->angles.size(); i++)
 	      {
 		const Angle angle = app->topology->angles[i];
-		
+
 		vector<double> parameters(2);
 		parameters[0] = angle.ureyBradleyConstant * Constant::KCAL_KJ * Constant::NM_ANGSTROM * Constant::NM_ANGSTROM;
 		parameters[1] = angle.ureyBradleyRestLength * Constant::ANGSTROM_NM;
@@ -555,27 +556,27 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 		}
 
 #endif
-	
+
 	if( isLTMD ){
 #ifdef HAVE_OPENMM_LTMD
 		for( unsigned int i = 0; i < mForceList.size(); i++ ){
 			mLTMDParameters.forces.push_back( OpenMM::LTMD::Force( mForceList[i], i ) );
 		}
-	
+
 		OpenMM::LTMD::Integrator *ltmd = new OpenMM::LTMD::Integrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS, mLTMDParameters );
 		ltmd->setRandomNumberSeed( mSeed );
-		
+
 		integrator = ltmd;
 #endif
 	}else{
 		OpenMM::LangevinIntegrator *langevin = new OpenMM::LangevinIntegrator( mTemperature, mGamma, getTimestep() * Constant::FS_PS );
 		langevin->setRandomNumberSeed( mSeed );
-		
+
 		integrator = langevin;
 	}
-	
+
 	std::string sPlatform = "Reference";
-	
+
 	switch( mPlatform ){
 		case 0:
 			sPlatform = "Reference";
@@ -587,23 +588,23 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			sPlatform = "Cuda";
 			break;
 	}
-	
+
 	std::cout << "OpenMM Propagation Platform: " << sPlatform << std::endl;
 	OpenMM::Platform& platform = OpenMM::Platform::getPlatformByName( sPlatform );
-	
-	if( mPlatform != 0 && mDeviceID != -1 ){
+
+	if( mPlatform != 0 && mPropagatorDevice != -1 ){
         std::ostringstream stream;
-        stream << mDeviceID;
-        
-        std::cout << "OpenMM Propagation Device: " << mDeviceID << std::endl;
-        
+        stream << mPropagatorDevice;
+
+        std::cout << "OpenMM Propagation Device: " << mPropagatorDevice << std::endl;
+
         if( mPlatform == 1 ){
             platform.setPropertyDefaultValue("OpenCLDeviceIndex", stream.str() );
         }else{
             platform.setPropertyDefaultValue("CudaDevice", stream.str() );
         }
     }
-    
+
 	std::cout << "Creating context" << std::endl;
 	context = new OpenMM::Context( *system, *integrator, platform );
 
@@ -611,7 +612,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 	std::vector<OpenMM::Vec3> positions, velocities;
 	positions.reserve( sz );
 	velocities.reserve( sz );
-	
+
 	OpenMM::Vec3 openMMvecp, openMMvecv;
 	for( unsigned int i = 0; i < sz; ++i ) {
 		for( int j = 0; j < 3; j++ ) {
@@ -642,7 +643,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 
 long OpenMMIntegrator::run( const long numTimesteps ) {
 	preStepModify();
-    
+
     integrator->step( numTimesteps );
 
 	// Retrive data
@@ -650,11 +651,11 @@ long OpenMMIntegrator::run( const long numTimesteps ) {
 								OpenMM::State::Velocities |
 								OpenMM::State::Forces |
 								OpenMM::State::Energy );
-								
+
 	const std::vector<OpenMM::Vec3> positions( state.getPositions() );
 	const std::vector<OpenMM::Vec3> velocities( state.getVelocities() );
 	const std::vector<OpenMM::Vec3> forces( state.getForces() );
-	
+
 	const unsigned int sz = app->positions.size();
 	for( unsigned int i = 0; i < sz; ++i ) {
 		for( int j = 0; j < 3; j++ ) {
@@ -666,7 +667,7 @@ long OpenMMIntegrator::run( const long numTimesteps ) {
 	}
 
 	app->energies.clear();
-	
+
 	//clear old energies
 	app->energies[ScalarStructure::COULOMB] =
 		app->energies[ScalarStructure::LENNARDJONES] =
@@ -680,9 +681,9 @@ long OpenMMIntegrator::run( const long numTimesteps ) {
 
 	//fix time as no forces calculated
 	app->topology->time += numTimesteps * getTimestep();
-	
+
 	postStepModify();
-    
+
     return numTimesteps;
 }
 
@@ -691,7 +692,7 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	parameters.push_back( Parameter( "temperature", Value( mTemperature, ConstraintValueType::NotNegative() ) ) );
 	parameters.push_back( Parameter( "gamma", Value( mGamma, ConstraintValueType::NotNegative() ) ) );
 	parameters.push_back( Parameter( "seed", Value( mSeed, ConstraintValueType::NotNegative() ), 1234 ) );
-	
+
 	//Force Switches
 	parameters.push_back( Parameter( "HarmonicBondForce", Value( isUsingHarmonicBondForce, ConstraintValueType::NoConstraints() ), false ) );
 	parameters.push_back( Parameter( "HarmonicAngleForce", Value( isUsingHarmonicAngleForce, ConstraintValueType::NoConstraints() ), false ) );
@@ -703,23 +704,23 @@ void OpenMMIntegrator::getParameters( vector<Parameter> &parameters ) const {
 	parameters.push_back( Parameter( "ImproperTorsionForce", Value ( isUsingImproperTorsionForce, ConstraintValueType::NoConstraints() ), false) );
 	parameters.push_back( Parameter( "UreyBradleyForce", Value ( isUsingUreyBradleyForce, ConstraintValueType::NoConstraints() ), false) );
 	parameters.push_back( Parameter( "CHARMMLennardJonesForce", Value ( isUsingCHARMMLennardJonesForce, ConstraintValueType::NoConstraints() ), false) );
-	
+
 	//Implicit solvent parameters
 	parameters.push_back( Parameter( "commonmotion", Value( mCommonMotionRate, ConstraintValueType::NotNegative() ), 0.0 ) );
 	parameters.push_back( Parameter( "GBSAEpsilon", Value( mGBSAEpsilon, ConstraintValueType::NotNegative() ), 1.0 ) );
 	parameters.push_back( Parameter( "GBSASolvent", Value( mGBSASolvent, ConstraintValueType::NotNegative() ), 78.3 ) );
-		
+
 	// OpenMM Parameters
 	parameters.push_back( Parameter( "platform", Value( mPlatform, ConstraintValueType::NoConstraints() ), 2 ) );
 	parameters.push_back( Parameter( "minSteps", Value( mMinSteps, ConstraintValueType::NotNegative() ), 0 ) );
 	parameters.push_back( Parameter( "tolerance", Value( mTolerance, ConstraintValueType::NotNegative() ), 1.0 ) );
-	
+
 	// Cutoff Parameters
 	parameters.push_back( Parameter( "CutoffNonBonded", Value( mNonbondedCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
 	parameters.push_back( Parameter( "CutoffGB", Value( mGBCutoff, ConstraintValueType::NotNegative() ), 0.0 ) );
-	
-	
-	parameters.push_back( Parameter( "DeviceID", Value( mDeviceID, ConstraintValueType::NoConstraints() ), -1 ) );
+
+	parameters.push_back( Parameter( "DeviceID", Value( mPropagatorDevice, ConstraintValueType::NoConstraints() ), -1 ) );
+	parameters.push_back( Parameter( "BlockDeviceID", Value( mBlockDevice, ConstraintValueType::NoConstraints() ), -1 ) );
 }
 
 STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup *fg ) const {
@@ -728,7 +729,7 @@ STSIntegrator *OpenMMIntegrator::doMake( const vector<Value> &values, ForceGroup
 
 // 1 for STS Integrator + 22 for OpenMM Integrator
 unsigned int OpenMMIntegrator::getParameterSize() const {
-	return 1 + 22;
+	return 1 + 23;
 }
 
 // Figure out OBC scale factors based on the atomic masses.

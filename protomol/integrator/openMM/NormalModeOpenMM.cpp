@@ -14,13 +14,13 @@ namespace ProtoMol {
 	const string NormalModeOpenMM::keyword( "NormalModeOpenMM" );
 
 	NormalModeOpenMM::NormalModeOpenMM() : OpenMMIntegrator(), NormalModeUtilities() {
-	
+
 	}
 
 	NormalModeOpenMM::NormalModeOpenMM( const std::vector<Value>& base, const std::vector<Value>& params, ForceGroup *forces )
 		: OpenMMIntegrator( base, forces ), NormalModeUtilities( params[0], params[1], base[2], base[3], base[1] ) {
 		isLTMD = true;
-		
+
 		mModes = params[1];
 		mResiduesPerBlock = params[2];
 		mBlockDOF = params[3];
@@ -40,7 +40,7 @@ namespace ProtoMol {
 
 	void NormalModeOpenMM::initialize( ProtoMolApp *app ) {
 		report << plain << "OpenMM NML Vector information: Vector number " << app->eigenInfo.myNumEigenvectors << ", length " << app->eigenInfo.myEigenvectorLength << "." << endr;
-		
+
 		//NM initialization
 		NormalModeUtilities::initialize( ( int )app->positions.size(), app,
 										 myForces, NO_NM_FLAGS );
@@ -75,7 +75,7 @@ namespace ProtoMol {
 			mLTMDParameters.ShouldForceRediagOnMinFail = false;
 			std::cout << "Failure Rediagonalization: False" << std::endl;
 		}
-				
+
 		if( !mProtomolDiagonalize ){
 			switch( mBlockPlatform ){
 				case 0: // Reference
@@ -92,9 +92,9 @@ namespace ProtoMol {
 					break;
 			}
 
-			mLTMDParameters.DeviceID = mDeviceID;
+			mLTMDParameters.DeviceID = mBlockDevice;
 		}
-		
+
 		int current_res = app->topology->atoms[0].residue_seq;
 		int res_size = 0;
 		for( int i = 0; i < app->topology->atoms.size(); i++ ) {
@@ -106,11 +106,11 @@ namespace ProtoMol {
 			res_size++;
 		}
 		mLTMDParameters.residue_sizes.push_back( res_size );
-		
+
 		if( mLTMDParameters.ShouldProtoMolDiagonalize ){
 			//app->eigenInfo.OpenMMMinimize = true;
 		}
-		
+
 		//initialize base
 		OpenMMIntegrator::initialize( app );
 
@@ -148,13 +148,13 @@ namespace ProtoMol {
 
 			app->eigenInfo.myEigVecChanged = false;
 		}
-		
+
 		if( mLTMDParameters.ShouldProtoMolDiagonalize && app->eigenInfo.havePositionsChanged ){
 			const unsigned int sz = app->positions.size();
-			
+
 			std::vector<OpenMM::Vec3> positions;
 			positions.reserve( sz );
-			
+
 			OpenMM::Vec3 openMMvecp;
 			for( unsigned int i = 0; i < sz; ++i ) {
 				for( int j = 0; j < 3; j++ ) {
@@ -162,32 +162,32 @@ namespace ProtoMol {
 				}
 				positions.push_back( openMMvecp );
 			}
-			
+
 			context->setPositions( positions );
-			
+
 			app->eigenInfo.havePositionsChanged = false;
 		}
-		
+
 		OpenMMIntegrator::run( numTimesteps );
-		
+
 		if( mLTMDParameters.ShouldProtoMolDiagonalize && mLTMDParameters.ShouldForceRediagOnMinFail ){
 			OpenMM::LTMD::Integrator *ltmd = dynamic_cast<OpenMM::LTMD::Integrator*>( integrator );
 			if( ltmd ){
 				const unsigned int completed = ltmd->CompletedSteps();
 				const unsigned int remaining = numTimesteps - completed;
-				
+
 				if( completed != numTimesteps ) {
 					app->eigenInfo.reDiagonalize = true;
-					
+
 					//fix time as no forces calculated
 					app->topology->time -= remaining * getTimestep();
-					
+
 					std::cout << "OpenMM Failed Minimization" << std::endl;
                     return completed;
 				}
 			}
 		}
-    
+
       return numTimesteps;
 	}
 
@@ -214,7 +214,7 @@ namespace ProtoMol {
 	STSIntegrator *NormalModeOpenMM::doMake( const vector<Value>& values, ForceGroup *fg ) const {
 		const std::vector<Value> base( values.begin(), values.begin() + OpenMMIntegrator::getParameterSize() );
 		const std::vector<Value> params( values.begin() + OpenMMIntegrator::getParameterSize(), values.end() );
-		
+
 		return ( STSIntegrator * ) new NormalModeOpenMM( base, params, fg );
 	}
 

@@ -38,24 +38,24 @@ namespace ProtoMol {
 			static const std::string keyword;
 		protected:
 			// OpenMM Parameters
-			int mPlatform, mDeviceID, mMinSteps;
+			int mPlatform, mPropagatorDevice, mBlockDevice, mMinSteps;
 			double mTolerance;
-			
+
 			OpenMM::System *system;
 			OpenMM::Context *context;
 			OpenMM::Integrator *integrator;
-			
+
 			// Integrator Parameters
 			int mSeed;
 			Real mTemperature, mGamma;
-			
+
 			// Solvent Parameters
 			int mCommonMotionRate;
 			Real mGBSAEpsilon, mGBSASolvent;
-		
+
 			// CutoffParams
 			double mNonbondedCutoff, mGBCutoff;
-			
+
 			// Force Switches
 			bool isUsingHarmonicBondForce;
 			bool isUsingHarmonicAngleForce;
@@ -71,7 +71,7 @@ namespace ProtoMol {
 			// LTMD Data
 			bool isLTMD;
 			std::vector<std::string> mForceList;
-			
+
 #ifdef HAVE_OPENMM_LTMD
 			OpenMM::LTMD::Parameters mLTMDParameters;
 #endif
@@ -83,4 +83,4 @@ namespace ProtoMol {
 	};
 }
 
-#endif // OPENMMINTEGRATOR_H 
+#endif // OPENMMINTEGRATOR_H
