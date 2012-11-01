@@ -13,11 +13,11 @@ namespace ProtoMol {
 			NormalModeOpenMM();
 			NormalModeOpenMM( const std::vector<Value>& base, const std::vector<Value>& params, ForceGroup *forces );
 			~NormalModeOpenMM();
-			
+
 			virtual std::string getIdNoAlias() const { return keyword; }
 			virtual void getParameters( std::vector<Parameter>& parameters ) const;
 			virtual unsigned int getParameterSize() const;
-			
+
 			virtual void initialize( ProtoMolApp *app );
 			virtual long run( const long numTimesteps );
 		private:
@@ -28,8 +28,10 @@ namespace ProtoMol {
 			bool shoudForceRediagOnMinFail;
 			bool mRediagOnQuadratic;
 
+			int mBlockSplit;
+
 			int mRediagonalizationFrequency;
-			
+
 			Real mMinimizationLimit;
 			int mResiduesPerBlock, mBlockDOF;
 			Real mBlockDelta, mSDelta;

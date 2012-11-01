@@ -32,6 +32,7 @@ namespace ProtoMol {
 		mSDelta = params[9];
 		mProtomolDiagonalize = params[10];
 		mRediagOnQuadratic = params[11];
+		mBlockSplit = params[12];
 	}
 
 	NormalModeOpenMM::~NormalModeOpenMM() {
@@ -95,16 +96,32 @@ namespace ProtoMol {
 			mLTMDParameters.DeviceID = mBlockDevice;
 		}
 
-		int current_res = app->topology->atoms[0].residue_seq;
-		int res_size = 0;
-		for( int i = 0; i < app->topology->atoms.size(); i++ ) {
-			if( app->topology->atoms[i].residue_seq != current_res ) {
-				mLTMDParameters.residue_sizes.push_back( res_size );
-				current_res = app->topology->atoms[i].residue_seq;
-				res_size = 0;
-			}
-			res_size++;
+		// Calculate Block Splitting (0 - Residue, 1 - Alpha Carbons)
+		int res_size = 0, current_res = app->topology->atoms[0].residue_seq;
+
+		switch( mBlockSplit ){
+			case 0:// Residues
+				for( int i = 0; i < app->topology->atoms.size(); i++ ) {
+					if( app->topology->atoms[i].residue_seq != current_res ) {
+						mLTMDParameters.residue_sizes.push_back( res_size );
+						current_res = app->topology->atoms[i].residue_seq;
+						res_size = 0;
+					}
+					res_size++;
+				}
+				break;
+			case 1:// Alpha Carbons
+				for( int i = 0; i < app->topology->atoms.size(); i++ ) {
+					res_size++;
+					if(app->topology->atoms[i].name.compare("CA")==0){
+						mLTMDParameters.residue_sizes.push_back( res_size );
+						current_res = app->topology->atoms[i].residue_seq;
+						res_size = 0;
+					}
+				}
+				break;
 		}
+
 		mLTMDParameters.residue_sizes.push_back( res_size );
 
 		if( mLTMDParameters.ShouldProtoMolDiagonalize ){
@@ -209,6 +226,7 @@ namespace ProtoMol {
 		parameters.push_back( Parameter( "sEpsilon", Value( mSDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
 		parameters.push_back( Parameter( "ProtomolDiag", Value( mProtomolDiagonalize, ConstraintValueType::NoConstraints() ), false ) );
 		parameters.push_back( Parameter( "forceRediagOnQuadratic", Value( mRediagOnQuadratic, ConstraintValueType::NoConstraints() ), true ) );
+		parameters.push_back( Parameter( "blockSplit", Value( mBlockSplit, ConstraintValueType::NoConstraints() ), 0 ) );
 	}
 
 	STSIntegrator *NormalModeOpenMM::doMake( const vector<Value>& values, ForceGroup *fg ) const {
@@ -219,7 +237,7 @@ namespace ProtoMol {
 	}
 
 	unsigned int NormalModeOpenMM::getParameterSize() const {
-		return OpenMMIntegrator::getParameterSize() + 12;
+		return OpenMMIntegrator::getParameterSize() + 13;
 	}
 }
 
