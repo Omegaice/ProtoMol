@@ -33,6 +33,9 @@ namespace ProtoMol {
 		mProtomolDiagonalize = params[10];
 		mRediagOnQuadratic = params[11];
 		mBlockSplit = params[12];
+
+		mRediagQuadraticLambda = params[13];
+		mAlwaysQuadratic = params[14];
 	}
 
 	NormalModeOpenMM::~NormalModeOpenMM() {
@@ -60,6 +63,9 @@ namespace ProtoMol {
 		mLTMDParameters.modes = mModes;
 		mLTMDParameters.rediagFreq = mRediagonalizationFrequency;
 		mLTMDParameters.minLimit = mMinimizationLimit * Constant::KCAL_KJ;
+
+		mLTMDParameters.isAlwaysQuadratic = mAlwaysQuadratic;
+		mLTMDParameters.ShouldForceRediagOnQuadraticLambda = mRediagQuadraticLambda;
 
 		if( mProtomolDiagonalize ) {
 			mLTMDParameters.ShouldProtoMolDiagonalize = true;
@@ -227,6 +233,8 @@ namespace ProtoMol {
 		parameters.push_back( Parameter( "ProtomolDiag", Value( mProtomolDiagonalize, ConstraintValueType::NoConstraints() ), false ) );
 		parameters.push_back( Parameter( "forceRediagOnQuadratic", Value( mRediagOnQuadratic, ConstraintValueType::NoConstraints() ), true ) );
 		parameters.push_back( Parameter( "blockSplit", Value( mBlockSplit, ConstraintValueType::NoConstraints() ), 0 ) );
+		parameters.push_back( Parameter( "rediagLambda", Value( mRediagQuadraticLambda, ConstraintValueType::NoConstraints() ), false ) );
+		parameters.push_back( Parameter( "alwaysQuadratic", Value( mAlwaysQuadratic, ConstraintValueType::NoConstraints() ), false ) );
 	}
 
 	STSIntegrator *NormalModeOpenMM::doMake( const vector<Value>& values, ForceGroup *fg ) const {
@@ -237,7 +245,7 @@ namespace ProtoMol {
 	}
 
 	unsigned int NormalModeOpenMM::getParameterSize() const {
-		return OpenMMIntegrator::getParameterSize() + 13;
+		return OpenMMIntegrator::getParameterSize() + 15;
 	}
 }
 

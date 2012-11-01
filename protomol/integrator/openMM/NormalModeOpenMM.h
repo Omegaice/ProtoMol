@@ -27,6 +27,8 @@ namespace ProtoMol {
 		private:
 			bool shoudForceRediagOnMinFail;
 			bool mRediagOnQuadratic;
+			bool mAlwaysQuadratic;
+			bool mRediagQuadraticLambda;
 
 			int mBlockSplit;
 
