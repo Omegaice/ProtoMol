@@ -1,6 +1,6 @@
 /* -*- c++ -*- */
-#ifndef HARMONICRESTRAINTFORCE_H
-#define HARMONICRESTRAINTFORCE_H
+#ifndef PROTEINRESTRAINTFORCE_H
+#define PROTEINRESTRAINTFORCE_H
 
 #include <protomol/topology/Topology.h>
 #include <protomol/topology/GenericTopology.h>
@@ -13,8 +13,8 @@
 using namespace ProtoMol::Report;
 
 namespace ProtoMol {
-  //____ HarmonicRestraintForce
-  class HarmonicRestraintForce {
+  //____ ProteinRestraintForce
+  class ProteinRestraintForce {
   public:
     enum {DIST_R2 = 1};
     enum {CUTOFF = 0};
@@ -27,18 +27,18 @@ namespace ProtoMol {
     // New methods of class LennardJonesForce
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
-    HarmonicRestraintForce();
-    HarmonicRestraintForce(Real k, Real r, Real so, Real co);
+    ProteinRestraintForce();
+    ProteinRestraintForce(Real k, Real r, Real so, Real co, int atom);
     
     void operator()(Real &energy, Real &force,
                     Real /*distSquared*/, Real rDistSquared, const Vector3D &,
                     const GenericTopology *topo, int atom1, int atom2,
                     ExclusionClass excl)  {
-      
-      if( !forceCalculated[atom1] ){
+
+      if( !forceCalculated[atom1] && (myAtom - 1) == atom1){
         
         forceCalculated[atom1] = true;
-        
+       
         Vector3D diff = (*pos)[atom1] - centerofmass;
 
         Real distance = diff.norm();
@@ -143,7 +143,7 @@ namespace ProtoMol {
     static unsigned int getParameterSize();
     void getParameters(std::vector<Parameter> &) const;
 
-    static HarmonicRestraintForce make(const std::vector<Value> &);
+    static ProteinRestraintForce make(const std::vector<Value> &);
     
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // My data members
@@ -154,6 +154,7 @@ namespace ProtoMol {
     Vector3DBlock myForces;
     std::vector<bool> forceCalculated;
     Vector3D centerofmass;
+    int myAtom;
     const Vector3DBlock *pos;
     Real sphereK, sphereradius;
     
@@ -168,4 +169,4 @@ namespace ProtoMol {
   //____ INLINES
 }
 
-#endif /* HARMONICRESTRAINTFORCE_H */
+#endif /* PROTEINRESTRAINTFORCE_H */
