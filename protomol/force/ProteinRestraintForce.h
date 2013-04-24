@@ -28,58 +28,35 @@ namespace ProtoMol {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   public:
     ProteinRestraintForce();
-    ProteinRestraintForce(Real k, Real r, Real so, Real co, int atom);
+    ProteinRestraintForce(Real k, int atom);
     
     void operator()(Real &energy, Real &force,
                     Real /*distSquared*/, Real rDistSquared, const Vector3D &,
                     const GenericTopology *topo, int atom1, int atom2,
                     ExclusionClass excl)  {
 
-      if( !forceCalculated[atom1] && (myAtom - 1) == atom1){
+      if( !forceCalculated  && myAtom== atom1){
         
-        forceCalculated[atom1] = true;
+        forceCalculated = true;
        
         Vector3D diff = (*pos)[atom1] - centerofmass;
 
         Real distance = diff.norm();
         Real distSquared = distance * distance;
         
-        //switch
-        Real value;
-        Real deriv = 0.0;
-        if (distSquared > myCutoff2)
-          value = 0.0;
-        else if (distSquared >= mySwitchon2) {
-          Real c2 = myCutoff2 - distSquared;
-          Real c4 = c2 * (mySwitch2 + 2.0 * distSquared);
-          value = mySwitch1 * (c2 * c4);
-          deriv = mySwitch3 * (c2 * c2 - c4);
-        } else
-          value = 1.0;
-        
-        //compensate for compliment
-        value = 1.0 - value;
-        deriv *= -1.0;
-        
         //calc energy
-        energy = sphereK * ( distance - sphereradius ) * ( distance - sphereradius );
+        energy = sphereK * distance * distance;
         
         //Real myForce = 
-        const Real dpotdr = 2.0 * sphereK * (distance - sphereradius);  // Calculate dpot/dr
+        const Real dpotdr = 2.0 * sphereK * distance;  // Calculate dpot/dr
         
-        //chain rule
-        const Real combinedForce = dpotdr * value + energy * deriv;
-        
-        //fix energy for switch
-        energy *= value;
-        
-        const Real scalarForce = -combinedForce / distance;
+        const Real scalarForce = -dpotdr / distance;
         
         // Calculate force on atom1 due to atom2.
-        Vector3D force1(diff * scalarForce);//diff * (-dpotdr / distance));
+        Vector3D force1(diff * scalarForce);
         
         // Add to the total force.
-        myForces[atom1] = force1;
+        myForces = force1;
         
       }
     }
@@ -99,20 +76,12 @@ namespace ProtoMol {
         
         firstEvaluate = false;
         
-        
-        //resize and set flags to false
-        forceCalculated.resize(size, false);
-        myForces.resize(size);
-        
         //get center of mass
-        centerofmass = centerOfMass(positions, apptopo);
-        
+        centerofmass = centerOfMass(positions, apptopo);        
       }
-      
+
       //reset flags
-      for(unsigned int i=0; i<size; i++){
-        forceCalculated[i] = false;
-      }
+      forceCalculated = false;
       
       //save position pointer
       pos = positions;
@@ -121,12 +90,7 @@ namespace ProtoMol {
     
     //add in forces
     void postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces){
-      const unsigned int size = forces->size();
-
-      for( unsigned int i=0; i<size; i++ ){
-        (*forces)[i] += myForces[i];
-      }
-
+      (*forces)[myAtom] += myForces;
     }
 
     static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {
@@ -151,19 +115,16 @@ namespace ProtoMol {
   public:
     static const std::string keyword;
   private:
-    Vector3DBlock myForces;
-    std::vector<bool> forceCalculated;
+    Vector3D myForces;
     Vector3D centerofmass;
     int myAtom;
     const Vector3DBlock *pos;
-    Real sphereK, sphereradius;
+    bool forceCalculated;
+    Real sphereK;
     
     //"first" flag
     bool firstEvaluate;
     
-    //switch
-    Real mySwitchon, mySwitchon2, myCutoff, myCutoff2, mySwitch1, mySwitch2,
-    mySwitch3;
   
   };
   //____ INLINES
