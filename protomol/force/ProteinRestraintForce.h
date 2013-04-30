@@ -35,14 +35,13 @@ namespace ProtoMol {
                     const GenericTopology *topo, int atom1, int atom2,
                     ExclusionClass excl)  {
 
-      if( !forceCalculated  && myAtom== atom1){
+      if( !forceCalculated  && myAtom == atom1){
         
         forceCalculated = true;
        
         Vector3D diff = (*pos)[atom1] - centerofmass;
 
         Real distance = diff.norm();
-        Real distSquared = distance * distance;
         
         //calc energy
         energy = sphereK * distance * distance;
@@ -70,7 +69,6 @@ namespace ProtoMol {
     }
     
     void preProcess(const GenericTopology *apptopo, const Vector3DBlock *positions) {
-      const unsigned int size = positions->size();
       
       if( firstEvaluate ){
         
@@ -90,7 +88,7 @@ namespace ProtoMol {
     
     //add in forces
     void postProcess(const GenericTopology *topo, ScalarStructure *energies, Vector3DBlock *forces){
-      (*forces)[myAtom] += myForces;
+      if(forceCalculated) (*forces)[myAtom] += myForces;
     }
 
     static void parallelPostProcess(const GenericTopology *topo, ScalarStructure *energies) {

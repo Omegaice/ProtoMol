@@ -35,6 +35,20 @@ namespace ProtoMol {
                     const GenericTopology *topo, int atom1, int atom2,
                     ExclusionClass excl)  {
       
+      energy = doAtomCalculation(atom1);
+      
+      const int size = pos->size();
+      
+      //last atom?, runs from i=1-N->1, j=i+1->N
+      if( atom1 == size - 2 && atom2 == size - 1 ){
+        energy += doAtomCalculation(atom2);
+      }
+
+    }
+    
+    //actual calculation
+    Real doAtomCalculation( int atom1 ){
+      
       if( !forceCalculated[atom1] ){
         
         forceCalculated[atom1] = true;
@@ -62,7 +76,7 @@ namespace ProtoMol {
         deriv *= -1.0;
         
         //calc energy
-        energy = sphereK * ( distance - sphereradius ) * ( distance - sphereradius );
+        Real energy = sphereK * ( distance - sphereradius ) * ( distance - sphereradius );
         
         //Real myForce = 
         const Real dpotdr = 2.0 * sphereK * (distance - sphereradius);  // Calculate dpot/dr
@@ -81,7 +95,11 @@ namespace ProtoMol {
         // Add to the total force.
         myForces[atom1] = force1;
         
+        return energy;
+        
       }
+      
+      return 0.;
     }
 
     static void accumulateEnergy(ScalarStructure *energies, Real energy) {
@@ -112,6 +130,7 @@ namespace ProtoMol {
       //reset flags
       for(unsigned int i=0; i<size; i++){
         forceCalculated[i] = false;
+        myForces[i] = Vector3D(); //initializes to zero
       }
       
       //save position pointer
