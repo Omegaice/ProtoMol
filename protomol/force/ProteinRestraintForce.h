@@ -35,7 +35,8 @@ namespace ProtoMol {
                     const GenericTopology *topo, int atom1, int atom2,
                     ExclusionClass excl)  {
 
-      if( !forceCalculated  && myAtom == atom1){
+      //take the diagonal set as unique under \\lel decomposition
+      if( myAtom == atom1 && atom2 == atom1 + 1){
         
         forceCalculated = true;
        
