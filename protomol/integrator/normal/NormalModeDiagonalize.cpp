@@ -16,6 +16,7 @@
 #include <algorithm>
 
 #include <protomol/base/Lapack.h>
+#include <protomol/parallel/Parallel.h>
 
 using namespace std;
 using namespace ProtoMol::Report;
@@ -219,127 +220,63 @@ namespace ProtoMol
         Vector3DBlock current_pos = app->positions;
         app->positions = diagAt;
 
-        //Diagonalize
-        if ( fullDiag ) {
-          //****Full method**********************************************************************//
-          // Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
-          //*************************************************************************************//
-          report << debug(2) << "Start diagonalization." << endr;
-
-          //Find Hessians
-          blockDiag.hessianTime.start(); //time Hessian
-          rHsn.clear();
-          rHsn.evaluate( &app->positions, app->topology, true ); //mass re-weighted hessian
-          report << debug(2) << "Hessian found." << endr;
-
-          //stop timer
-          blockDiag.hessianTime.stop();
-          hessianCounter++;
-
-          //Diagonalize
-          blockDiag.rediagTime.start();
-          int numeFound;
-          int info = blockDiag.diagHessian( *Q , blockDiag.eigVal, rHsn.hessM, _3N, numeFound );
-
-          if ( info ) {
-            report << error << "Full diagonalization failed." << endr;
-          }
-
-          //find number of -ve eigs
-          int ii;
-          for ( ii = 0;ii < _3N - 3;ii++ ) {
-            if ( blockDiag.eigVal[ii+3] > 0 ) {
-              break;
-            }
-          }
-
-          report << debug( 1 ) << "[NormalModeDiagonalize::run] Full diagonalize. No. negative eigenvales = " << ii << endr;
-
-          for ( int i = 0;i < _3N;i++ ) {
-            blockDiag.eigIndx[i] = i;
-          }
-
-          blockDiag.absSort( *Q , blockDiag.eigVal, blockDiag.eigIndx, _3N );
-
-          //set new max eigenvalue in C
-          app->eigenInfo.myNewCEigval = fabs(blockDiag.eigVal[_rfM]); //safe as eigval set t length sz=_3N >= _rfM
-
-          //flag update to eigenvectors
-          *eigVecChangedP = true;
-
-          blockDiag.rediagTime.stop();
-          rediagCounter++;
-
-          //set flags if firstDiag
-          if ( firstDiag ) {
-            numEigvectsu = _3N;
-            *eigValP = blockDiag.eigVal[_3N-1];
-            
-            //first max eigenvalue in C, save original timestep for adaptive use
-            if(!checkpointUpdate){
-              app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
-              app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
-            }
-            
-            validMaxEigv = true;
-            firstDiag = false;
-          }
-          
-        } else {
-          //****Coarse method**************************************************************************//
-          // Process:  Finds isolated 'minimized' block (of residues) Hessians   [evaluateResidues]    //
-          //           Diagonalizes blocks to form block eigenvectors B          [findCoarseBlockEigs] //
-          //           Finds actual Hessian H (but coarse grained) then S=B^THB  [innerHessian]        //
-          //           Diagonalizes S to get eigenvectors Q, then approximate                          //
-          //           eigenvectors are the first 'm' columns of BQ.                                   //
-          //*******************************************************************************************//
-          report << debug(2) << "Start coarse diagonalization." << endr;
-                        
-          //find eienstuff
-          Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
-                                *Q , _3N, _rfM,
-                                blockCutoffDistance, eigenValueThresh, blockVectorCols,
-								geometricfdof, numerichessians);
-            
-          //Stats/diagnostics
-          rediagCounter++; hessianCounter++;
-          memory_Hessian = ( rHsn.memory_base + rHsn.memory_blocks ) * sizeof( Real ) / 1000000;
-          memory_eigenvector = blockDiag.memory_footprint * sizeof( Real ) / 1000000;
-          
-          //set new max eigenvalue in C
-          app->eigenInfo.myNewCEigval = fabs(blockDiag.eigVal[_rfM]); //safe as eigval set t length sz=_3N >= _rfM
-
-          //flag update to eigenvectors
-          *eigVecChangedP = true;
-
-          //set flags if firstDiag (firstDiag can now be coarse)
-          if ( firstDiag ) {
-            //Number of eigenvectors in set, _rfM
-            numEigvectsu = _rfM;
-
-            //use 1000 for regression tests, set REGRESSION_T NE 0.
-            if ( REGRESSION_T ) {
-              *eigValP = 1000;
-            } else {
-
-              //maximum from blocks
-              *eigValP = max_eigenvalue;
-            }
-
-            //first max eigenvalue in C, save original timestep for adaptive use
-            if(!checkpointUpdate){
-              app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
-              app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
-            }
-            
-            //flags
-            validMaxEigv = true;
-            firstDiag = false;
-          }
-
-          report << debug(2) << "Coarse diagonalization complete. Maximum eigenvalue = " << max_eigenvalue << "." << endr;
-        }
+        //~~~~if parallel only do diagonalization if master node~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+        Real max_eig;
         
+#ifdef HAVE_MPI
+        if(Parallel::isParallel()){
+          if(Parallel::iAmMaster()){
+            //I am the MASTER if I get here
+            
+            //do actual diagonalization
+            max_eig = doDiagonalization();
+
+            //set new max eigenvalue in C
+            app->eigenInfo.myNewCEigval = fabs(blockDiag.eigVal[_rfM]); //safe as eigval set t length sz=_3N >= _rfM
+
+          }
+          
+          cout << "Diagonalized at master" << endl;
+          
+          //broadcast *Q from master
+          const unsigned int numreals = app->eigenInfo.myEigenvectorLength * app->eigenInfo.myNumEigenvectors * 3;
+          Parallel::bcastSlaves(*Q,*Q+numreals);
+          
+          //broadcast *eigValP from master
+          Parallel::bcastSlaves(&max_eig,&max_eig + 1);
+          
+          //broadcast myNewCEigval from master
+          Parallel::bcastSlaves(&app->eigenInfo.myNewCEigval,&app->eigenInfo.myNewCEigval + 1);
+          
+        }else{
+#endif
+          //do actual diagonalization
+          max_eig = doDiagonalization();
+          
+          //set new max eigenvalue in C
+          app->eigenInfo.myNewCEigval = fabs(blockDiag.eigVal[_rfM]); //safe as eigval set t length sz=_3N >= _rfM
+#ifdef HAVE_MPI
+        }
+#endif
+        
+        //flag update to eigenvectors
+        *eigVecChangedP = true;
+
+        //set flags if firstDiag
+        if ( firstDiag ) {
+          numEigvectsu = ( fullDiag == true ) ? _3N : _rfM;
+          *eigValP = max_eig;
+
+          //first max eigenvalue in C, save original timestep for adaptive use
+          if(!checkpointUpdate){
+            app->eigenInfo.myOrigCEigval = app->eigenInfo.myNewCEigval;
+            app->eigenInfo.myOrigTimestep = bottom()->getTimestep();
+          }
+
+          validMaxEigv = true;
+          firstDiag = false;
+        }
+
         //revert positions after diagonalization
         app->positions = current_pos;
 
@@ -397,6 +334,92 @@ namespace ProtoMol
     return numTimesteps;
   }
 
+  //actual diagonalization code
+  Real NormalModeDiagonalize::doDiagonalization(){
+    
+    //Diagonalize
+    if ( fullDiag ) {
+      //****Full method**********************************************************************//
+      // Uses BLAS/LAPACK to do 'brute force' diagonalization                                //
+      //*************************************************************************************//
+      report << debug(2) << "Start diagonalization." << endr;
+      
+      //Find Hessians
+      blockDiag.hessianTime.start(); //time Hessian
+      rHsn.clear();
+      rHsn.evaluate( &app->positions, app->topology, true ); //mass re-weighted hessian
+      report << debug(2) << "Hessian found." << endr;
+      
+      //stop timer
+      blockDiag.hessianTime.stop();
+      hessianCounter++;
+      
+      //Diagonalize
+      blockDiag.rediagTime.start();
+      int numeFound;
+      int info = blockDiag.diagHessian( *Q , blockDiag.eigVal, rHsn.hessM, _3N, numeFound );
+      
+      if ( info ) {
+        report << error << "Full diagonalization failed." << endr;
+      }
+      
+      //find number of -ve eigs
+      int ii;
+      for ( ii = 0;ii < _3N - 3;ii++ ) {
+        if ( blockDiag.eigVal[ii+3] > 0 ) {
+          break;
+        }
+      }
+      
+      report << debug( 1 ) << "[NormalModeDiagonalize::run] Full diagonalize. No. negative eigenvales = " << ii << endr;
+      
+      for ( int i = 0;i < _3N;i++ ) {
+        blockDiag.eigIndx[i] = i;
+      }
+      
+      blockDiag.absSort( *Q , blockDiag.eigVal, blockDiag.eigIndx, _3N );
+      
+      blockDiag.rediagTime.stop();
+      rediagCounter++;
+      
+      //return max eig
+      return blockDiag.eigVal[_3N-1];
+      
+    } else {
+      //****Coarse method**************************************************************************//
+      // Process:  Finds isolated 'minimized' block (of residues) Hessians   [evaluateResidues]    //
+      //           Diagonalizes blocks to form block eigenvectors B          [findCoarseBlockEigs] //
+      //           Finds actual Hessian H (but coarse grained) then S=B^THB  [innerHessian]        //
+      //           Diagonalizes S to get eigenvectors Q, then approximate                          //
+      //           eigenvectors are the first 'm' columns of BQ.                                   //
+      //*******************************************************************************************//
+      report << debug(2) << "Start coarse diagonalization." << endr;
+      
+      //find eienstuff
+      Real max_eigenvalue = blockDiag.findEigenvectors( &app->positions, app->topology,
+                                                       *Q , _3N, _rfM,
+                                                       blockCutoffDistance, eigenValueThresh, blockVectorCols,
+                                                       geometricfdof, numerichessians);
+      
+      //Stats/diagnostics
+      rediagCounter++; hessianCounter++;
+      memory_Hessian = ( rHsn.memory_base + rHsn.memory_blocks ) * sizeof( Real ) / 1000000;
+      memory_eigenvector = blockDiag.memory_footprint * sizeof( Real ) / 1000000;
+      
+      //set new max eigenvalue in C
+      app->eigenInfo.myNewCEigval = fabs(blockDiag.eigVal[_rfM]); //safe as eigval set t length sz=_3N >= _rfM
+      
+      //flag update to eigenvectors
+      *eigVecChangedP = true;
+            
+      report << debug(2) << "Coarse diagonalization complete. Maximum eigenvalue = " << max_eigenvalue << "." << endr;
+      
+      //return max eig
+      return max_eigenvalue;
+    }
+    
+  }
+  
   //********************************************************************************************************************************************
 
   //*************************************************************************************

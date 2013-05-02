@@ -84,6 +84,8 @@ namespace ProtoMol
     protected:
       virtual void streamRead( std::istream& inStream );
       virtual void streamWrite( std::ostream& outStream ) const;
+    private:
+      Real doDiagonalization();
 
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       // My data members
