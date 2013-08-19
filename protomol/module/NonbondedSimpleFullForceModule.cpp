@@ -11,6 +11,7 @@
 #include <protomol/force/OneAtomPairTwo.h>
 #include <protomol/force/CoulombForce.h>
 #include <protomol/force/LennardJonesForce.h>
+#include <protomol/force/LennardJonesVDWForce.h>
 #include <protomol/force/HarmonicRestraintForce.h>
 #include <protomol/force/ProteinRestraintForce.h>
 #include <protomol/force/coulomb/CoulombSCPISMForce.h>
@@ -78,6 +79,9 @@ void NonbondedSimpleFullForceModule::registerForces(ProtoMolApp *app) {
           LennardJonesForce> >());
     f.reg(new SimpleFullSystem<OneAtomPair<PBC, Complement<Cn>,
           LennardJonesForce> >());
+    f.reg(new SimpleFullSystem<OneAtomPair<PBC, Universal,
+          LennardJonesVDWForce> >());
+    f.reg(new SimpleFullSystem<OneAtomPair<PBC, C2, LennardJonesVDWForce> >());
     
     // NonbondedSimpleFullSystemForce LennardJonesForce CoulombForce
     f.reg(new SimpleFullSystem<OneAtomPairTwo<PBC, Universal,
@@ -156,6 +160,9 @@ void NonbondedSimpleFullForceModule::registerForces(ProtoMolApp *app) {
           LennardJonesForce> >());
     f.reg(new SimpleFullSystem<OneAtomPair<VBC, Complement<Cn>,
           LennardJonesForce> >());
+    f.reg(new SimpleFullSystem<OneAtomPair<VBC, Universal,
+          LennardJonesVDWForce> >());
+    f.reg(new SimpleFullSystem<OneAtomPair<VBC, C2, LennardJonesVDWForce> >());
 
     // NonbondedSimpleFullSystemForce LennardJonesForce CoulombForce
     f.reg(new SimpleFullSystem<OneAtomPairTwo<VBC, Universal,

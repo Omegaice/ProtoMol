@@ -100,6 +100,8 @@ protomol/force/HarmonicRestraintForce.cpp -text
 protomol/force/HarmonicRestraintForce.h -text
 protomol/force/LennardJonesForce.cpp -text
 protomol/force/LennardJonesForce.h -text
+protomol/force/LennardJonesVDWForce.cpp -text
+protomol/force/LennardJonesVDWForce.h -text
 protomol/force/MetaForce.cpp -text
 protomol/force/MetaForce.h -text
 protomol/force/MollyForce.cpp -text
