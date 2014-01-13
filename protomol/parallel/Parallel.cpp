@@ -15,6 +15,8 @@
 #include <protomol/base/TimerStatistic.h>
 #include <protomol/base/Report.h>
 
+#include <unistd.h>
+
 using namespace std;
 using namespace ProtoMol::Report;
 
@@ -159,12 +161,60 @@ void broadcastScalar(T &begin) {
 }
 
 //____ broadcast
+void BroadcastNonBlocking(void* data, int count, MPI_Datatype datatype, int root, MPI_Comm communicator) {
+  int world_rank, world_size;
+  MPI_Comm_rank(communicator, &world_rank);
+  MPI_Comm_size(communicator, &world_size);
+ 
+  if (world_rank == root) {
+    MPI_Request *requestList = new MPI_Request[world_size];
+    for( int i = 0; i < world_size; i++ ) {
+      if( i != world_rank ) {
+        MPI_Isend(data, count, datatype, i, 0, communicator, &requestList[i]);
+      }
+    }
+
+    int *results = new int[world_size];
+    results[world_rank] = 1;
+
+    while( true ){
+      for( int i = 0; i < world_size; i++ ){
+        if( i != world_rank ) {
+          MPI_Test(&requestList[i], &results[i], MPI_STATUS_IGNORE);
+        }
+      }
+
+      int count = 0;
+      for( int i = 0; i < world_size; i++ ){
+        count += results[i];
+      }
+
+      if( count == world_size ) {
+        delete [] results;
+        delete [] requestList;
+        return;
+      }
+      
+      sleep(0);
+    }
+  } else {
+    MPI_Request request;
+    MPI_Irecv(data, count, datatype, root, 0, communicator, &request);
+
+    int result = 0;
+    while( true ){
+      MPI_Test(&request, &result, MPI_STATUS_IGNORE);
+      if( result == 1 ) return;
+      sleep(0);
+    }
+  }
+}
 
 template<bool exludeMaster, bool dobarrier, typename T>
 void broadcast(T *begin, T *end) {
   if (dobarrier)
     doBarrier<exludeMaster>();
-  MPI_Bcast(begin, (end - begin), MPITypeTraits<T>::datatype,
+  BroadcastNonBlocking(begin, (end - begin), MPITypeTraits<T>::datatype,
             (exludeMaster ? 0 : master),
             (exludeMaster ? slaveComm : MPI_COMM_WORLD));
 }
