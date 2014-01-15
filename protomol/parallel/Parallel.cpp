@@ -195,7 +195,7 @@ void BroadcastNonBlocking(void* data, int count, MPI_Datatype datatype, int root
         return;
       }
       
-      sleep(0);
+      usleep(1);
     }
   } else {
     MPI_Request request;
@@ -205,7 +205,7 @@ void BroadcastNonBlocking(void* data, int count, MPI_Datatype datatype, int root
     while( true ){
       MPI_Test(&request, &result, MPI_STATUS_IGNORE);
       if( result == 1 ) return;
-      sleep(0);
+      usleep(1);
     }
   }
 }
