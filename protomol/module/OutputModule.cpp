@@ -6,6 +6,7 @@
 
 #include <protomol/output/OutputDCDTrajectory.h>
 #include <protomol/output/OutputDCDTrajectoryVel.h>
+#include <protomol/output/OutputDCDTrajectoryForces.h>
 #include <protomol/output/OutputFinalPDBPos.h>
 #include <protomol/output/OutputFinalXYZPos.h>
 #include <protomol/output/OutputFinalXYZVel.h>
@@ -29,6 +30,7 @@ void OutputModule::init(ProtoMolApp *app) {
   f.registerExemplar(new OutputScreen());
   f.registerExemplar(new OutputDCDTrajectory());
   f.registerExemplar(new OutputDCDTrajectoryVel());
+  f.registerExemplar(new OutputDCDTrajectoryForces());
   f.registerExemplar(new OutputFinalPDBPos());
   f.registerExemplar(new OutputFinalXYZPos());
   f.registerExemplar(new OutputFinalXYZVel());
