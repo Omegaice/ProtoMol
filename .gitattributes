@@ -404,6 +404,8 @@ protomol/output/OutputCollection.cpp -text
 protomol/output/OutputCollection.h -text
 protomol/output/OutputDCDTrajectory.cpp -text
 protomol/output/OutputDCDTrajectory.h -text
+protomol/output/OutputDCDTrajectoryForces.cpp -text
+protomol/output/OutputDCDTrajectoryForces.h -text
 protomol/output/OutputDCDTrajectoryVel.cpp -text
 protomol/output/OutputDCDTrajectoryVel.h -text
 protomol/output/OutputDihedrals.cpp -text
