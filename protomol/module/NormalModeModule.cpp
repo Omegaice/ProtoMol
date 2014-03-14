@@ -9,6 +9,7 @@
 #include <protomol/io/XYZReader.h>
 #include <protomol/integrator/normal/NormalModeLangevin.h>
 #include <protomol/integrator/normal/NormalModeLangLf.h>
+#include <protomol/integrator/normal/NormalModeLangevinLeapfrogSwitching.h>
 #include <protomol/integrator/normal/NormalModeMinimizer.h>
 #include <protomol/integrator/normal/NormalModeDiagonalize.h>
 #include <protomol/integrator/normal/NormalModeMori.h>
@@ -34,6 +35,7 @@ void NormalModeModule::init(ProtoMolApp *app) {
 
   app->integratorFactory.registerExemplar(new NormalModeLangevin());
   app->integratorFactory.registerExemplar(new NormalModeLangLf());
+  app->integratorFactory.registerExemplar(new NormalModeLangevinLeapfrogSwitching());
   app->integratorFactory.registerExemplar(new NormalModeMinimizer());
   app->integratorFactory.registerExemplar(new NormalModeDiagonalize());
   app->integratorFactory.registerExemplar(new NormalModeMori());
