@@ -1,0 +1,20 @@
+box: werkcer/default
+
+build:
+  steps:
+    - script:
+        name: install requirements
+        code: sudo apt-get install build-essential cmake liblapack-dev
+    - script:
+        name: setup build folder
+        code: mkdir build
+    - script:
+        name: configure build
+        code: |
+            cd build
+            cmake .. -DBUILD_LAPACK_TYPE=lapack
+    - script:
+        name: build package
+        code: |
+            cd build
+            make
