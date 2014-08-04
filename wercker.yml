@@ -3,6 +3,9 @@ box: wercker/default
 build:
   steps:
     - script:
+        name: update package list
+        code: sudo apt-get update
+    - script:
         name: install requirements
         code: |
             sudo apt-get install build-essential
