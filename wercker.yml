@@ -9,7 +9,6 @@ build:
         name: install requirements
         code: |
             sudo apt-get install build-essential
-            sudo apt-cache search cmake
             sudo apt-get install cmake
             sudo apt-get install liblapack-dev
     - script:
