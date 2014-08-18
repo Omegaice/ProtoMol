@@ -37,6 +37,7 @@ namespace ProtoMol {
     eigVecChangedP = &app->eigenInfo.myEigVecChanged;
     eigValP = &app->eigenInfo.myMaxEigenvalue;
     Q = &app->eigenInfo.myEigenvectors;
+    pMetropolisPE = &app->eigenInfo.metropolisPE;
 
     //find topology pointer
     GenericTopology *myTopo = app->topology;
@@ -557,7 +558,7 @@ namespace ProtoMol {
   //Simple-Steepest decent minimizer for all modes outside subspace.
   //PK update respects 'c' subspace positions. Requires virtual force calculation function utilityCalculateForces().
   int NormalModeUtilities::minimizer(Real peLim, int numloop, bool simpM, bool reDiag, bool nonSubspace, int *forceCalc, Real *lastLambda,
-                                ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo) {
+                                ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis) {
     int in, itr, numLambda;
     Real oldPot, lambda, lambda1, lambdaSlp, lambdaSlp1, lastDiff;
     int rsCG;
@@ -651,7 +652,21 @@ namespace ProtoMol {
             rsCG = 0;
             lambda = 1.0 / *eigValP;	//revert to original value
         }
-        if((oldPot - myEnergies->potentialEnergy()) < peLim && !rsCG) break;
+      
+        //use metropolis?
+        if(!metropolis){
+          //asymptotic
+          if((oldPot - myEnergies->potentialEnergy()) < peLim && !rsCG) break;
+        }else{
+          //metropolis
+          if(!rsCG){
+            if(myEnergies->potentialEnergy() < *pMetropolisPE) break;
+            const Real prob = exp(-(1.0 / (Constant::BOLTZMANN * myTemp)) * (myEnergies->potentialEnergy() - *pMetropolisPE));
+            const Real throwprob = randomNumber(mySeed);
+            if(throwprob < prob) break;
+          }
+        }
+
         if(!rsCG) lastDiff = oldPot - myEnergies->potentialEnergy();
         //
     }

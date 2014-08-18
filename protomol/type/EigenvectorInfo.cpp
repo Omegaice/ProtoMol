@@ -9,7 +9,7 @@ EigenvectorInfo::EigenvectorInfo() : myEigenvectorLength( 0 ), myNumEigenvectors
 	myNumUsedEigenvectors( 0 ),
 	myEigenvectors( 0 ), myOrigCEigval( 0.0 ), myNewCEigval( 0.0 ), myOrigTimestep( 0.0 ),
 	reDiagonalize( false ), havePositionsChanged( false ), OpenMMMinimize( false ), RediagonalizationCount( 0 ),
-	mySingleEigs( 0 ), myEigVecChanged( true ), myMinimumLimit( 0.5 ), currentMode( -1 ) {
+	mySingleEigs( 0 ), myEigVecChanged( true ), myMinimumLimit( 0.5 ), currentMode( -1 ), metropolisPE( 0.0 ) {
 
 }
 
@@ -18,7 +18,7 @@ EigenvectorInfo::EigenvectorInfo( unsigned int n, unsigned int m ) : myEigenvect
 	myMaxEigenvalue( 0.0 ), myEigenvectors( new double[n *m * 3] ),
 	myOrigCEigval( 0.0 ), myNewCEigval( 0.0 ), myOrigTimestep( 0.0 ), reDiagonalize( false ),
 	havePositionsChanged( false ), OpenMMMinimize( false ), RediagonalizationCount( 0 ), mySingleEigs( 0 ), myEigVecChanged( true ), myMinimumLimit( 0.5 ),
-	currentMode( -1 ) {}
+	currentMode( -1 ), metropolisPE( 0.0 ) {}
 
 EigenvectorInfo::~EigenvectorInfo() {
 	if( myEigenvectors ) {

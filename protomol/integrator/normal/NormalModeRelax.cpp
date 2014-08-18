@@ -73,7 +73,7 @@ namespace ProtoMol {
         report << error << "No Eigenvectors for NormalMode integrator."<<endr;
     //
     //do minimization with local forces, max loop 100, set subSpace minimization true
-    itrs = minimizer(minLim, 100, simpleMin, reDiag, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology);
+    itrs = minimizer(minLim, 100, simpleMin, reDiag, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology, false);
     Real minPotEnergy = app->energies.potentialEnergy();				//save potential energy before random
     //constraints?
     app->energies.clear();

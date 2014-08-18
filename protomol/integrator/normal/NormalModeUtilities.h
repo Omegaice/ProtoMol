@@ -47,7 +47,7 @@ namespace ProtoMol {
         void absSort(double *eigVec, double *eigVal, int *eigIndx, int dim);
         double calcRayleigh(double *rQ, double *boundRq, double *hsnhessM, int numv, double raylAverage);
         int minimizer(Real peLim, int numloop, bool simpM, bool reDiag, bool nonSubspace, int *forceCalc, Real *lastLambda, 
-            ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo);
+            ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis);
         virtual void utilityCalculateForces(){};
         void getInnerHess(double *eigVec, double *hess, double *innerHess);
         void getNewEigs(double *eigVec, double *origEigVec, double *innerEigVec);
@@ -102,6 +102,8 @@ namespace ProtoMol {
         Vector3DBlock diagAt;
         //flag for diag
         bool newDiag;
+        //previous integrator potential energy for metropolis
+        Real *pMetropolisPE;
 
     protected:
         double *invSqrtMass, *sqrtMass;

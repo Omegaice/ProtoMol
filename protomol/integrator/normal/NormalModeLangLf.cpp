@@ -76,6 +76,12 @@ namespace ProtoMol {
     //main loop
     for( int i = 0; i < numTimesteps; i++ ) {
       //****main loop*************************************
+      //save current PE to next integrator, required for metropolis sub-space sampling
+      if(myNextIntegrator != NULL){
+          *pMetropolisPE = app->energies.potentialEnergy();
+          //report <<debug(1)<<"[NormalModeLangLf::run] Testing! pe= "<<app->energies.potentialEnergy()<<endl;
+      }
+      
       preStepModify();
       genProjGauss(&gaussRandCoord1, app->topology);
       doHalfKick();

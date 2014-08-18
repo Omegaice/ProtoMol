@@ -55,6 +55,10 @@ namespace ProtoMol {
 		//Analytic integrator
 		std::vector< double > myEigenvalues;
 		int currentMode;
+        
+        //previous integrator potential energy for metropolis
+        double metropolisPE;
+
 	};
 }
 
