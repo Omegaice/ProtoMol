@@ -27,19 +27,19 @@ namespace ProtoMol {
     avItrs(0), itrs(0), avMinForceCalc(0), numSteps(0), minCount(0),
     forceCalc(0), minLim(0), randforce(0), myPreviousNormalMode(0),
     lastLambda(0), reDiag(0), simpleMin(0), eUFactor(0), randStp(0),
-    rediagOnMaxMinSteps(0), metropolis(false) {}
+    rediagOnMaxMinSteps(0), metropolis(false), metropolisnoise(0.0) {}
 
   NormalModeMinimizer::NormalModeMinimizer
   (Real timestep, int firstmode, int nummode, Real gamma, int seed,
    Real temperature,  Real minimlim, int rforce, bool red, bool simplemin,
-   int redmaxmin, bool met, ForceGroup *overloadedForces)
+   int redmaxmin, bool met, Real noise, ForceGroup *overloadedForces)
     : STSIntegrator(timestep, overloadedForces),
       NormalModeUtilities(firstmode, nummode, gamma, seed, temperature),
       avItrs(0), itrs(0), avMinForceCalc(0), numSteps(0), minCount(0),
       forceCalc(0), minLim(minimlim), randforce(rforce),
       myPreviousNormalMode(0), lastLambda(0), reDiag(red), 
       simpleMin(simplemin), eUFactor(0), randStp(0),
-      rediagOnMaxMinSteps(redmaxmin), metropolis(met) {}
+      rediagOnMaxMinSteps(redmaxmin), metropolis(met), metropolisnoise(noise) {}
 
   NormalModeMinimizer::~NormalModeMinimizer() 
   {  
@@ -88,7 +88,7 @@ namespace ProtoMol {
     if(randforce) app->positions.intoSubtract(gaussRandCoord1);
     //(*myPositions).intoWeightedAdd(-randStp,gaussRandCoord1);
     //do minimization with local forces, max loop rediagOnMaxMinSteps, set subSpace minimization true
-    itrs = minimizer(minLim, rediagOnMaxMinSteps>0 ? rediagOnMaxMinSteps : 100 , simpleMin, reDiag, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology, metropolis);
+    itrs = minimizer(minLim, rediagOnMaxMinSteps>0 ? rediagOnMaxMinSteps : 100 , simpleMin, reDiag, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology, metropolis, metropolisnoise);
 
     //flag excessive minimizations
     if(itrs > 10) report << debug(1) << "[NormalModeMinimizer::run] iterations = " << itrs << "." << endr;
@@ -164,13 +164,15 @@ namespace ProtoMol {
     parameters.push_back(Parameter("rediag",Value(reDiag,ConstraintValueType::NoConstraints()),false,Text("Force re-digonalize")));
     parameters.push_back(Parameter("simplemin",Value(simpleMin,ConstraintValueType::NoConstraints()),true,Text("Simple minimizer or exact minima projection.")));
     parameters.push_back(Parameter("rediagmaxminsteps",Value(rediagOnMaxMinSteps,ConstraintValueType::NotNegative()),0,Text("Rediagonalize if maximum minimizer steps exceeded.")));
-    parameters.push_back(Parameter("metropolis",Value(metropolis,ConstraintValueType::NoConstraints()),false,Text("Use metropolis end condition.")));
+    parameters.push_back(Parameter("metropolis",Value(metropolis,ConstraintValueType::NoConstraints()),false,Text("Use Metropolis end condition.")));
+    parameters.push_back(Parameter("metropolisnoise",Value(metropolisnoise,ConstraintValueType::NotNegative()),0.0,Text("Noise factor for Metropolis.")));
+
 
   }
 
   STSIntegrator* NormalModeMinimizer::doMake(const vector<Value>& values,ForceGroup* fg)const{
     return new NormalModeMinimizer(values[0],values[1],values[2],values[3],values[4],values[5],
-                                   values[6],values[7],values[8],values[9],values[10],values[11],fg);
+                                   values[6],values[7],values[8],values[9],values[10],values[11],values[12],fg);
   }
 
   //void NormalModeMinimizer::addModifierAfterInitialize(){

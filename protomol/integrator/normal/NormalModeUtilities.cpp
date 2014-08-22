@@ -558,16 +558,32 @@ namespace ProtoMol {
   //Simple-Steepest decent minimizer for all modes outside subspace.
   //PK update respects 'c' subspace positions. Requires virtual force calculation function utilityCalculateForces().
   int NormalModeUtilities::minimizer(Real peLim, int numloop, bool simpM, bool reDiag, bool nonSubspace, int *forceCalc, Real *lastLambda,
-                                ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis) {
+                                ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis, Real metropolisnoise) {
     int in, itr, numLambda;
     Real oldPot, lambda, lambda1, lambdaSlp, lambdaSlp1, lastDiff;
     int rsCG;
 
+    //pure Metropolis?
+    if( metropolis && metropolisnoise > 0.0){
+      return metropolisMinimizer(peLim, numloop, simpM, reDiag, nonSubspace, forceCalc, lastLambda,
+                                 myEnergies, myPositions, myTopo, metropolis, metropolisnoise, false);
+    }
+    //else minimizer with termination criterion replaced with Metropolis
+    
     //initialize
     rsCG = 0; *lastLambda = 0.0; numLambda = 0; itr = 0; *forceCalc = 0; lastDiff = 5; //start at 5 kcal mol^{-1}
 
     utilityCalculateForces();
     (*forceCalc)++;
+    
+    //start with metropolis?
+    if(metropolis){
+      if(myEnergies->potentialEnergy() < *pMetropolisPE) return 0;
+      const Real prob = exp(-(1.0 / (Constant::BOLTZMANN * myTemp)) * (myEnergies->potentialEnergy() - *pMetropolisPE));
+      const Real throwprob = randomNumber(mySeed);
+      if(throwprob < prob) return 0;
+    }
+
     //Set first value of /lambda to be 1/eigval
     lambda = 1.0 / *eigValP;	//exact solution for highest frequency mode if force mass weighted
     for(in=0;in<numloop;in++){
@@ -675,5 +691,86 @@ namespace ProtoMol {
     return itr;
   }
 
+  //Simple-Steepest decent minimizer for all modes outside subspace.
+  //PK update respects 'c' subspace positions. Requires virtual force calculation function utilityCalculateForces().
+  int NormalModeUtilities::metropolisMinimizer(Real peLim, int numloop, bool simpM, bool reDiag, bool nonSubspace, int *forceCalc, Real *lastLambda,
+                                               ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis, Real metropolisnoise, bool discard) {
+    int in, itr, numLambda;
+    Real oldPot, lambda, /*lambda1, lambdaSlp,*/ lambdaSlp1, lastDiff;
+    int rsCG;
+    
+    Vector3DBlock oldPos, oldForce;
+    
+    //initialize
+    rsCG = 0; *lastLambda = 0.0; numLambda = 0; itr = 0; *forceCalc = 0; lastDiff = 5; //start at 5 kcal mol^{-1}
+    
+    utilityCalculateForces();
+    (*forceCalc)++;
+    
+    //save start for Metropolis
+    oldPos = *myPositions;
+    oldForce = *myForcesP;
+    
+    //Set first value of /lambda to be 1/eigval
+    lambda = 1.0 / *eigValP;	//exact solution for highest frequency mode if force mass weighted
+    for(in=0;in<numloop;in++){
+      itr++;
+      
+      //
+      report.precision(10);
+      report <<debug(6)<<"[NormalModeUtilities::minimizer] PE= "<<myEnergies->potentialEnergy()<<endr;
+      //****find search direction vector posTemp
+      //find forces in compliment space.
+      if(nonSubspace) nonSubspaceForce(myForcesP, myForcesP);
+      //sift so position move is in compliment space, mass weighted. Replaces nonSubspacePosition(myForces, myForces)
+      for(int i=0;i<_N;i++) (*myForcesP)[i] /= myTopo->atoms[i].scaledMass;
+      //set posTemp
+      posTemp = *myForcesP;
+      //find slope of original PE with /lambda=0 here.
+      lambdaSlp1 = 0.0;
+      for( int k = 0; k < _N; k++ ) lambdaSlp1 -= posTemp[k].dot((*myForcesP)[k]);
+      //save PE at /lambda=0
+      oldPot = myEnergies->potentialEnergy();
+      report <<debug(7)<<"[NormalModeUtilities::minimizer] lambd= "<<lambda<<endl;
+      //find force at new position pos+/lambda*posTemp
+      (*myPositions).intoWeightedAdd(lambda,posTemp);
+      
+      //add random
+      genProjGauss(&gaussRandCoord1, myTopo);
+      //was 0.5, now should be 2 * metropolisnoise
+      Real randStp = sqrt(2.0 * metropolisnoise * Constant::BOLTZMANN * myTemp / *eigValP);	//
+      (*myPositions).intoWeightedAdd(randStp,gaussRandCoord1);
+      
+      utilityCalculateForces();
+      (*forceCalc)++;
+      
+      //end full minimizer
+      //update total gamma
+      *lastLambda += lambda;
+      numLambda++;
+      
+      //do metropolis
+      //utilityCalculatePreviousIntegratorEnergies();
+      if(myEnergies->potentialEnergy() < *pMetropolisPE) break;
+      const Real prob = exp(-(1.0 / (Constant::BOLTZMANN * myTemp)) * (myEnergies->potentialEnergy() - *pMetropolisPE));
+      const Real throwprob = randomNumber(mySeed);
+      if(throwprob < prob) break;
+      
+      //if((oldPot - myEnergies->potentialEnergy()) < peLim && !rsCG) break;
+      if(!rsCG) lastDiff = oldPot - myEnergies->potentialEnergy();
+      //
+      
+      //restore positions if failed and discard flag set
+      if(discard){
+        *myPositions = oldPos;
+        *myForcesP = oldForce;
+      }
+      
+    }
+    
+    if(numLambda) *lastLambda /= (Real)numLambda;
+    else lastLambda = 0;
+    return itr;
+  }
 
 }

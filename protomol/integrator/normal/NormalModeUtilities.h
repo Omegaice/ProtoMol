@@ -47,7 +47,9 @@ namespace ProtoMol {
         void absSort(double *eigVec, double *eigVal, int *eigIndx, int dim);
         double calcRayleigh(double *rQ, double *boundRq, double *hsnhessM, int numv, double raylAverage);
         int minimizer(Real peLim, int numloop, bool simpM, bool reDiag, bool nonSubspace, int *forceCalc, Real *lastLambda, 
-            ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis);
+            ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis, Real metropolisnoise);
+        int metropolisMinimizer(Real peLim, int numloop, bool simpM, bool reDiag, bool nonSubspace, int *forceCalc, Real *lastLambda,
+                              ScalarStructure *myEnergies, Vector3DBlock *myPositions, GenericTopology *myTopo, bool metropolis, Real metropolisnoise, bool discard);
         virtual void utilityCalculateForces(){};
         void getInnerHess(double *eigVec, double *hess, double *innerHess);
         void getNewEigs(double *eigVec, double *origEigVec, double *innerEigVec);

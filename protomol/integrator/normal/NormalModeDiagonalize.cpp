@@ -287,7 +287,7 @@ namespace ProtoMol
           app->eigenInfo.havePositionsChanged = true;
 
           //do minimization with local forces, max loop maxMinSteps, set subSpace minimization true
-          int itrs = minimizer(minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology, false);
+          int itrs = minimizer(minLim, maxMinSteps, true, false, true, &forceCalc, &lastLambda, &app->energies, &app->positions, app->topology, false, 0.0);
           report << debug(2) << "[NormalModeDiagonalize::run] iterations = "<< itrs << " force calcs = " << forceCalc << endr;
 
         }
