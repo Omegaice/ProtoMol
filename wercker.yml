@@ -10,6 +10,7 @@ build:
         code: |
             sudo apt-get install build-essential
             sudo apt-get install cmake
+            sudo apt-get install subversion
             sudo apt-get install liblapack-dev
     - script:
         name: setup build folder
@@ -24,3 +25,14 @@ build:
         code: |
             cd build
             make
+    - script:
+        name: download tests
+        code: svn co https://svn.code.sf.net/p/protomol/svn/trunk/test
+    - script:
+        name: copy executable
+        code: cp build/ProtoMol test/
+    - script:
+        name: run tests
+        code: |
+            cd test
+            python test.py
