@@ -185,6 +185,7 @@ namespace ProtoMol {
   //*************************************************************************************
 
   void NormalModeMinimizer::utilityCalculateForces(){
+      app->energies.clear();
       calculateForces();
   }
 
