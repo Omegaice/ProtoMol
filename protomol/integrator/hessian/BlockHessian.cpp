@@ -166,7 +166,7 @@ void BlockHessian::initialResidueData(const GenericTopology *myTopo, int res_per
           }
       }
       residues_max[i] = res_idx;	//set max number of atoms per residue
-      if(residues_alpha_c[i] == -1) report << error << "Alpha Carbon not found for residue "<<
+      if(residues_alpha_c[i] == -1) report << debug(3) << "Alpha Carbon not found for residue "<<
           myTopo->atoms[i].residue_name<<", "<<residue_id[i]<<"."<<endr;
       report << debug(3) << "residue "<<residue_id[i]<<", valid "<<residues_alpha_c[i]<<", max "<<residues_max[i]<<
           ", total "<<num_residues<<", alpha "<<myTopo->atoms[residues_alpha_c[i]].name<<endr;
@@ -191,10 +191,13 @@ void BlockHessian::initialResidueData(const GenericTopology *myTopo, int res_per
       }
   }
   for(int i=0;i<num_residues;i++){	//diags
-      report << debug(3) << "residue "<<i<<", phi N "<<residues_phi_n[i]<<
-          ", psi C "<<residues_psi_c[i]<<", alpha C "<<residues_alpha_c[i]<<endr;
-      if(residues_phi_n[i] == -1 || residues_psi_c[i] == -1)
-          report << error << "Phi/Psi parameter not found!" << endr;
+      //test if aC found before printing
+      if(residues_alpha_c[i] >= 0){
+          report << debug(3) << "residue "<<i<<", phi N "<<residues_phi_n[i]<<
+                  ", psi C "<<residues_psi_c[i]<<", alpha C "<<residues_alpha_c[i]<<endr;
+          if(residues_phi_n[i] == -1 || residues_psi_c[i] == -1)
+              report << debug(3) << "Phi/Psi parameter not found!" << endr;
+      }
   }
   //test atoms are in the correct order (if not we need to implement eigenvector row swapping)
   int i_res = 0;
@@ -853,6 +856,9 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
     int bCount = 0;
     for(int res_a=0;res_a<num_residues;res_a++){
       for(int res_b=res_a+2;res_b<num_residues;res_b++){
+        //miss if either alpha C not found
+        if( residues_alpha_c[res_a] == -1 || residues_alpha_c[res_b] ) continue;
+        
         int rac_a = residues_alpha_c[res_a]; int rac_b = residues_alpha_c[res_b];
         Real ac_dist;
         if(abs(atom_block[rac_a] - atom_block[rac_b]) >= 2 &&
