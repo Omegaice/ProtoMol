@@ -16,6 +16,3 @@ script:
   - cd test
   - cp $HOME/ProtoMol/bin/ProtoMol .
   - python test.py
-
-notifications:
-  email: false
