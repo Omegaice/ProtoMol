@@ -857,7 +857,7 @@ void BlockHessian::evaluateBlocks(const Real cutoffDistance, const Vector3DBlock
     for(int res_a=0;res_a<num_residues;res_a++){
       for(int res_b=res_a+2;res_b<num_residues;res_b++){
         //miss if either alpha C not found
-        if( residues_alpha_c[res_a] == -1 || residues_alpha_c[res_b] ) continue;
+        if( residues_alpha_c[res_a] == -1 || residues_alpha_c[res_b] == -1 ) continue;
         
         int rac_a = residues_alpha_c[res_a]; int rac_b = residues_alpha_c[res_b];
         Real ac_dist;
