@@ -29,6 +29,7 @@ namespace ProtoMol {
 			bool mRediagOnQuadratic;
 			bool mAlwaysQuadratic;
 			bool mRediagQuadraticLambda;
+			bool mMetropolisMinimize;
 
 			int mBlockSplit;
 

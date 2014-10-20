@@ -36,6 +36,8 @@ namespace ProtoMol {
 
 		mRediagQuadraticLambda = params[13];
 		mAlwaysQuadratic = params[14];
+
+		mMetropolisMinimize = params[15];
 	}
 
 	NormalModeOpenMM::~NormalModeOpenMM() {
@@ -66,6 +68,7 @@ namespace ProtoMol {
 
 		mLTMDParameters.isAlwaysQuadratic = mAlwaysQuadratic;
 		mLTMDParameters.ShouldForceRediagOnQuadraticLambda = mRediagQuadraticLambda;
+		mLTMDParameters.ShouldUseMetropolisMinimization = mMetropolisMinimize;
 
 		if( mProtomolDiagonalize ) {
 			mLTMDParameters.ShouldProtoMolDiagonalize = true;
@@ -225,7 +228,7 @@ namespace ProtoMol {
 		parameters.push_back( Parameter( "resPerBlock", Value( mResiduesPerBlock, ConstraintValueType::NotNegative() ), 1 ) );
 		parameters.push_back( Parameter( "bdof", Value( mBlockDOF, ConstraintValueType::NotNegative() ), 12 ) );
 		parameters.push_back( Parameter( "blockEpsilon", Value( mBlockDelta, ConstraintValueType::NotNegative() ), 1e-3 ) );
-		parameters.push_back( Parameter( "rediagFreq", Value( mRediagonalizationFrequency, ConstraintValueType::NotNegative() ), 1000 ) );
+		parameters.push_back( Parameter( "rediagFrequency", Value( mRediagonalizationFrequency, ConstraintValueType::NotNegative() ), 1000 ) );
 		parameters.push_back( Parameter( "minimlim", Value( mMinimizationLimit, ConstraintValueType::NotNegative() ), 0.1, Text( "Minimizer target PE difference kcal mole^{-1}" ) ) );
 		parameters.push_back( Parameter( "blockHessianPlatform", Value( mBlockPlatform, ConstraintValueType::NoConstraints() ), 0 ) );
 		parameters.push_back( Parameter( "forceRediagOnMinFail", Value( shoudForceRediagOnMinFail, ConstraintValueType::NoConstraints() ), false ) );
@@ -235,6 +238,7 @@ namespace ProtoMol {
 		parameters.push_back( Parameter( "blockSplit", Value( mBlockSplit, ConstraintValueType::NoConstraints() ), 0 ) );
 		parameters.push_back( Parameter( "rediagLambda", Value( mRediagQuadraticLambda, ConstraintValueType::NoConstraints() ), false ) );
 		parameters.push_back( Parameter( "alwaysQuadratic", Value( mAlwaysQuadratic, ConstraintValueType::NoConstraints() ), false ) );
+		parameters.push_back( Parameter( "metropolis", Value( mMetropolisMinimize, ConstraintValueType::NoConstraints() ), false ) );
 	}
 
 	STSIntegrator *NormalModeOpenMM::doMake( const vector<Value>& values, ForceGroup *fg ) const {
@@ -245,7 +249,7 @@ namespace ProtoMol {
 	}
 
 	unsigned int NormalModeOpenMM::getParameterSize() const {
-		return OpenMMIntegrator::getParameterSize() + 15;
+		return OpenMMIntegrator::getParameterSize() + 16;
 	}
 }
 

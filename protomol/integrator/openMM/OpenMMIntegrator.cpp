@@ -585,7 +585,7 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
 			sPlatform = "OpenCL";
 			break;
 		case 2:
-			sPlatform = "Cuda";
+			sPlatform = "CUDA";
 			break;
 	}
 
@@ -601,9 +601,13 @@ void OpenMMIntegrator::initialize( ProtoMolApp *app ) {
         if( mPlatform == 1 ){
             platform.setPropertyDefaultValue("OpenCLDeviceIndex", stream.str() );
         }else{
-            platform.setPropertyDefaultValue("CudaDevice", stream.str() );
+            platform.setPropertyDefaultValue("CudaDeviceIndex", stream.str() );
         }
     }
+
+	if( mPlatform == 2 ){
+		//platform.setPropertyDefaultValue("CudaPrecision", "double");
+	}
 
 	std::cout << "Creating context" << std::endl;
 	context = new OpenMM::Context( *system, *integrator, platform );
