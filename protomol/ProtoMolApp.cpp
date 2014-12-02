@@ -347,8 +347,7 @@ void ProtoMolApp::build() {
   report << plain << "Molecular virial tensor : "
          << energies.molecularVirial() << endr;
 
-  topology->time =
-    (Real)config[InputFirststep::keyword] * integrator->getTimestep();
+  topology->time = (Real)(toInt(config[InputFirststep::keyword]) * integrator->getTimestep());
 
   integrator->initialize(this);
   outputs->initialize(this);
