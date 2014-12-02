@@ -151,13 +151,13 @@ bool ProtoMolApp::configure(const vector<string> &args) {
   if (!load(args)) return false;
 
   configure();
-  
+
   return true;
 }
 
 
 void ProtoMolApp::build() {
-  
+
   //Set parallel parameters
   if( Parallel::isParallel() ){
     //mode
@@ -172,9 +172,9 @@ void ProtoMolApp::build() {
     //max pacjkages
     if (config[InputMaxPackages::keyword].valid())
       Parallel::setMaxPackages(config[InputMaxPackages::keyword]);
-    
+
   }
-  
+
   // TPR input for topology, positions and velocities?
   // Then check for Gromacs support
 #if !defined(HAVE_GROMACS)
@@ -186,15 +186,25 @@ void ProtoMolApp::build() {
   //floag for TPR
   bool GROMACRTPR(false);
   bool GROMACSNEWPOSITIONS(false);
+  bool GROMACSNEWVELOCITIES(false);
 
   //test TPR file
   if( config.valid(InputGromacsTprFile::keyword) ){
     GROMACRTPR = true;
+    if( config.valid("Checkpoint") ) {
+        GROMACSNEWPOSITIONS = true;
+        GROMACSNEWVELOCITIES = true;
+    }
     if( config.valid(InputPositions::keyword) ) GROMACSNEWPOSITIONS = true;
+    if( config.valid(InputVelocities::keyword) ) GROMACSNEWVELOCITIES = true;
   }
 
   // Read data if not TPR unless positions defined
-  if( !GROMACRTPR || GROMACSNEWPOSITIONS ) modManager->read(this);
+  if( !GROMACRTPR || GROMACSNEWPOSITIONS || GROMACSNEWVELOCITIES) {
+    modManager->read(this);
+    GROMACSNEWPOSITIONS = config.valid(InputPositions::keyword);
+    GROMACSNEWVELOCITIES = config.valid(InputVelocities::keyword);
+  }
 
   // Build topology
   try {
@@ -293,7 +303,7 @@ void ProtoMolApp::build() {
     // Build the topology from the tpr file
     buildTopologyFromTpr( topology, positions, velocities,
                           config[InputGromacsTprFile::keyword].getString(),
-                           GROMACSNEWPOSITIONS);
+                           GROMACSNEWPOSITIONS, GROMACSNEWVELOCITIES);
   }
 
   // Register Forces
@@ -319,7 +329,7 @@ void ProtoMolApp::build() {
 			outputs = outputFactory.makeCollection(&config);
 		}
 	}
-  
+
   // Post build processing
   modManager->postBuild(this);
 
@@ -415,10 +425,10 @@ void ProtoMolApp::finalize() {
   float nanoSeconds = ( (currentStep - config[InputFirststep::keyword].operator long()) * integrator->getTimestep() ) / 1000000;
   float secondsPerNanosecond = TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() / nanoSeconds;
   float nanoSecondsPerDay = 86400 / secondsPerNanosecond;
-  
+
   report.setf( std::ios::fixed );
   report << plain << "Performance: " << nanoSeconds << "ns in " << TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() << "s = " << nanoSecondsPerDay << "ns/day" << std::endl;
-  
+
   outputs->finalize(currentStep);
 
   // Clean up
@@ -432,7 +442,7 @@ void ProtoMolApp::finalize() {
 	if( Parallel::iAmMaster() ){
 		report << plain << "Timing: " << TimerStatistic() << "." << endr;
 	}
-	
+
 	Parallel::finalize();
 }
 

@@ -3,6 +3,10 @@
 #include <protomol/base/Report.h>
 #include <protomol/base/StringUtilities.h>
 
+#include <protomol/module/IOModule.h>
+#include <protomol/module/MainModule.h>
+#include <protomol/module/ModifierModule.h>
+
 #include <protomol/io/DCDTrajectoryReader.h>
 
 using namespace std;
@@ -21,7 +25,7 @@ bool CheckpointConfigReader::tryFormat() {
   if (!open()) return false;
 
   string header = getline();
-    
+
   cout << header << endl;
 
   return header == "!Checkpoint File!";
@@ -33,11 +37,11 @@ bool CheckpointConfigReader::readBase(Configuration &conf, Random &rand) {
     cout << "Invalid checkpoint" << endl;
     return false;
   }
-    
+
   cout << "Reading checkpoint" << endl;
 
   int id = 0, step = 0;
-    
+
   string line;
   while (std::getline(file, line)) {
     if (line.find("#ID") != string::npos) file >> id;
@@ -49,23 +53,27 @@ bool CheckpointConfigReader::readBase(Configuration &conf, Random &rand) {
   conf["CheckpointStart"] = id + 1;
 
   // Update position file
-  conf["posfile"] = Append(conf["CheckpointPosBase"], id) + ".pos";
+  conf[InputPositions::keyword] = Append(conf["CheckpointPosBase"], id) + ".pos";
 
   // Update velocities file
-  conf["velfile"] = Append(conf["CheckpointVelBase"], id) + ".vel";
+  conf[InputVelocities::keyword] = Append(conf["CheckpointVelBase"], id) + ".vel";
 
   // Update energy file
   if (conf.valid("allEnergiesFile"))
     conf["allEnergiesFile"] = Append(conf["allEnergiesFile"], id);
 
   // Update firststep
-  int firststep = toInt(conf["firststep"]);
-  conf["firststep"] = step;
+  int firststep = toInt(conf[InputFirststep::keyword]);
+  conf[InputFirststep::keyword] = step;
 
   // Update total steps
-  int numsteps = toInt(conf["numsteps"]) - (step - firststep);
+  int numsteps = toInt(conf[InputNumsteps::keyword]) - (step - firststep);
   if (numsteps < 0) numsteps = 0;
-  conf["numsteps"] = numsteps;
+  conf[InputNumsteps::keyword] = numsteps;
+
+  // Disable Angular and Linear Motion removal
+  conf[InputRemoveLinearMomentum::keyword] = -1;
+  conf[InputRemoveAngularMomentum::keyword] = -1;
 
   // DCD file in use?
   if( conf.valid("DCDFile") ){
@@ -85,7 +93,7 @@ bool CheckpointConfigReader::readBase(Configuration &conf, Random &rand) {
           //valid first step?
           //if not start again!
           if( dcdFirststep >= 0 ){
-          
+
               //get DCD write frequency
               int dcdFrequency = 1; //if not set default is 1
 
@@ -107,7 +115,7 @@ bool CheckpointConfigReader::readBase(Configuration &conf, Random &rand) {
           }
 
       }
-      
+
   }
 
   return !file.fail();
@@ -116,7 +124,7 @@ bool CheckpointConfigReader::readBase(Configuration &conf, Random &rand) {
 
 bool CheckpointConfigReader::readIntegrator(Integrator *integ) {
   if (!tryFormat()) return false;
-    
+
   string line;
   while (std::getline(file, line))
     if (line.find("#Integrator") != string::npos)
