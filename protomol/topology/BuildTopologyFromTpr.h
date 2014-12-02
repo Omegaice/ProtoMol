@@ -12,10 +12,10 @@ namespace ProtoMol {
   class GenericTopology;
 
   //build topo from TPR file
-  void buildTopologyFromTpr(GenericTopology *topo, 
+  void buildTopologyFromTpr(GenericTopology *topo,
                                 Vector3DBlock &pos, Vector3DBlock &vel,
                                 const string &fname,
-                                bool gromacsnewpositions);
+                                bool newpositions, bool newvelocities);
   //struct for saving functions
   struct function{
     string name;

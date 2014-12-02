@@ -42,13 +42,13 @@ defineInputValue(InputGromacsTprFile, "gromacstprfile")
 
 void IOModule::init(ProtoMolApp *app) {
   Configuration *config = &app->config;
-  
+
   InputPositions::registerConfiguration(config);
   InputVelocities::registerConfiguration(config);
   InputPSF::registerConfiguration(config);
   InputPAR::registerConfiguration(config);
   InputPDBScaling::registerConfiguration(config);
-  InputDihedralMultPSF::registerConfiguration(config);  
+  InputDihedralMultPSF::registerConfiguration(config);
   InputSCPISM::registerConfiguration(config);
 
   //for GROMACS
@@ -63,10 +63,13 @@ void IOModule::init(ProtoMolApp *app) {
 void IOModule::read(ProtoMolApp *app) {
   Configuration &config = app->config;
 
-  
   //test if TPR file as only velocities and positions allowed
   bool GROMACSTPR = false;
   if( config.valid(InputGromacsTprFile::keyword) ) GROMACSTPR = true;
+
+  if( !config.valid(InputPositions::keyword) && !config.valid(InputVelocities::keyword) ){
+    return;
+  }
 
   // Positions
   PosVelReader reader;
@@ -80,7 +83,7 @@ void IOModule::read(ProtoMolApp *app) {
       THROW(string("Could not parse PDB position file '") +
         config[InputPositions::keyword].getString() + "'.");
 	}
-    
+
     // Use swap function of Vector3DBlock
     app->positions.swap(pdb.coords);
 
@@ -141,14 +144,14 @@ void IOModule::read(ProtoMolApp *app) {
   //if not TPR
   if(!GROMACSTPR){
     // Gromacs/AMBER input files
-    if (config.valid(InputGromacsTopo::keyword) && 
+    if (config.valid(InputGromacsTopo::keyword) &&
           config.valid(InputGromacsParamPath::keyword)){
        GromacsTopology gTopo;
        GromacsParameters gParams;
        PortGromacsParameters gromacs_port;
-         
+
        if (!gromacs_port.Read_Basic_Gromacs_Parameters
-           (app->psf,app->par, gTopo, gParams, 
+           (app->psf,app->par, gTopo, gParams,
             (const string)config[InputGromacsTopo::keyword],
             (const string)config[InputGromacsParamPath::keyword])){
          THROW(string("Cant read GROMACS parameters into PSF and PAR"));
@@ -216,7 +219,7 @@ void IOModule::read(ProtoMolApp *app) {
 
 
     }
-    
+
     // Test input if normal topology
     if (app->positions.size() != app->velocities.size() ||
         app->positions.size() != app->psf.atoms.size())
@@ -225,12 +228,12 @@ void IOModule::read(ProtoMolApp *app) {
              << " velocities=" << app->velocities.size()
              << " atoms=" << app->psf.atoms.size());
   }else{
-  
+
     // Test input for positions and velocities only if TPR
     if (app->positions.size() != app->velocities.size() )
       THROWS("Positions, velocities and PSF input have different number "
            "of atoms. positions=" << app->positions.size()
              << " velocities=" << app->velocities.size());
-    
+
   }
 }

@@ -171,7 +171,7 @@ bool ProtoMol::parse_iparams(function &func, void *ft, void *ip,
 // main build topology
 void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
                                     Vector3DBlock &vel, const string &fname,
-                                    bool gromacsnewpositions) {
+                                    bool newpositions, bool newvelocities) {
   // define versions of TPR file
   // Version 4.5.3 has tpx_version=73 and includes gb_radius in the tpr file
   enum {GB_RADII_IN_TPR = 73};
@@ -218,7 +218,9 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
   // ----------------------------------------------------------------------
 
   //test if we are over writing positions and velocities
-  if( !gromacsnewpositions ){
+  if( !newpositions && !newvelocities){
+    std::cout << "TPR Velocities and Positions" << std::endl;
+
     // test positions/velocities available
     if (!tpx.bX || !tpx.bV) THROW("No Position or Velocity data.");
 
@@ -238,7 +240,7 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
         Constant::TIMEFACTOR * Constant::FS_PS; // nm/ps to A/fs?; // tpx.bV?
     }
   }
-  
+
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // First, generate the array of atomtypes
   // Each time a new atom comes up, we need to check if it is
@@ -923,7 +925,7 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
 
       if (!tempatom->myGBSA_T->distij)
         tempatom->myGBSA_T->SetSpaceDistij(atomsSize);
-      
+
       tempatom->myGBSA_T->expTerm.resize( atomsSize );
       tempatom->myGBSA_T->filTerm.resize( atomsSize );
       tempatom->myGBSA_T->partialTerm.resize( atomsSize );
