@@ -70,7 +70,7 @@ void OutputCheckpoint::doRun(long step) {
 
 
 Output *OutputCheckpoint::doMake(const vector<Value> &values) const {
-  return new OutputCheckpoint(values[0], values[1], values[2], values[3], values[4]);
+  return new OutputCheckpoint(values[0], toInt(values[1]), values[2], values[3], values[4]);
 }
 
 
