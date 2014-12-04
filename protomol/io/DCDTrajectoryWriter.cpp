@@ -15,14 +15,16 @@ DCDTrajectoryWriter::DCDTrajectoryWriter(Real timestep, unsigned int firststep,
   Writer(ios::binary | ios::trunc), myFrameOffset(0),
   myIsLittleEndian(isLittleEndian),
   myFirstStep(firststep), myTimeStep(timestep), 
-  firstWrite(true) {}
+  firstWrite(true), cachesize(1), firstFlushOffset(1) {
+}
 
 DCDTrajectoryWriter::DCDTrajectoryWriter(const string &filename, Real timestep,
                                          unsigned int firststep,
                                          bool isLittleEndian) :
   Writer(ios::binary | ios::trunc, filename), myFrameOffset(0),
   myIsLittleEndian(isLittleEndian), myFirstStep(firststep),
-  myTimeStep(timestep), firstWrite(true) {}
+  myTimeStep(timestep), firstWrite(true), cachesize(1), firstFlushOffset(1) {
+}
 
 DCDTrajectoryWriter::DCDTrajectoryWriter(std::ios::openmode mode, int frameoffs,
                                          const string &filename, Real timestep,
@@ -30,14 +32,21 @@ DCDTrajectoryWriter::DCDTrajectoryWriter(std::ios::openmode mode, int frameoffs,
                                          bool isLittleEndian) :
   Writer(mode, filename), myFrameOffset(frameoffs),
   myIsLittleEndian(isLittleEndian), myFirstStep(firststep),
-  myTimeStep(timestep), firstWrite(true) {}
+  myTimeStep(timestep), firstWrite(true), cachesize(1), firstFlushOffset(1) {
+}
 
 DCDTrajectoryWriter::DCDTrajectoryWriter(const char *filename, Real timestep,
                                          unsigned int firststep,
                                          bool isLittleEndian) :
   Writer(ios::binary | ios::trunc, string(filename)), myFrameOffset(0),
   myIsLittleEndian(isLittleEndian), myFirstStep(firststep),
-  myTimeStep(timestep), firstWrite(true) {}
+  myTimeStep(timestep), firstWrite(true), cachesize(1), firstFlushOffset(1) {
+}
+
+DCDTrajectoryWriter::~DCDTrajectoryWriter(){
+  Vector3DBlock zerolength;
+  write(zerolength);
+}
 
 bool DCDTrajectoryWriter::openWith(Real timestep, unsigned int firststep,
                                    bool isLittleEndian) {
@@ -65,7 +74,7 @@ bool DCDTrajectoryWriter::openWith(const char *filename, Real timestep,
   return open(filename);
 }
 
-bool DCDTrajectoryWriter::reopen(unsigned int numAtoms) {
+bool DCDTrajectoryWriter::reopen(unsigned int numAtoms, unsigned int numberOfSets) {
   if (!is_open()) {
     open(filename, ios::binary | ios::in | ios::out);
     if (!is_open()) THROWS("Failed to open '" << filename << "'");
@@ -121,11 +130,14 @@ bool DCDTrajectoryWriter::reopen(unsigned int numAtoms) {
           THROWS("Corrupt DCD file. Size is " << size << ", should be >= " << calculateSize << ".");
 
       //correct numsets
-      numSets = ++myFrameOffset;
+      myFrameOffset += numberOfSets;
+      numSets = myFrameOffset;
+      //was numSets = ++myFrameOffset, but now save multiple steps;
       
     }else{
         //original code here
-        ++numSets;
+        numSets += numberOfSets;
+        //++numSets;
     }
 
     //back to original code
@@ -147,7 +159,7 @@ bool DCDTrajectoryWriter::reopen(unsigned int numAtoms) {
     file.seekg(0, ios::beg);
 
     int32 nAtoms = static_cast<int32>(numAtoms);
-    int32 numSets = 1;
+    int32 numSets = numberOfSets; //was 1, now set to number we are writing;
     int32 numSteps = 1;
     int32 firstStep = static_cast<int32>(myFirstStep);
     float4 timeStep =
@@ -236,42 +248,81 @@ bool DCDTrajectoryWriter::write(const Vector3DBlock &coords) {
     return true;
   }
 
-  //original code
-  const unsigned int count = coords.size();
-  if (!reopen(count)) return false;
+  //added caching to lower IO calls
+  if( coords.size() != 0 ) cachedCoords.push_back(coords);
+  
+  //disable forward save if cachesize is 1)
+  if( cachesize == 1 ) firstFlushOffset = 0;
+  
+  //push out if sufficient
+  if( cachedCoords.size() >= (cachesize + firstFlushOffset) || ( coords.size() == 0 && cachedCoords.size() > 0 )){
+    //report << debug(0) <<"Writing DCD." << endr;
 
-  myX.resize(count);
-  myY.resize(count);
-  myZ.resize(count);
+    //clear first flush offset so that output is synced with checkpoint
+    firstFlushOffset = 0;
+    
+    //original code modified for caching, index 0 must exist here
+    const unsigned int setcount = cachedCoords.size();
+    const unsigned int count = cachedCoords[0].size();//ccoords.size();
+    if (!reopen(count, setcount)) return false;
 
-  for (unsigned int i = 0; i < count; ++i) {
-    myX[i] = static_cast<float>(coords[i].c[0]);
-    myY[i] = static_cast<float>(coords[i].c[1]);
-    myZ[i] = static_cast<float>(coords[i].c[2]);
-    if (myIsLittleEndian != ISLITTLEENDIAN) {
-      swapBytes(myX[i]);
-      swapBytes(myY[i]);
-      swapBytes(myZ[i]);
-    }
+    //loop over each set of coordinates
+    for( int i=0; i<setcount; i++){
+      Vector3DBlock ccoords = cachedCoords[i];
+      
+      //original code
+      //const unsigned int count = ccoords.size();
+      //if (!reopen(count)) return false;
+
+      myX.resize(count);
+      myY.resize(count);
+      myZ.resize(count);
+
+      for (unsigned int i = 0; i < count; ++i) {
+        myX[i] = static_cast<float>(ccoords[i].c[0]);
+        myY[i] = static_cast<float>(ccoords[i].c[1]);
+        myZ[i] = static_cast<float>(ccoords[i].c[2]);
+        if (myIsLittleEndian != ISLITTLEENDIAN) {
+          swapBytes(myX[i]);
+          swapBytes(myY[i]);
+          swapBytes(myZ[i]);
+        }
+      }
+
+      int32 nAtoms = static_cast<int32>(count * 4);
+      if (myIsLittleEndian != ISLITTLEENDIAN) swapBytes(nAtoms);
+
+      file.write((char *)&nAtoms, sizeof(int32));
+      file.write((char *)&(myX[0]), count * sizeof(float4));
+      file.write((char *)&nAtoms, sizeof(int32));
+
+      file.write((char *)&nAtoms, sizeof(int32));
+      file.write((char *)&(myY[0]), count * sizeof(float4));
+      file.write((char *)&nAtoms, sizeof(int32));
+
+      file.write((char *)&nAtoms, sizeof(int32));
+      file.write((char *)&(myZ[0]), count * sizeof(float4));
+      file.write((char *)&nAtoms, sizeof(int32));
+
+      //close();
+      
+      if( file.fail() ){
+        cachedCoords.clear();
+        close();
+        return false;
+      }//end of coordinate save
+      
+    }//end of loop
+    
+    //close file once strored
+    close();
+    cachedCoords.clear();
+    return true;//!file.fail();
+
   }
-
-  int32 nAtoms = static_cast<int32>(count * 4);
-  if (myIsLittleEndian != ISLITTLEENDIAN) swapBytes(nAtoms);
-
-  file.write((char *)&nAtoms, sizeof(int32));
-  file.write((char *)&(myX[0]), count * sizeof(float4));
-  file.write((char *)&nAtoms, sizeof(int32));
-
-  file.write((char *)&nAtoms, sizeof(int32));
-  file.write((char *)&(myY[0]), count * sizeof(float4));
-  file.write((char *)&nAtoms, sizeof(int32));
-
-  file.write((char *)&nAtoms, sizeof(int32));
-  file.write((char *)&(myZ[0]), count * sizeof(float4));
-  file.write((char *)&nAtoms, sizeof(int32));
-
-  close();
-  return !file.fail();
+  
+  //true if just cached
+  return true;
 }
 
 void DCDTrajectoryWriter::setLittleEndian(bool littleEndian) {

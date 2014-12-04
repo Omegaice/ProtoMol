@@ -42,6 +42,7 @@ namespace ProtoMol {
                                  Real timestep = 1.0, unsigned int firststep =
                                    1,
                                  bool isLittleEndian = ISLITTLEENDIAN);
+    virtual ~DCDTrajectoryWriter();
     
     //special create for append to DCD
     explicit DCDTrajectoryWriter(std::ios::openmode mode, int frameoffs,
@@ -71,7 +72,7 @@ namespace ProtoMol {
     void setTimestep(Real timestep);
     void setFirststep(unsigned int firststep);
 
-    bool reopen(unsigned int numAtoms);
+    bool reopen(unsigned int numAtoms, unsigned int numberOfSets);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Friends
@@ -95,6 +96,11 @@ namespace ProtoMol {
     std::vector<float4> myX;
     std::vector<float4> myY;
     std::vector<float4> myZ;
+    
+    //additions to cache data
+    std::vector<Vector3DBlock> cachedCoords;
+    unsigned int cachesize;
+    unsigned int firstFlushOffset;
   };
 
   //____INLINES
