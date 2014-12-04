@@ -20,9 +20,9 @@ OutputDCDTrajectory::OutputDCDTrajectory() :
 
 
 OutputDCDTrajectory::OutputDCDTrajectory(const string &filename, int freq,
-                                         bool minimal, int frameoffs) :
+                                         bool minimal, int frameoffs, int cachesz) :
   Output(freq), dCD(0), minimalImage(minimal), frameOffset(frameoffs),
-  filename(filename), cachesize(10), firstWrite(true), cacheoffset(0) {
+  filename(filename), cachesize(cachesz), firstWrite(true), cacheoffset(0) {
 
   report << plain << "DCD FrameOffset parameter set to "
          << frameOffset << "." << endr;
@@ -79,7 +79,7 @@ void OutputDCDTrajectory::doRun(long) {
   }
   
   if(firstWrite){
-    cacheoffset = 1;
+    if(cachesize > 1) cacheoffset = 1;
     firstWrite = false;
   }
 
@@ -109,7 +109,7 @@ void OutputDCDTrajectory::doFinalize(long) {
 
 
 Output *OutputDCDTrajectory::doMake(const vector<Value> &values) const {
-  return new OutputDCDTrajectory(values[0], values[1], values[2], values[3]);//, values[4]);
+  return new OutputDCDTrajectory(values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -125,9 +125,9 @@ void OutputDCDTrajectory::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
     (Parameter(keyword + "FrameOffset",
                 Value(frameOffset, ConstraintValueType::NotNegative()), 0 ));
-  /*parameter.push_back
+  parameter.push_back
     (Parameter(keyword + "CacheSize",
-             Value(cachesize, ConstraintValueType::NotNegative()), 1 ));*/
+             Value(cachesize, ConstraintValueType::NotNegative()), 1 ));
 }
 
 

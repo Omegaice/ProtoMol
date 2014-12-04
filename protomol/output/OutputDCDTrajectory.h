@@ -23,13 +23,13 @@ namespace ProtoMol {
 
     //additions to cache data
     std::vector<Vector3DBlock> cachedCoords;
-    unsigned int cachesize;
+    int cachesize;
     unsigned int cacheoffset;
 
   public:
     OutputDCDTrajectory();
     OutputDCDTrajectory(const std::string &filename, int freq,
-                            bool minimal, int frameoffs);
+                            bool minimal, int frameoffs, int cachesz);
     virtual ~OutputDCDTrajectory();
 
     //   From class Output

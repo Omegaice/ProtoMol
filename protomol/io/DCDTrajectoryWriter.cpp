@@ -242,7 +242,7 @@ bool DCDTrajectoryWriter::write(const std::vector<Vector3DBlock> &cachedCoords) 
   
   //push out if sufficient
   if( cachedCoords.size() > 0 ){
-    report << debug(0) <<"Writing DCD, multiple frames." << endr;
+    report << debug(1) <<"Writing DCD, multiple frames." << endr;
     
     //original code modified for caching, index 0 must exist here
     const unsigned int setcount = cachedCoords.size();
@@ -305,7 +305,7 @@ bool DCDTrajectoryWriter::write(const std::vector<Vector3DBlock> &cachedCoords) 
 //standard call
 bool DCDTrajectoryWriter::write(const Vector3DBlock &coords) {
   
-  report << debug(0) <<"Writing DCD, single frame." << endr;
+  report << debug(1) <<"Writing DCD, single frame." << endr;
   
   //original code
   const unsigned int count = coords.size();
