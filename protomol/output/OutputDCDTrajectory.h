@@ -18,9 +18,13 @@ namespace ProtoMol {
     int frameOffset;
     string filename;
     
+    //checkpoint correction at first output
+    bool firstWrite;
+
     //additions to cache data
     std::vector<Vector3DBlock> cachedCoords;
     unsigned int cachesize;
+    unsigned int cacheoffset;
 
   public:
     OutputDCDTrajectory();

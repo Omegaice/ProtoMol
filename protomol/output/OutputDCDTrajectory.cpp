@@ -16,13 +16,13 @@ const string OutputDCDTrajectory::keyword("DCDFile");
 
 
 OutputDCDTrajectory::OutputDCDTrajectory() :
-  dCD(0), minimalImage(false), frameOffset(0), cachesize(1) {}
+  dCD(0), minimalImage(false), frameOffset(0), cachesize(1), firstWrite(true), cacheoffset(0) {}
 
 
 OutputDCDTrajectory::OutputDCDTrajectory(const string &filename, int freq,
                                          bool minimal, int frameoffs) :
   Output(freq), dCD(0), minimalImage(minimal), frameOffset(frameoffs),
-  filename(filename), cachesize(10) {
+  filename(filename), cachesize(10), firstWrite(true), cacheoffset(0) {
 
   report << plain << "DCD FrameOffset parameter set to "
          << frameOffset << "." << endr;
@@ -70,13 +70,27 @@ void OutputDCDTrajectory::doInitialize() {
 
 
 void OutputDCDTrajectory::doRun(long) {
+  
+  //don't write first frame if checkpoint re-start
+  if(firstWrite && frameOffset != 0 ){
+    //one shot
+    firstWrite = false;
+    return;
+  }
+  
+  if(firstWrite){
+    cacheoffset = 1;
+    firstWrite = false;
+  }
+
   const Vector3DBlock *pos =
     (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
   
   //cache data
   cachedCoords.push_back(*pos);
   
-  if (cachedCoords.size() >= cachesize){
+  if (cachedCoords.size() >= cachesize + cacheoffset){
+    cacheoffset = 0;
     if (!dCD->write(cachedCoords))
       THROWS("Could not write " << getId() << " '" << dCD->getFilename() << "'.");
     cachedCoords.clear();

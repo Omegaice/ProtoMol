@@ -44,8 +44,6 @@ DCDTrajectoryWriter::DCDTrajectoryWriter(const char *filename, Real timestep,
 }
 
 DCDTrajectoryWriter::~DCDTrajectoryWriter(){
-  Vector3DBlock zerolength;
-  write(zerolength);
 }
 
 bool DCDTrajectoryWriter::openWith(Real timestep, unsigned int firststep,
@@ -242,13 +240,6 @@ bool DCDTrajectoryWriter::reopen(unsigned int numAtoms, unsigned int numberOfSet
 //cached call
 bool DCDTrajectoryWriter::write(const std::vector<Vector3DBlock> &cachedCoords) {
   
-  /*//don't write first frame if checkpoint re-start
-  if(firstWrite && myFrameOffset != 0 ){
-    //one shot
-    firstWrite = false;
-    return true;
-  }*/
-  
   //push out if sufficient
   if( cachedCoords.size() > 0 ){
     report << debug(0) <<"Writing DCD, multiple frames." << endr;
@@ -313,13 +304,6 @@ bool DCDTrajectoryWriter::write(const std::vector<Vector3DBlock> &cachedCoords) 
 
 //standard call
 bool DCDTrajectoryWriter::write(const Vector3DBlock &coords) {
-
-  /*//don't write first frame if checkpoint re-start
-  if(firstWrite && myFrameOffset != 0 ){
-    //one shot
-    firstWrite = false;
-    return true;
-  }*/
   
   report << debug(0) <<"Writing DCD, single frame." << endr;
   
