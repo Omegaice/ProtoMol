@@ -67,6 +67,7 @@ namespace ProtoMol {
                   bool isLittleEndian = ISLITTLEENDIAN);
 
     bool write(const Vector3DBlock &coords);
+    bool write(const std::vector<Vector3DBlock> &cachedCoords);
 
     void setLittleEndian(bool littleEndian);
     void setTimestep(Real timestep);
@@ -97,10 +98,6 @@ namespace ProtoMol {
     std::vector<float4> myY;
     std::vector<float4> myZ;
     
-    //additions to cache data
-    std::vector<Vector3DBlock> cachedCoords;
-    unsigned int cachesize;
-    unsigned int firstFlushOffset;
   };
 
   //____INLINES
