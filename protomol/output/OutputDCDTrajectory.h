@@ -3,6 +3,7 @@
 #define PROTOMOL_OUTPUT_DCD_TRAJECTORY_H
 
 #include <protomol/output/Output.h>
+#include <protomol/type/Vector3DBlock.h>
 
 namespace ProtoMol {
   class DCDTrajectoryWriter;
@@ -16,11 +17,19 @@ namespace ProtoMol {
     bool minimalImage;
     int frameOffset;
     string filename;
+    
+    //checkpoint correction at first output
+    bool firstWrite;
+
+    //additions to cache data
+    std::vector<Vector3DBlock> cachedCoords;
+    int cachesize;
+    unsigned int cacheoffset;
 
   public:
     OutputDCDTrajectory();
     OutputDCDTrajectory(const std::string &filename, int freq,
-                            bool minimal, int frameoffs);
+                            bool minimal, int frameoffs, int cachesz);
     virtual ~OutputDCDTrajectory();
 
     //   From class Output

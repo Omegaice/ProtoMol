@@ -16,13 +16,13 @@ const string OutputDCDTrajectory::keyword("DCDFile");
 
 
 OutputDCDTrajectory::OutputDCDTrajectory() :
-  dCD(0), minimalImage(false), frameOffset(0) {}
+  dCD(0), minimalImage(false), frameOffset(0), cachesize(1), firstWrite(true), cacheoffset(0) {}
 
 
 OutputDCDTrajectory::OutputDCDTrajectory(const string &filename, int freq,
-                                         bool minimal, int frameoffs) :
+                                         bool minimal, int frameoffs, int cachesz) :
   Output(freq), dCD(0), minimalImage(minimal), frameOffset(frameoffs),
-  filename(filename) {
+  filename(filename), cachesize(cachesz), firstWrite(true), cacheoffset(0) {
 
   report << plain << "DCD FrameOffset parameter set to "
          << frameOffset << "." << endr;
@@ -30,7 +30,14 @@ OutputDCDTrajectory::OutputDCDTrajectory(const string &filename, int freq,
 
 
 OutputDCDTrajectory::~OutputDCDTrajectory() {
-  if (dCD) delete dCD;
+  if (dCD){
+    if(cachedCoords.size() > 0){
+      if (!dCD->write(cachedCoords))
+        THROWS("Could not write " << getId() << " '" << dCD->getFilename() << "'.");
+      cachedCoords.clear();
+    }
+    delete dCD;
+  }
 }
 
 
@@ -63,21 +70,46 @@ void OutputDCDTrajectory::doInitialize() {
 
 
 void OutputDCDTrajectory::doRun(long) {
+  
+  //don't write first frame if checkpoint re-start
+  if(firstWrite && frameOffset != 0 ){
+    //one shot
+    firstWrite = false;
+    return;
+  }
+  
+  if(firstWrite){
+    if(cachesize > 1) cacheoffset = 1;
+    firstWrite = false;
+  }
+
   const Vector3DBlock *pos =
     (minimalImage ? app->outputCache.getMinimalPositions() : &app->positions);
-
-  if (!dCD->write(*pos))
-    THROWS("Could not write " << getId() << " '" << dCD->getFilename() << "'.");
+  
+  //cache data
+  cachedCoords.push_back(*pos);
+  
+  if (cachedCoords.size() >= cachesize + cacheoffset){
+    cacheoffset = 0;
+    if (!dCD->write(cachedCoords))
+      THROWS("Could not write " << getId() << " '" << dCD->getFilename() << "'.");
+    cachedCoords.clear();
+  }
 }
 
 
 void OutputDCDTrajectory::doFinalize(long) {
+  if(cachedCoords.size() > 0){
+    if (!dCD->write(cachedCoords))
+      THROWS("Could not write " << getId() << " '" << dCD->getFilename() << "'.");
+    cachedCoords.clear();
+  }
   dCD->close();
 }
 
 
 Output *OutputDCDTrajectory::doMake(const vector<Value> &values) const {
-  return new OutputDCDTrajectory(values[0], values[1], values[2], values[3]);
+  return new OutputDCDTrajectory(values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -93,6 +125,9 @@ void OutputDCDTrajectory::getParameters(vector<Parameter> &parameter) const {
   parameter.push_back
     (Parameter(keyword + "FrameOffset",
                 Value(frameOffset, ConstraintValueType::NotNegative()), 0 ));
+  parameter.push_back
+    (Parameter(keyword + "CacheSize",
+             Value(cachesize, ConstraintValueType::NotNegative()), 1 ));
 }
 
 
