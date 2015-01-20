@@ -233,48 +233,30 @@ namespace ProtoMol {
     //define epsilon
     Real epsilon = 1e-9;
 
-    //loop over each eigenvector purtubation
-    for(int eg=0; eg<residues_total_eigs; eg++ ){
+    BlockMatrix H( 0, 0, 3 * sz, 3 * sz );
+    H.clear();
 
+    //loop over each degree of freedom
+    for( unsigned i=0; i < sz * 3; i++ ){
         //get purturbed position
-        for( unsigned i=0; i < sz; i++ ){
-            for( unsigned j=0; j<3; j++ ){
-                (*myPositions)[i][j] = tempPos[i][j]
-                    + epsilon * ( 1.0 / sqrt(myTopo->atoms[i].scaledMass))
-                        * fullEigs( i*3+j, eg );
-
-            }
-        }
+        (*myPositions)[i/3][i%3] = tempPos[i/3][i%3] + epsilon;
 
         //get new forces and find difference
         intg->calculateForces();
-
         Vector3DBlock deltaForce = *(intg->getForces()) - tempForce;
 
-        //creat row matrix of deltaForce vector
-        BlockMatrix dForce( 0, 0, 1, 3 * sz );
-
-        for( unsigned i=0; i < 3 * sz; i++ ){
-            dForce[i] = deltaForce[i/3][i%3]
-                            * ( 1.0 / sqrt(myTopo->atoms[i/3].scaledMass) )
-                                * ( 1.0 / epsilon );
+        //create E matrix
+        for( unsigned j = 0; j < 3 * sz; j++ ){
+            H(j,i) = deltaForce[j/3][j%3] * ( 1.0 / epsilon );
         }
 
-        //create output column matrix
-        BlockMatrix opVector( 0, 0, 1, residues_total_eigs );
-        opVector.clear();
+        //get purturbed position
+        (*myPositions)[i/3][i%3] = tempPos[i/3][i%3];
+    }
 
-        //get product
-        for(int i=0;i<bHess->num_blocks;i++){
-            dForce.product( blockEigVect[i], opVector );
-        }
-
-        //copy product
-        for(int i=0;i<residues_total_eigs;i++){
-            innerDiag(i,eg) = opVector[i];
-        }
-
-    }//~~~~
+    BlockMatrix EH( 0, 0, residues_total_eigs, 3 * sz);
+    fullEigs.transposeProduct(H, EH);
+    EH.product(fullEigs, innerDiag);
 
     //restore positions
     *myPositions = tempPos;
