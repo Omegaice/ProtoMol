@@ -429,6 +429,7 @@ namespace ProtoMol {
 
       //diagonalize block
       rediagTime.start();
+      BlockMatrix bH = bHess->blocks[ii];
       int infor = diagHessian(blockEigVect[ii].arrayPointer(), &rE[bHess->hess_eig_point[ii] * 3],
                                 bHess->blocks[ii].arrayPointer(), bHess->blocks[ii].Rows, numFound);
       rediagTime.stop();
@@ -701,14 +702,14 @@ namespace ProtoMol {
 
           // Calculate Quotients
           BlockMatrix TtH( blockEigVect[ii].RowStart, blockEigVect[ii].ColumnStart, blockEigVect[ii].Rows, blockEigVect[ii].Columns );
-          tmpEigs.transposeProduct(blockEigVect[ii], TtH);
+          tmpEigs.transposeProduct(bH, TtH);
 
           BlockMatrix quotients( blockEigVect[ii].RowStart, blockEigVect[ii].ColumnStart, blockEigVect[ii].Rows, blockEigVect[ii].Columns );
           TtH.product(tmpEigs, quotients);
 
           const unsigned int ignoredVectors = 0;
 
-          int element = 0;
+          int element = ignoredVectors;
           std::vector<double> eigVal;
           for( int j = quotients.ColumnStart + ignoredVectors; j < quotients.ColumnStart+quotients.Columns; j++ ){
             eigVal.push_back(quotients(quotients.RowStart+element, j));
@@ -721,7 +722,7 @@ namespace ProtoMol {
           for( int i = 0; i < sortedValues.size(); i++ ){
             int column = sortedValues[i].second;
             for( int j = quotients.RowStart; j < quotients.RowStart+quotients.Rows; j++ ){
-                tmpEigs(j, quotients.ColumnStart+i+ignoredVectors) = sorted(j,quotients.ColumnStart+column);
+                tmpEigs(j, quotients.ColumnStart+i+ignoredVectors) = sorted(j,quotients.ColumnStart+column+ignoredVectors);
             }
           }
 
