@@ -254,6 +254,12 @@ namespace ProtoMol {
         (*myPositions)[i/3][i%3] = tempPos[i/3][i%3];
     }
 
+    for( unsigned j = 0; j < sz * 3; j++ ){
+        for( unsigned i = 0; i < sz * 3; i++ ){
+            H(j,i) /= std::sqrt(myTopo->atoms[j/3].scaledMass) * std::sqrt(myTopo->atoms[i/3].scaledMass);
+        }
+    }
+
     BlockMatrix EH( 0, 0, residues_total_eigs, 3 * sz);
     fullEigs.transposeProduct(H, EH);
     EH.product(fullEigs, innerDiag);
