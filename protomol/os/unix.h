@@ -2,6 +2,5 @@
 #define CONFIG_UNIX_H
 
 #define HAVE_DEBUGGER
-#define HAVE_BACKTRACE
 
 #endif // CONFIG_UNIX_H

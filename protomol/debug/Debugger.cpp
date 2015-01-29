@@ -26,9 +26,9 @@
 
 #ifdef HAVE_DEBUGGER
 #include <protomol/debug/Debugger.h>
-#include <protomol/debug/Process.h>
 #include <protomol/type/String.h>
 
+#include <execinfo.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -80,88 +80,17 @@ bool Debugger::_getStackTrace(trace_t &trace) {
     return false;
   }
 
-  // Spawn gdb process
-  int argc = 0;
-  const char *argv[5];
+  void *array[maxTraces];
+  size_t size = backtrace(array, maxTraces);
+  char **strings = backtrace_symbols(array, size);
 
-  argv[argc++] = "gdb";
-  argv[argc++] = (char *)executableName.c_str();
-  String pid(getpid());
-  argv[argc++] = (char *)pid.c_str();
-  argv[argc] = 0;
-
-  try {
-    Process debugProc;
-    Pipe *outPipe = debugProc.getChildPipe(Process::FROM_CHILD, 1);
-    Pipe *errPipe = debugProc.getChildPipe(Process::FROM_CHILD, 2);
-
-    // Run gdb commands
-    string debugCmd =
-      string("set width ") + String(BUF_SIZE - 1) + "\nwhere\nquit\n";
-
-    // Execute debugger process
-    debugProc.exec((char **)argv);
-
-    // Read output
-    FILE *out = fdopen(outPipe->getOutFD(), "r");
-    FILE *err = fdopen(errPipe->getOutFD(), "r");
-    if (!out || !err) {
-      trace.push_back("Stack Trace Error: Opening debugger output streams!");
-
-      return false;
-    }
-
-    char buf[BUF_SIZE + 1];
-    int offset = 0;
-    int count = 0;
-    while (fgets(buf, BUF_SIZE, out))
-      if (buf[0] == '#') {
-        if (traceFiltering) {
-          count++;
-
-          if (strstr(buf, "Debugger::") ||
-              strstr(buf, "Exception::init") ||
-              strstr(buf, "Exception (")) {
-            offset = count;
-            trace.clear();
-            continue;
-          }
-        }
-
-        int line = atoi(&buf[1]) - offset;
-        char *start = strchr(buf, ' ');
-        int len = strlen(buf);
-
-        if (buf[len - 1] == '\n' || buf[len - 1] == '\r') buf[len - 1] = 0;
-        trace.push_back(string("#") + String(line) + start);
-      }
-
-#ifdef DEBUGGER_PRINT_ERROR_STREAM
-    while (fgets(buf, BUF_SIZE, err)) {
-      int len = strlen(buf);
-      if (buf[len - 1] == '\n' || buf[len - 1] == '\r') buf[len - 1] = 0;
-      if (buf[0] != 0) trace.push_back(buf);
-    }
-#endif
-
-
-    // Clean up
-    fclose(out);
-    fclose(err);
-
-    debugProc.wait();
-    if (debugProc.getReturnCode()) {
-      trace.push_back("Stack Trace Error: gdb returned an error.");
-
-      return false;
-    }
-
-    return true;
-  } catch (const Exception &e) {
-    trace.push_back(string("Stack Trace Error: ") + e.getMessage());
+  for( size_t i = 1; i < size && strings != NULL; ++i ) {
+    trace.push_back(strings[i]);
   }
 
-  return false;
+  free (strings);
+
+  return true;
 }
 
 bool Debugger::getStackTrace(trace_t &trace) {
