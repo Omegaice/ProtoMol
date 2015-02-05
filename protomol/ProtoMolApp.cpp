@@ -407,6 +407,9 @@ bool ProtoMolApp::step(long inc) {
 #endif
   }
 
+  // Handle analysis on each output step
+  analysis->run(currentStep);
+
   std::cout << inc << std::endl;
   if (!inc) inc = outputs->getNext() - currentStep;
  std::cout << inc << std::endl;
