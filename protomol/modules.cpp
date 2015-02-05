@@ -9,6 +9,7 @@
 #include <protomol/module/ModifierModule.h>
 #include <protomol/module/IOModule.h>
 #include <protomol/module/CheckpointModule.h>
+#include <protomol/module/AnalysisModule.h>
 
 #include <protomol/module/IntegratorBaseModule.h>
 #include <protomol/module/NormalModeModule.h>
@@ -33,6 +34,7 @@ void moduleInitFunction(ModuleManager *manager) {
   manager->add(new ModifierModule());
   manager->add(new IOModule());
   manager->add(new CheckpointModule());
+  manager->add(new AnalysisModule());
 
   // Integrators
   manager->add(new IntegratorBaseModule());
@@ -49,4 +51,3 @@ void moduleInitFunction(ModuleManager *manager) {
   manager->add(new NonbondedFullElectrostaticForceModule());
   manager->add(new NonbondedIntermittentFullForceModule());
 }
-

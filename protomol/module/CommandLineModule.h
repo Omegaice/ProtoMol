@@ -31,6 +31,7 @@ namespace ProtoMol {
     int listIntegrators(const std::vector<std::string> &args);
     int listForces(const std::vector<std::string> &args);
     int listOutputs(const std::vector<std::string> &args);
+    int listAnalysis(const std::vector<std::string> &args);
   };
 }
 

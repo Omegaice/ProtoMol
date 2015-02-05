@@ -11,6 +11,7 @@
 #include <protomol/module/MainModule.h>
 #include <protomol/module/IOModule.h>
 #include <protomol/module/ConfigurationModule.h>
+#include <protomol/module/AnalysisModule.h>
 
 #include <protomol/type/String.h>
 
@@ -28,6 +29,7 @@
 #include <protomol/topology/TopologyUtilities.h>
 
 #include <protomol/output/OutputCollection.h>
+#include <protomol/analysis/AnalysisCollection.h>
 
 #include <protomol/parallel/Parallel.h>
 
@@ -56,6 +58,7 @@ ProtoMolApp::ProtoMolApp(ModuleManager *modManager) :
 
   topologyFactory.registerAllExemplarsConfiguration(&config);
   outputFactory.registerAllExemplarsConfiguration(&config);
+  analysisFactory.registerAllExemplarsConfiguration(&config);
 }
 
 
@@ -324,10 +327,15 @@ void ProtoMolApp::build() {
   // TODO if !Parallel::iAmMaster() turn off outputs
 	if( !Parallel::iAmMaster() ){
 		outputs = new OutputCollection;
+        analysis = new AnalysisCollection;
 	}else{
 		if (config[InputOutput::keyword]){
 			outputs = outputFactory.makeCollection(&config);
 		}
+
+        if (config[InputAnalysis::keyword]){
+            analysis = analysisFactory.makeCollection(&config);
+        }
 	}
 
   // Post build processing
@@ -359,21 +367,22 @@ void ProtoMolApp::build() {
   outputCache.add(par);
 
   // Print Factories
-  if ((int)config[InputDebug::keyword] >= 5  &&
-      (int)config[InputDebugLimit::keyword] <= 5)
+  if ((int)config[InputDebug::keyword] >= 5 && (int)config[InputDebugLimit::keyword] <= 5)
     cout
       << headerRow("Factories")     << endl
       << headerRow("Configuration") << endl << config            << endl
       << headerRow("Topology")      << endl << topologyFactory   << endl
       << headerRow("Integrator")    << endl << integratorFactory << endl
       << headerRow("Force")         << endl << forceFactory      << endl
-      << headerRow("Output")        << endl << outputFactory     << endl;
+      << headerRow("Output")        << endl << outputFactory     << endl
+      << headerRow("Analysis")      << endl << analysisFactory   << endl;
 
   // Clear all factories
   topologyFactory.unregisterAllExemplars();
   integratorFactory.unregisterAllExemplars();
   forceFactory.unregisterAllExemplars();
   outputFactory.unregisterAllExemplars();
+  analysisFactory.unregisterAllExemplars();
 
   TimerStatistic::timer[TimerStatistic::RUN].reset();
   TimerStatistic::timer[TimerStatistic::INTEGRATOR].reset();
@@ -395,7 +404,9 @@ bool ProtoMolApp::step(long inc) {
 #endif
   }
 
+  std::cout << inc << std::endl;
   if (!inc) inc = outputs->getNext() - currentStep;
+ std::cout << inc << std::endl;
 
   //fix inc so do not overrun
   if( lastStep != -1 ){
