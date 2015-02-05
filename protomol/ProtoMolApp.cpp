@@ -366,6 +366,9 @@ void ProtoMolApp::build() {
   outputCache.add(psf);
   outputCache.add(par);
 
+  // Initialize Analysis
+  analysis->initialize(this);
+
   // Print Factories
   if ((int)config[InputDebug::keyword] >= 5 && (int)config[InputDebugLimit::keyword] <= 5)
     cout
@@ -440,11 +443,13 @@ void ProtoMolApp::finalize() {
   report << plain << "Performance: " << nanoSeconds << "ns in " << TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() << "s = " << nanoSecondsPerDay << "ns/day" << std::endl;
 
   outputs->finalize(currentStep);
+  analysis->finalize(currentStep);
 
   // Clean up
   zap(topology);
   zap(integrator);
   zap(outputs);
+  zap(analysis);
   zap(SCPISMParameters);
 
   TimerStatistic::timer[TimerStatistic::WALL].stop();
