@@ -12,7 +12,7 @@ using namespace ProtoMol::Report;
 const string Analysis::scope("Analysis");
 
 Analysis::Analysis(bool output) :
-	app(0), onOutput(output) {}
+	app(0), onOutput(output), mShouldStop(false) {}
 
 void Analysis::initialize(const ProtoMolApp *app) {
 	this->app = app;
@@ -22,6 +22,10 @@ void Analysis::initialize(const ProtoMolApp *app) {
 bool Analysis::run(long step) {
 	doRun(step);
 	return true;
+}
+
+bool Analysis::shouldStop() {
+	return mShouldStop;
 }
 
 void Analysis::finalize(long step) {

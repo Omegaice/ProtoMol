@@ -39,6 +39,15 @@ bool AnalysisCollection::run(long step) {
 	return outputRan;
 }
 
+bool AnalysisCollection::shouldStop() {
+	for( iterator i = begin(); i != end(); ++i ) {
+		if(( *i )->shouldStop() ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void AnalysisCollection::finalize(long step) {
 	app->outputCache.uncache();
 	for( iterator i = begin(); i != end(); i++ ) {

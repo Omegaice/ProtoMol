@@ -13,6 +13,7 @@ namespace ProtoMol {
 
 		protected:
 			bool onOutput;
+			bool mShouldStop;
 
 		public:
 			Analysis(bool output = 1);
@@ -23,6 +24,9 @@ namespace ProtoMol {
 			// / Called at each step (e.g., printing total energy on the screen),
 			// / takes care of the output frequency.  Returns true if it ran.
 			virtual bool run (long step);
+
+			// Called after running to determine if the simulation should be stopped
+			bool shouldStop();
 
 			// / At the end of the simulation (e.g., writing final positions), and
 			// / calls first run() to ensure that run is called for the last

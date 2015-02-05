@@ -431,6 +431,8 @@ bool ProtoMolApp::step(long inc) {
   }
   currentStep += completed;
 
+  if( analysis->shouldStop() ) lastStep = currentStep;
+
   TimerStatistic::timer[TimerStatistic::RUN].stop();
 
   return true;

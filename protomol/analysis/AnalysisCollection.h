@@ -27,6 +27,8 @@ namespace ProtoMol {
 			// / Invoke all Analysis objects with run().  Returns true if an Analysis ran.
 			bool run (long step);
 
+			bool shouldStop ();
+
 			// / Finalize all Outout object
 			void finalize (long step);
 
