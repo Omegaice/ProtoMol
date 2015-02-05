@@ -10,7 +10,6 @@ namespace ProtoMol {
 	class ProtoMolApp;
 
 	declareInputValue(InputAnalysis, BOOL, NOCONSTRAINTS);
-	declareInputValue(InputAnalysisfreq, LONG, NOTNEGATIVE);
 
 	class AnalysisModule : public Module {
 		public:

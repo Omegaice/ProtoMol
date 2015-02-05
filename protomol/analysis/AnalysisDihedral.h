@@ -12,8 +12,7 @@ namespace ProtoMol {
 			static const std::string keyword;
 
 		public:
-			AnalysisDihedral() {}
-			AnalysisDihedral(int freq);
+			AnalysisDihedral();
 
 		public:
 			void doIt (long step);
@@ -29,7 +28,6 @@ namespace ProtoMol {
 		public:
 			std::string getIdNoAlias() const { return keyword; }
 			void getParameters (std::vector<Parameter> &) const;
-			bool adjustWithDefaultParameters (std::vector<Value> &values, const Configuration *config) const;
 	};
 }
 

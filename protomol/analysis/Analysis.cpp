@@ -11,43 +11,17 @@ using namespace ProtoMol::Report;
 
 const string Analysis::scope("Analysis");
 
-Analysis::Analysis(long freq) :
-	app(0), firstStep(0), nextStep(0), lastStep(0), outputFreq(freq) {}
+Analysis::Analysis(bool output) :
+	app(0), onOutput(output) {}
 
 void Analysis::initialize(const ProtoMolApp *app) {
 	this->app = app;
-
-	if( outputFreq <= 0 ) {	//  used for finalize only output
-		if( app->config.valid(InputOutputfreq::keyword)) {
-			outputFreq = app->config[InputOutputfreq::keyword];
-		} else {
-			outputFreq = 1;
-		}
-	}
-
-	if( app->config.valid(InputFirststep::keyword)) {
-		nextStep = app->config[InputFirststep::keyword];
-		firstStep = app->config[InputFirststep::keyword];
-		lastStep = firstStep;
-	}
-
-	if( app->config.valid(InputNumsteps::keyword)) {
-		lastStep = lastStep + app->config[InputNumsteps::keyword].operator long();
-	}
-
 	doInitialize();
 }
 
 bool Analysis::run(long step) {
-	if( step >= nextStep ) {
-		long n = ( step - nextStep ) / outputFreq;
-		nextStep += max(n, 1L) * outputFreq;
-
-		doRun(step);
-		return true;
-	}
-
-	return false;
+	doRun(step);
+	return true;
 }
 
 void Analysis::finalize(long step) {
@@ -69,14 +43,10 @@ bool Analysis::isIdDefined(const Configuration *config) const {
 }
 
 void Analysis::getParameters(vector<Parameter> &parameter) const {
-	parameter.push_back(Parameter(getId() + "AnalysisFreq", Value(outputFreq, ConstraintValueType::Positive()), Text("output frequency")));
+	parameter.push_back(Parameter(getId() + "OnOutput", Value(onOutput), true));
 }
 
 bool Analysis:: adjustWithDefaultParameters(std::vector<Value> &values, const Configuration *config) const {
 	if( !checkParameterTypes(values)) { return false; }
-	if( config->valid(InputOutputfreq::keyword) && !values[1].valid()) {
-		values[1] = ( *config )[InputOutputfreq::keyword];
-	}
-
 	return checkParameters(values);
 }

@@ -31,7 +31,9 @@ bool AnalysisCollection::run(long step) {
 
 	app->outputCache.uncache();
 	for( iterator i = begin(); i != end(); ++i ) {
-		outputRan |= ( *i )->run(step);
+		if( ( *i )->isOnOutput() ) {
+			outputRan |= ( *i )->run(step);
+		}
 	}
 
 	return outputRan;
@@ -47,13 +49,4 @@ void AnalysisCollection::finalize(long step) {
 void AnalysisCollection::adoptAnalysis(Analysis *output) {
 	if( !output ) { THROW("null pointer"); }
 	outputList.push_back(output);
-}
-
-long AnalysisCollection::getNext() const {
-	long next = Constant::MAX_LONG;
-	for( const_iterator i = begin(); i != end(); i++ ) {
-		next = min(( *i )->getNext(), next);
-	}
-
-	return next;
 }

@@ -18,18 +18,31 @@ using namespace std;
 using namespace ProtoMol::Report;
 using namespace ProtoMol;
 
-const string AnalysisDihedral::keyword("Dihedral");
+const string AnalysisDihedral::keyword("AnalyzeDihedral");
 
-AnalysisDihedral::AnalysisDihedral(int freq) : Analysis(freq) {}
+AnalysisDihedral::AnalysisDihedral() : Analysis(true) {}
 
 void AnalysisDihedral::doInitialize() {}
 
 void AnalysisDihedral::doIt(long step) {}
 
-void AnalysisDihedral::doRun(long step) {}
+void AnalysisDihedral::doRun(long step) {
+	const size_t dihedralCount = app->topology->dihedrals.size();
+	std::cout << dihedralCount << std::endl;
+	for( int i = 0; i < dihedralCount; i++ ) {
+		if( i == 1 || i == 2 || i == 3 ) {
+			const Real angle = app->outputCache.getDihedralPhi( i );
+			std::cout << i << " " << angle << std::endl;
+			if( angle >= -180.0 && angle <= 0.0 ) {
+				std::cout << "Folded" << std::endl;
+				//app->finalize();
+			}
+		}
+	}
+}
 
 Analysis *AnalysisDihedral::doMake(const vector<Value> &values) const {
-	return new AnalysisDihedral(toInt(values[1]));
+	return new AnalysisDihedral();
 }
 
 bool AnalysisDihedral::isIdDefined(const Configuration *config) const {
@@ -38,15 +51,4 @@ bool AnalysisDihedral::isIdDefined(const Configuration *config) const {
 
 void AnalysisDihedral::getParameters(vector<Parameter> &parameter) const {
 	parameter.push_back( Parameter( getId(), Value( true ), true ) );
-	parameter.push_back(Parameter(getId() + "Freq", Value(outputFreq, ConstraintValueType::Positive()), Text("output frequency")));
-}
-
-bool AnalysisDihedral::adjustWithDefaultParameters(vector<Value> &values, const Configuration *config) const {
-	if( !checkParameterTypes(values)) { return false; }
-
-	if( config->valid(InputOutputfreq::keyword) && !values[1].valid()) {
-		values[1] = ( *config )[InputOutputfreq::keyword];
-	}
-
-	return checkParameters(values);
 }

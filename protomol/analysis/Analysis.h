@@ -12,13 +12,10 @@ namespace ProtoMol {
 			const ProtoMolApp *app;
 
 		protected:
-			long firstStep;
-			long nextStep;
-			long lastStep;
-			long outputFreq;// /< Output freqeuncy
+			bool onOutput;
 
 		public:
-			Analysis(long freq = 0);
+			Analysis(bool output = 1);
 
 			// / To initialize the object, before the simulation starts.
 			virtual void initialize (const ProtoMolApp *app);
@@ -44,10 +41,7 @@ namespace ProtoMol {
 			// / the output.
 			virtual bool addDoKeyword() const { return true; }
 
-			long getFirstStep() const { return firstStep; }
-			long getLastStep() const { return lastStep; }
-			long getOutputFreq() const { return outputFreq; }
-			long getNext() const { return nextStep; }
+			bool isOnOutput() const { return onOutput; }
 
 		private:
 			virtual void doInitialize () = 0;

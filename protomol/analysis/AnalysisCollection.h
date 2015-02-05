@@ -31,8 +31,6 @@ namespace ProtoMol {
 			void finalize (long step);
 
 			// / Add new Analysis object to the collection
-			long getNext () const;
-
 			void adoptAnalysis (Analysis *output);
 
 			// / Iterators, const
