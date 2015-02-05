@@ -29,7 +29,6 @@ bool Analysis::shouldStop() {
 }
 
 void Analysis::finalize(long step) {
-	doRun(step);
 	doFinalize(step);
 }
 
