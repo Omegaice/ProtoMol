@@ -39,6 +39,10 @@ void CommandLineModule::init(ProtoMolApp *app) {
     (this, &CommandLineModule::listOutputs);
   cmdLine.add(0, "outputs", action, "List outputs and exit.");
 
+  action = new CommandLineOption::Action<CommandLineModule>
+    (this, &CommandLineModule::listAnalysis);
+  cmdLine.add(0, "analysis", action, "List analysis and exit.");
+
 #ifdef DEBUG
   action = new CommandLineOption::Action<CommandLine>
     (&cmdLine, &CommandLine::enableStackTraceAction);
@@ -88,5 +92,10 @@ int CommandLineModule::listForces(const vector<string> &args) {
 
 int CommandLineModule::listOutputs(const vector<string> &args) {
   cout << headerRow("Outputs") << endl << app->outputFactory << endl;
+  return -1;
+}
+
+int CommandLineModule::listAnalysis(const vector<string> &args) {
+  cout << headerRow("Analysis") << endl << app->analysisFactory << endl;
   return -1;
 }
