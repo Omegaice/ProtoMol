@@ -141,9 +141,20 @@ void AnalysisDihedral::doRun(long step) {
 		}
 	}
 
+	report.setf( std::ios::fixed );
+
 	bool isFolded = true;
 	for( int i = 0; i < mIndex.size(); i++ ) {
-		if( ( psiAngle[i] < mPsiMin && psiAngle[i] > mPsiMax ) || ( phiAngle[i] < mPhiMin && phiAngle[i] > mPhiMax ) ) {
+		report << debug(1) << "[AnalyzeDihedral] Residues ";
+		for( int j = 0; j < mIndex.size(); j++ ) {
+			report << mIndex[j] << " (Phi:" << phiAngle[j] << "°, Psi:" << psiAngle[j] << "°)";
+			if( j < mIndex.size() - 1 ) {
+				report << ", ";
+			}
+		}
+		report << endr;
+
+		if( psiAngle[i] < mPsiMin || psiAngle[i] > mPsiMax || phiAngle[i] < mPhiMin || phiAngle[i] > mPhiMax ) {
 			isFolded = false;
 			break;
 		}
@@ -153,7 +164,7 @@ void AnalysisDihedral::doRun(long step) {
 		report << "[AnalyzeDihedral] Molecule satisfied dihedral angle analysis for residues ";
 
 		for( int j = 0; j < mIndex.size(); j++ ) {
-			report << mIndex[j] << "(Phi:" << phiAngle[j] << "°, Psi:" << psiAngle[j] << "°)";
+			report << mIndex[j] << " (Phi:" << phiAngle[j] << "°, Psi:" << psiAngle[j] << "°)";
 			if( j < mIndex.size() - 1 ) {
 				report << ", ";
 			}
@@ -163,6 +174,8 @@ void AnalysisDihedral::doRun(long step) {
 
 		mShouldStop = true;
 	}
+
+	report.reset();
 }
 
 Analysis *AnalysisDihedral::doMake(const vector<Value> &values) const {
