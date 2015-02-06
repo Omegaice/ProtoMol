@@ -1,5 +1,5 @@
 #include <protomol/factory/AnalysisFactory.h>
-#include <protomol/Analysis/AnalysisCollection.h>
+#include <protomol/analysis/AnalysisCollection.h>
 #include <protomol/config/Configuration.h>
 #include <protomol/base/StringUtilities.h>
 #include <protomol/factory/HelpTextFactory.h>
