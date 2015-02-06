@@ -144,6 +144,7 @@ void AnalysisDihedral::doRun(long step) {
 	bool isFolded = true;
 	for( int i = 0; i < mIndex.size(); i++ ) {
 		if( ( psiAngle[i] < mPsiMin && psiAngle[i] > mPsiMax ) || ( phiAngle[i] < mPhiMin && phiAngle[i] > mPhiMax ) ) {
+		if( psiAngle[i] < mPsiMin || psiAngle[i] > mPsiMax || phiAngle[i] < mPhiMin || phiAngle[i] > mPhiMax ) {
 			isFolded = false;
 			break;
 		}
