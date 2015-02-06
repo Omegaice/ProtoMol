@@ -118,12 +118,12 @@ const Real AnalysisDihedral::computeDihedral(const int a1, const int a2, const i
 }
 
 void AnalysisDihedral::doRun(long step) {
+	std::vector<Real> phiAngle(mIndex.size()), psiAngle(mIndex.size());
+
 	for( int i = 0; i < mIndex.size(); i++ ) {
 		const int alpha_c = residues_alpha_c[mIndex[i]];
 		const int phi_n = residues_phi_n[mIndex[i]];
 		const int psi_c = residues_psi_c[mIndex[i]];
-
-		Real phiAngle = 0.0, psiAngle = 0.0;
 
 		for( int dihedral = 0; dihedral < app->topology->rb_dihedrals.size(); dihedral++ ) {
 			const int a1 = app->topology->rb_dihedrals[dihedral].atom1;
@@ -132,28 +132,36 @@ void AnalysisDihedral::doRun(long step) {
 			const int a4 = app->topology->rb_dihedrals[dihedral].atom4;
 
 			if( a1 == phi_n && a2 == alpha_c && a3 == psi_c ) {
-				phiAngle = rtod(computeDihedral(a1, a2, a3, a4));
+				phiAngle[i] = rtod(computeDihedral(a1, a2, a3, a4));
 			}
 
 			if( a2 == phi_n && a3 == alpha_c && a4 == psi_c ) {
-				psiAngle = rtod(computeDihedral(a1, a2, a3, a4));
+				psiAngle[i] = rtod(computeDihedral(a1, a2, a3, a4));
+			}
+		}
+	}
+
+	bool isFolded = true;
+	for( int i = 0; i < mIndex.size(); i++ ) {
+		if( ( psiAngle[i] < mPsiMin && psiAngle[i] > mPsiMax ) || ( phiAngle[i] < mPhiMin && phiAngle[i] > mPhiMax ) ) {
+			isFolded = false;
+			break
+		}
+	}
+
+	if( isFolded ) {
+		report << "[AnalyzeDihedral] Molecule satisfied dihedral angle analysis for residues ";
+
+		for( int j = 0; j < mIndex.size(); j++ ) {
+			report << mIndex[j] << "(Phi:" << phiAngle << "°, Psi:" << psiAngle << "°)"
+			if( j < mIndex.size() - 1 ) {
+				report << ", ";
 			}
 		}
 
-		if( ( psiAngle >= mPsiMin && psiAngle <= mPsiMax ) && ( phiAngle >= mPhiMin && phiAngle <= mPhiMax ) ) {
-			report << "[AnalyzeDihedral] Molecule satisfied dihedral angle analysis for residues ";
+		report << endr;
 
-			for( int j = 0; j < mIndex.size(); j++ ) {
-				report << mIndex[j];
-				if( j < mIndex.size() - 1 ) {
-					report << ", ";
-				}
-			}
-
-			report << endr;
-
-			mShouldStop = true;
-		}
+		mShouldStop = true;
 	}
 }
 
