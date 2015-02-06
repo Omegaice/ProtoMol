@@ -153,7 +153,7 @@ void AnalysisDihedral::doRun(long step) {
 		report << "[AnalyzeDihedral] Molecule satisfied dihedral angle analysis for residues ";
 
 		for( int j = 0; j < mIndex.size(); j++ ) {
-			report << mIndex[j] << "(Phi:" << phiAngle << "°, Psi:" << psiAngle << "°)"
+			report << mIndex[j] << "(Phi:" << phiAngle[j] << "°, Psi:" << psiAngle[j] << "°)"
 			if( j < mIndex.size() - 1 ) {
 				report << ", ";
 			}
