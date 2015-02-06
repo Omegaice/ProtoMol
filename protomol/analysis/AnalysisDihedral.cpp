@@ -131,16 +131,27 @@ void AnalysisDihedral::doRun(long step) {
 			const int a3 = app->topology->rb_dihedrals[dihedral].atom3;
 			const int a4 = app->topology->rb_dihedrals[dihedral].atom4;
 
-			if( a1 == phi_n && a2 == alpha_c && a3 == psi_c ){
+			if( a1 == phi_n && a2 == alpha_c && a3 == psi_c ) {
 				phiAngle = rtod(computeDihedral(a1, a2, a3, a4));
 			}
 
-			if( a2 == phi_n && a3 == alpha_c && a4 == psi_c ){
+			if( a2 == phi_n && a3 == alpha_c && a4 == psi_c ) {
 				psiAngle = rtod(computeDihedral(a1, a2, a3, a4));
 			}
 		}
 
 		if( ( psiAngle >= mPsiMin && psiAngle <= mPsiMax ) && ( phiAngle >= mPhiMin && phiAngle <= mPhiMax ) ) {
+			report << "[AnalyzeDihedral] Molecule satisfied dihedral angle analysis for residues ";
+
+			for( int j = 0; j < mIndex.size(); j++ ) {
+				report << mIndex[j];
+				if( j < mIndex.size() - 1 ) {
+					report << ", ";
+				}
+			}
+
+			report << endr;
+
 			mShouldStop = true;
 		}
 	}
@@ -184,7 +195,7 @@ Analysis *AnalysisDihedral::doMake(const vector<Value> &values) const {
 }
 
 bool AnalysisDihedral::isIdDefined(const Configuration *config) const {
-	return config->valid(getId()) && ((*config)[getId()] == true);
+	return config->valid(getId()) && (( *config )[getId()] == true );
 }
 
 void AnalysisDihedral::getParameters(vector<Parameter> &parameter) const {
