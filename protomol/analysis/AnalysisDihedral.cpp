@@ -220,7 +220,7 @@ bool AnalysisDihedral::isIdDefined(const Configuration *config) const {
 }
 
 void AnalysisDihedral::getParameters(vector<Parameter> &parameter) const {
-	parameter.push_back( Parameter( getId(), Value( true ), true ) );
+	parameter.push_back( Parameter( getId(), Value( false ), false ) );
 	parameter.push_back( Parameter( getId() + "Index", Value("", ConstraintValueType::NoConstraints()), "") );
 	parameter.push_back( Parameter( getId() + "PsiRange", Value("", ConstraintValueType::NoConstraints()), "" ) );
 	parameter.push_back( Parameter( getId() + "PhiRange", Value("", ConstraintValueType::NoConstraints()), "" ) );
