@@ -197,20 +197,18 @@ Analysis *AnalysisDihedral::doMake(const vector<Value> &values) const {
 	}
 
 	// Parse Psi
-	Real psiMin, psiMax;
+	std::string sPsi = values[2];
+	Real psiMin = 0.0, psiMax = 0.0;
+	sscanf(sPsi.c_str(), "%lf,%lf", &psiMin, &psiMax);
 
-	sStream.str(values[2]);
-	sStream >> psiMin;
-	sStream.ignore(std::numeric_limits<std::streamsize>::max(), ',');
-	sStream >> psiMax;
+	if( psiMin < -180.0 || psiMax > 180.0 || psiMax <= psiMin ) report << error <<  getId()+"PsiRange Invalid: (" << psiMin << " to " << psiMax << ") should be between (-180.0 to 180.0)" << endr;
 
 	// Parse Phi
-	Real phiMin, phiMax;
+	std::string sPhi = values[3];
+	Real phiMin = 0.0, phiMax = 0.0;
+	sscanf(sPhi.c_str(), "%lf,%lf", &phiMin, &phiMax);
 
-	sStream.str(values[3]);
-	sStream >> phiMin;
-	sStream.ignore(std::numeric_limits<std::streamsize>::max(), ',');
-	sStream >> phiMax;
+	if( phiMin < -180.0 || phiMax > 180.0 || phiMax <= phiMin ) report << error <<  getId()+"PhiRange Invalid: (" << phiMin << " to " << phiMax << ") should be between (-180.0 to 180.0)" << endr;
 
 	return new AnalysisDihedral(index, psiMin, psiMax, phiMin, phiMax);
 }
