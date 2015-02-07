@@ -43,6 +43,12 @@ void AnalysisDihedral::doInitialize() {
 
 	const int num_residues = residue_id.size();
 
+	for( int i = 0; i < mIndex.size(); i++ ) {
+		if( mIndex[i] > num_residues ) {
+			report << error << getId() + "Index Invalid. Value " << mIndex[i] << " is out of range. Must be betwen 0 and " << num_residues << endr;
+		}
+	}
+
 	residues_alpha_c.resize(num_residues);
 	residues_phi_n.resize(num_residues);
 	residues_psi_c.resize(num_residues);
@@ -187,11 +193,13 @@ Analysis *AnalysisDihedral::doMake(const vector<Value> &values) const {
 
 	std::vector<int> index;
 	while( !sStream.eof()) {
-		int value = -1;
+		int value = -99999;
 		sStream >> value;
 		sStream.ignore(std::numeric_limits<std::streamsize>::max(), ',');
 
-		if( value != -1 ) {
+		if( value < 0 ){
+			report << error << getId() + "Index Invalid. Residue number must not be negative" << endr;
+		}else{
 			index.push_back(value);
 		}
 	}
@@ -201,14 +209,18 @@ Analysis *AnalysisDihedral::doMake(const vector<Value> &values) const {
 	Real psiMin = 0.0, psiMax = 0.0;
 	sscanf(sPsi.c_str(), "%lf,%lf", &psiMin, &psiMax);
 
-	if( psiMin < -180.0 || psiMax > 180.0 || psiMax <= psiMin ) report << error <<  getId()+"PsiRange Invalid: (" << psiMin << " to " << psiMax << ") should be between (-180.0 to 180.0)" << endr;
+	if( psiMin < -180.0 || psiMax > 180.0 || psiMax <= psiMin ) {
+		report << error << getId() + "PsiRange Invalid: (" << psiMin << " to " << psiMax << ") should be between (-180.0 to 180.0)" << endr;
+	}
 
 	// Parse Phi
 	std::string sPhi = values[3];
 	Real phiMin = 0.0, phiMax = 0.0;
 	sscanf(sPhi.c_str(), "%lf,%lf", &phiMin, &phiMax);
 
-	if( phiMin < -180.0 || phiMax > 180.0 || phiMax <= phiMin ) report << error <<  getId()+"PhiRange Invalid: (" << phiMin << " to " << phiMax << ") should be between (-180.0 to 180.0)" << endr;
+	if( phiMin < -180.0 || phiMax > 180.0 || phiMax <= phiMin ) {
+		report << error << getId() + "PhiRange Invalid: (" << phiMin << " to " << phiMax << ") should be between (-180.0 to 180.0)" << endr;
+	}
 
 	return new AnalysisDihedral(index, psiMin, psiMax, phiMin, phiMax);
 }
