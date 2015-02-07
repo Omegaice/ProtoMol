@@ -104,6 +104,39 @@ void AnalysisDihedral::doInitialize() {
 			}
 		}
 	}
+
+	for( int i = 0; i < mIndex.size(); i++ ) {
+		const int alpha_c = residues_alpha_c[mIndex[i]];
+		const int phi_n = residues_phi_n[mIndex[i]];
+		const int psi_c = residues_psi_c[mIndex[i]];
+
+		Dihedral phi, psi;
+		for( int dihedral = 0; dihedral < app->topology->rb_dihedrals.size(); dihedral++ ) {
+			const int a1 = app->topology->rb_dihedrals[dihedral].atom1;
+			const int a2 = app->topology->rb_dihedrals[dihedral].atom2;
+			const int a3 = app->topology->rb_dihedrals[dihedral].atom3;
+			const int a4 = app->topology->rb_dihedrals[dihedral].atom4;
+
+			if( a1 == phi_n && a2 == alpha_c && a3 == psi_c ) {
+				phi.a = a1; phi.b = a2; phi.c = a3; phi.d = a4;
+			}
+
+			if( a2 == phi_n && a3 == alpha_c && a4 == psi_c ) {
+				psi.a = a1; psi.b = a2; psi.c = a3; psi.d = a4;
+			}
+		}
+
+		if( phi.a == 0 && phi.b == 0 && phi.c == 0 && phi.d == 0 ) {
+			report << error << "[" << getId() << "] Unable to find phi dihedral for residue " << mIndex[i] << endr;
+		}
+
+		if( psi.a == 0 && psi.b == 0 && psi.c == 0 && psi.d == 0 ) {
+			report << error << "[" << getId() << "] Unable to find psi dihedral for residue " << mIndex[i] << endr;
+		}
+
+		mPhiDihedral.push_back(phi);
+		mPsiDihedral.push_back(psi);
+	}
 }
 
 void AnalysisDihedral::doIt(long step) {}
@@ -127,24 +160,11 @@ void AnalysisDihedral::doRun(long step) {
 	std::vector<Real> phiAngle(mIndex.size()), psiAngle(mIndex.size());
 
 	for( int i = 0; i < mIndex.size(); i++ ) {
-		const int alpha_c = residues_alpha_c[mIndex[i]];
-		const int phi_n = residues_phi_n[mIndex[i]];
-		const int psi_c = residues_psi_c[mIndex[i]];
+		const Dihedral phiDihedral = mPhiDihedral[i];
+		phiAngle[i] = rtod(computeDihedral(phiDihedral.a, phiDihedral.b, phiDihedral.c, phiDihedral.d));
 
-		for( int dihedral = 0; dihedral < app->topology->rb_dihedrals.size(); dihedral++ ) {
-			const int a1 = app->topology->rb_dihedrals[dihedral].atom1;
-			const int a2 = app->topology->rb_dihedrals[dihedral].atom2;
-			const int a3 = app->topology->rb_dihedrals[dihedral].atom3;
-			const int a4 = app->topology->rb_dihedrals[dihedral].atom4;
-
-			if( a1 == phi_n && a2 == alpha_c && a3 == psi_c ) {
-				phiAngle[i] = rtod(computeDihedral(a1, a2, a3, a4));
-			}
-
-			if( a2 == phi_n && a3 == alpha_c && a4 == psi_c ) {
-				psiAngle[i] = rtod(computeDihedral(a1, a2, a3, a4));
-			}
-		}
+		const Dihedral psiDihedral = mPsiDihedral[i];
+		psiAngle[i] = rtod(computeDihedral(psiDihedral.a, psiDihedral.b, psiDihedral.c, psiDihedral.d));
 	}
 
 	report.setf( std::ios::fixed );
