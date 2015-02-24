@@ -782,6 +782,8 @@ void Hessian::evaluateGBBornRadii(const Vector3DBlock *myPositions,
    unsigned int atom_size = myTopo->atoms.size();
    GBBornRadii gbBornRadii;
 
+   gbBornRadii.preProcess(myTopo, myPositions);
+
    for (unsigned int i=0; i < atom_size ; i++) {
       for (unsigned int j = i + 1; j < atom_size; j++){
          ExclusionClass ec = myTopo->exclusions.check(i, j);
@@ -795,6 +797,8 @@ void Hessian::evaluateGBBornRadii(const Vector3DBlock *myPositions,
          }
       }
    }
+
+   gbBornRadii.postProcess(myTopo, NULL, NULL);
 }
 
 //GB Partial Sum
@@ -803,7 +807,9 @@ void Hessian::evaluateGBPartialSum(const Vector3DBlock *myPositions,
   
   unsigned int atom_size = myTopo->atoms.size();
   GBPartialSum gbPartialSum;
-  
+
+  gbPartialSum.preProcess(myTopo, myPositions);
+
   for (unsigned int i=0; i < atom_size ; i++) {
     for (unsigned int j = i + 1; j < atom_size; j++){
       ExclusionClass ec = myTopo->exclusions.check(i, j);
@@ -817,6 +823,8 @@ void Hessian::evaluateGBPartialSum(const Vector3DBlock *myPositions,
       }
     }
   }
+
+  gbPartialSum.postProcess(myTopo, NULL, NULL);
 }
 
 //GB ACE force
