@@ -82,7 +82,7 @@ if( BUILD_OPENMM )
 	option( BUILD_OPENMM_LTMD "Build with LTMD OpenMM" Off )
 	if( BUILD_OPENMM_LTMD )
 		add_definitions( "-DHAVE_OPENMM_LTMD" )
-		
+
 		set( LTMDPLUGIN_DIR "$ENV{LTMDOPENMM_HOME}" CACHE PATH "LTMD OpenMM Install Directory")
 		if( LTMDPLUGIN_DIR )
 			link_directories( "${LTMDPLUGIN_DIR}/lib/" )
@@ -92,7 +92,7 @@ if( BUILD_OPENMM )
 		find_library( LTMDPLUGIN_LIB "OpenMMLTMD" HINT "${LTMDPLUGIN_DIR}/lib" )
 		set( LIBS ${LIBS} ${LTMDPLUGIN_LIB} )
 	endif()
-	
+
 	option(BUILD_OPENMM_FBM "Build with OpenMM FBM" Off)
 	if(BUILD_OPENMM_FBM)
 		add_definitions("-DHAVE_OPENMM_FBM")
@@ -154,9 +154,9 @@ if( BUILD_PARALLEL )
 	include( FindMPI )
 	if( MPI_FOUND )
 		add_definitions( "-DHAVE_MPI" )
-		
+
 		include_directories( ${MPI_INCLUDE_PATH} )
-		
+
 		set( LIBS ${LIBS} ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY})
 		set( CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS} ${CMAKE_EXE_LINKER_FLAGS} )
 	endif( MPI_FOUND )
@@ -202,6 +202,8 @@ include_directories( . )
 # Library Headers
 file( GLOB HEADERS "protomol/*.h" )
 source_group( "include" FILES ${HEADERS} )
+file( GLOB ANALYSIS_HEADERS "protomol/analysis/*.h" )
+source_group( "include\\Analysis" FILES ${ANALYSIS_HEADERS} )
 file( GLOB BASE_HEADERS "protomol/base/*.h" )
 source_group( "include\\Base" FILES ${BASE_HEADERS} )
 file( GLOB CONFIG_HEADERS "protomol/config/*.h" )
@@ -225,7 +227,7 @@ source_group( "include\\Topology" FILES ${TOPOLOGY_HEADERS} )
 file( GLOB TYPE_HEADERS "protomol/type/*.h" )
 source_group( "include\\Type" FILES ${TYPE_HEADERS} )
 
-set( LIBRARY_BASE_HEADERS ${HEADERS} ${BASE_HEADERS} ${CONFIG_HEADERS}
+set( LIBRARY_BASE_HEADERS ${HEADERS} ${ANALYSIS_HEADERS} ${BASE_HEADERS} ${CONFIG_HEADERS}
 	${FACTORY_HEADERS} ${MODIFIER_HEADERS} ${MODULE_HEADERS} ${OS_HEADERS}
 	${OUTPUT_HEADERS} ${PARALLEL_HEADERS} ${SWITCH_HEADERS} ${TOPOLOGY_HEADERS}
 	${TYPE_HEADERS} )
@@ -285,7 +287,7 @@ if( BUILD_OPENMM )
     if( BUILD_OPENMM_FBM )
          set( OPENMM_INTEGRATOR_HEADERS ${OPENMM_INTEGRATOR_HEADERS} protomol/integrator/openMM/OpenMMFBMIntegrator.h )
 	endif(BUILD_OPENMM_FBM)
-    
+
     source_group( "include\\Integrator\\OpenMM" FILES ${OPENMM_INTEGRATOR_HEADERS} )
 endif( BUILD_OPENMM )
 
@@ -311,6 +313,8 @@ set( LIBRARY_HEADERS ${LIBRARY_BASE_HEADERS} ${LIBRARY_FOURCE_HEADERS} ${LIBRARY
 # Library sources
 file( GLOB SOURCES "protomol/*.cpp" )
 source_group( "src" FILES ${SOURCES} )
+file( GLOB ANALYSIS_SOURCES "protomol/analysis/*.cpp" )
+source_group( "src\\Analysis" FILES ${ANALYSIS_SOURCES} )
 file( GLOB BASE_SOURCES "protomol/base/*.cpp" )
 source_group( "src\\Base" FILES ${BASE_SOURCES} )
 file( GLOB CONFIG_SOURCES "protomol/config/*.cpp" )
@@ -338,7 +342,7 @@ source_group( "src\\Type" FILES ${TYPE_SOURCES} )
 list( REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/protomol/main.cpp" )
 list( REMOVE_ITEM SOURCES "${CMAKE_SOURCE_DIR}/protomol/modules.cpp" )
 
-set( LIBRARY_BASE_SOURCES ${SOURCES} ${BASE_SOURCES} ${CONFIG_SOURCES}
+set( LIBRARY_BASE_SOURCES ${SOURCES} ${ANALYSIS_SOURCES} ${BASE_SOURCES} ${CONFIG_SOURCES}
 	${FACTORY_SOURCES} ${MODIFIER_SOURCES} ${MODULE_SOURCES} ${OS_SOURCES}
 	${OUTPUT_SOURCES} ${PARALLEL_SOURCES} ${SWITCH_SOURCES} ${TOPOLOGY_SOURCES}
 	${TYPE_SOURCES} )
@@ -398,7 +402,7 @@ if( BUILD_OPENMM )
     if( BUILD_OPENMM_FBM )
          set( OPENMM_INTEGRATOR_SOURCES ${OPENMM_INTEGRATOR_SOURCES} protomol/integrator/openMM/OpenMMFBMIntegrator.cpp )
     endif( BUILD_OPENMM_FBM )
-    
+
     source_group( "src\\Integrator\\OpenMM" FILES ${OPENMM_INTEGRATOR_SOURCES} )
 endif( BUILD_OPENMM )
 

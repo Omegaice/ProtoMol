@@ -11,6 +11,7 @@
 #include <protomol/module/MainModule.h>
 #include <protomol/module/IOModule.h>
 #include <protomol/module/ConfigurationModule.h>
+#include <protomol/module/AnalysisModule.h>
 
 #include <protomol/type/String.h>
 
@@ -28,6 +29,7 @@
 #include <protomol/topology/TopologyUtilities.h>
 
 #include <protomol/output/OutputCollection.h>
+#include <protomol/analysis/AnalysisCollection.h>
 
 #include <protomol/parallel/Parallel.h>
 
@@ -56,6 +58,7 @@ ProtoMolApp::ProtoMolApp(ModuleManager *modManager) :
 
   topologyFactory.registerAllExemplarsConfiguration(&config);
   outputFactory.registerAllExemplarsConfiguration(&config);
+  analysisFactory.registerAllExemplarsConfiguration(&config);
 }
 
 
@@ -324,10 +327,15 @@ void ProtoMolApp::build() {
   // TODO if !Parallel::iAmMaster() turn off outputs
 	if( !Parallel::iAmMaster() ){
 		outputs = new OutputCollection;
+        analysis = new AnalysisCollection;
 	}else{
 		if (config[InputOutput::keyword]){
 			outputs = outputFactory.makeCollection(&config);
 		}
+
+        if (config[InputAnalysis::keyword]){
+            analysis = analysisFactory.makeCollection(&config);
+        }
 	}
 
   // Post build processing
@@ -358,22 +366,26 @@ void ProtoMolApp::build() {
   outputCache.add(psf);
   outputCache.add(par);
 
+  // Initialize Analysis
+  analysis->initialize(this);
+
   // Print Factories
-  if ((int)config[InputDebug::keyword] >= 5  &&
-      (int)config[InputDebugLimit::keyword] <= 5)
+  if ((int)config[InputDebug::keyword] >= 5 && (int)config[InputDebugLimit::keyword] <= 5)
     cout
       << headerRow("Factories")     << endl
       << headerRow("Configuration") << endl << config            << endl
       << headerRow("Topology")      << endl << topologyFactory   << endl
       << headerRow("Integrator")    << endl << integratorFactory << endl
       << headerRow("Force")         << endl << forceFactory      << endl
-      << headerRow("Output")        << endl << outputFactory     << endl;
+      << headerRow("Output")        << endl << outputFactory     << endl
+      << headerRow("Analysis")      << endl << analysisFactory   << endl;
 
   // Clear all factories
   topologyFactory.unregisterAllExemplars();
   integratorFactory.unregisterAllExemplars();
   forceFactory.unregisterAllExemplars();
   outputFactory.unregisterAllExemplars();
+  analysisFactory.unregisterAllExemplars();
 
   TimerStatistic::timer[TimerStatistic::RUN].reset();
   TimerStatistic::timer[TimerStatistic::INTEGRATOR].reset();
@@ -395,6 +407,9 @@ bool ProtoMolApp::step(long inc) {
 #endif
   }
 
+  // Handle analysis on each output step
+  analysis->run(currentStep);
+
   if (!inc) inc = outputs->getNext() - currentStep;
 
   //fix inc so do not overrun
@@ -414,6 +429,8 @@ bool ProtoMolApp::step(long inc) {
   }
   currentStep += completed;
 
+  if( analysis->shouldStop() ) lastStep = currentStep;
+
   TimerStatistic::timer[TimerStatistic::RUN].stop();
 
   return true;
@@ -429,11 +446,13 @@ void ProtoMolApp::finalize() {
   report << plain << "Performance: " << nanoSeconds << "ns in " << TimerStatistic::timer[TimerStatistic::RUN].getTime().getRealTime() << "s = " << nanoSecondsPerDay << "ns/day" << std::endl;
 
   outputs->finalize(currentStep);
+  analysis->finalize(currentStep);
 
   // Clean up
   zap(topology);
   zap(integrator);
   zap(outputs);
+  zap(analysis);
   zap(SCPISMParameters);
 
   TimerStatistic::timer[TimerStatistic::WALL].stop();

@@ -5,6 +5,7 @@
 #include <protomol/factory/ForceFactory.h>
 #include <protomol/factory/IntegratorFactory.h>
 #include <protomol/factory/OutputFactory.h>
+#include <protomol/factory/AnalysisFactory.h>
 
 #include <protomol/config/Configuration.h>
 #include <protomol/config/CommandLine.h>
@@ -20,6 +21,7 @@
 
 namespace ProtoMol {
   class OutputCollection;
+  class AnalysisCollection;
   class Integrator;
   class GenericTopology;
   class ModuleManager;
@@ -42,12 +44,14 @@ namespace ProtoMol {
     ForceFactory forceFactory;
     IntegratorFactory integratorFactory;
     OutputFactory outputFactory;
+    AnalysisFactory analysisFactory;
 
     // Containers
     CommandLine cmdLine;
     Configuration config;
     mutable OutputCache outputCache;
     OutputCollection *outputs;
+    AnalysisCollection *analysis;
     Integrator *integrator;
     GenericTopology *topology;
 
