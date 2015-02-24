@@ -10,7 +10,7 @@ before_install:
   - sudo apt-get install -qq libblas-dev
 
 script:
-  - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON.
+  - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON
   - make
   - make install
   - cd test
