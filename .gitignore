@@ -1,2 +1,5 @@
 /build
 *.pyc
+
+test/ProtoMol*
+test/tests/output
