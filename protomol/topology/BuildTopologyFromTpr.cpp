@@ -3,6 +3,7 @@
 #include <protomol/topology/BuildTopology.h>
 
 #include <protomol/base/Exception.h>
+#include <protomol/base/SystemUtilities.h>
 #include <protomol/type/String.h>
 #include <protomol/topology/TopologyUtilities.h>
 #include <protomol/topology/GenericTopology.h>
@@ -177,6 +178,9 @@ void ProtoMol::buildTopologyFromTpr(GenericTopology *topo, Vector3DBlock &pos,
   enum {GB_RADII_IN_TPR = 73};
 
 #if defined(HAVE_GROMACS)
+  // Check if TPR exists
+  if (!ProtoMol::SystemUtilities::exists(fname)) report << error << "TPR Missing: " << fname << endr;
+
   // ----------------------------------------------------------------------
   // Load tpr file
   // ----------------------------------------------------------------------
