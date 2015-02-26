@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 import sys
 import os
@@ -51,8 +50,7 @@ def run_test(protomol_path, conf_file, pwd):
 
     conf_param_overrides = parse_params(conf_file)
     epsilon = conf_param_overrides.get('epsilon', DEFAULT_EPSILON)
-    scaling_factor = conf_param_overrides.get('scaling_factor',
-            DEFAULT_SCALINGFACTOR)
+    scaling_factor = conf_param_overrides.get('scaling_factor', DEFAULT_SCALINGFACTOR)
 
     base = os.path.splitext(os.path.basename(conf_file))[0]
     logging.info('Executing Test: ' + base)
@@ -60,8 +58,7 @@ def run_test(protomol_path, conf_file, pwd):
     cmd = protomol_path[:]
     cmd.append(conf_file)
 
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
     if p.returncode > 0:
         s = 'Not able to execute Protomol!\n'
@@ -90,20 +87,17 @@ def run_test(protomol_path, conf_file, pwd):
         ignoreSign = False
 
         # Ignore signs on eignevectors
-
         if ftype == '.vec':
             ignoreSign = True
         logging.info('Testing: ' + expects[i] + ' ' + outputs[i])
 
-        if comparator.compare(expects[i], outputs[i], epsilon,
-                              scaling_factor, ignoreSign):
+        if comparator.compare(expects[i], outputs[i], epsilon, scaling_factor, ignoreSign):
             logging.info('Passed')
             testspassed += 1
         else:
             logging.warning('Failed')
             testsfailed += 1
-            failedtests.append('Comparison of ' + expects[i] + ' and '
-                               + outputs[i])
+            failedtests.append('Comparison of ' + expects[i] + ' and ' + outputs[i])
 
     return (tests, testspassed, testsfailed, failedtests)
 
@@ -116,11 +110,9 @@ def find_conf_files(pwd, args):
         if args.single.find('.conf') != -1:
             files.append(args.single)
         else:
-            raise Exception, args.single \
-                + ' is not a valid configuration file'
+            raise Exception, args.single + ' is not a valid configuration file'
     elif args.regex != None:
-        files = glob.glob(os.path.join(pwd, 'tests', args.regex
-                          + '.conf'))
+        files = glob.glob(os.path.join(pwd, 'tests', args.regex + '.conf'))
     return files
 
 
@@ -139,35 +131,25 @@ def find_protomol(pwd):
         path.append(win_path)
         return path
     else:
-        raise Exception, 'Cannot find ProtoMol executable in ' + pwd \
-            + ' . Please put the ProtoMol executable in this directory'
-
+        raise Exception, 'Cannot find ProtoMol executable in ' + pwd + ' . Please put the ProtoMol executable in this directory'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='ProtoMol Test Suite')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                        default=False, help='Verbose output')
-    parser.add_argument('--parallel', '-p', action='store_true',
-                        default=False, help='MPI Testing')
+    parser.add_argument('--verbose', '-v', action='store_true', default=False, help='Verbose output')
+    parser.add_argument('--parallel', '-p', action='store_true', default=False, help='MPI Testing')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--single', '-s',
-                       help='Single test to run. Must be within the tests directory.'
-                       )
-    group.add_argument('--regex', '-r',
-                       help='Regular expression of tests to run, Requires quotation marks around argument'
-                       )
+    group.add_argument('--single', '-s', help='Single test to run. Must be within the tests directory.')
+    group.add_argument('--regex', '-r', help='Regular expression of tests to run, Requires quotation marks around argument')
 
     args = parser.parse_args()
-
-    pwd = os.getcwd()
 
     level = logging.INFO
     if args.verbose:
         level = logging.DEBUG
-    FORMAT = '%(message)s'
-    logging.basicConfig(level=level, format=FORMAT)
+    logging.basicConfig(level=level, format='%(message)s')
 
+    pwd = os.getcwd()
     files = find_conf_files(pwd, args)
     files.sort()
     logging.debug('Files: ' + str(files))
