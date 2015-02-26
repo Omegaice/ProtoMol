@@ -98,6 +98,8 @@ def run_test(protomol_path, conf_file, pwd):
             logging.warning('Failed')
             testsfailed += 1
             failedtests.append('Comparison of ' + expects[i] + ' and ' + outputs[i])
+            if args.errorfailure:
+                sys.exit(1)
 
     return (tests, testspassed, testsfailed, failedtests)
 
@@ -136,6 +138,7 @@ def find_protomol(pwd):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='ProtoMol Test Suite')
     parser.add_argument('--verbose', '-v', action='store_true', default=False, help='Verbose output')
+    parser.add_argument('--errorfailure', '-e', action='store_true', default=False, help='Break on test failure')
     parser.add_argument('--parallel', '-p', action='store_true', default=False, help='MPI Testing')
 
     group = parser.add_mutually_exclusive_group()
