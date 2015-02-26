@@ -6,13 +6,13 @@ import glob
 import shlex
 import subprocess
 import comparator
+import compare_dcd
 import argparse
 
 import logging
 
 DEFAULT_EPSILON = 0.00001
 DEFAULT_SCALINGFACTOR = 1.0
-
 
 def parse_params(flname):
     """
@@ -87,7 +87,7 @@ def run_test(protomol_path, conf_file, pwd, parallel):
         tests += 1
         ftype = os.path.splitext(os.path.basename(outputs[i]))[1]
 
-        if ftype in ['.dcd', '.header', '.xtc']:
+        if ftype in ['.header', '.xtc']:
             continue
 
         ignoreSign = False
@@ -95,17 +95,29 @@ def run_test(protomol_path, conf_file, pwd, parallel):
         # Ignore signs on eignevectors
         if ftype == '.vec':
             ignoreSign = True
+
         logging.info('\tTesting: ' + expects[i] + ' ' + outputs[i])
 
-        if comparator.compare(expects[i], outputs[i], epsilon, scaling_factor, ignoreSign):
-            logging.info('\t\tPassed')
-            testspassed += 1
+        if ftype == ".dcd":
+            if compare_dcd.compare_dcd(expects[i], outputs[i], epsilon, scaling_factor, ignoreSign):
+                logging.info('\t\tPassed')
+                testspassed += 1
+            else:
+                logging.warning('\t\tFailed')
+                testsfailed += 1
+                failedtests.append('Comparison of ' + expects[i] + ' and ' + outputs[i])
+                if args.errorfailure:
+                    sys.exit(1)
         else:
-            logging.warning('\t\tFailed')
-            testsfailed += 1
-            failedtests.append('Comparison of ' + expects[i] + ' and ' + outputs[i])
-            if args.errorfailure:
-                sys.exit(1)
+            if comparator.compare(expects[i], outputs[i], epsilon, scaling_factor, ignoreSign):
+                logging.info('\t\tPassed')
+                testspassed += 1
+            else:
+                logging.warning('\t\tFailed')
+                testsfailed += 1
+                failedtests.append('Comparison of ' + expects[i] + ' and ' + outputs[i])
+                if args.errorfailure:
+                    sys.exit(1)
 
     return (tests, testspassed, testsfailed, failedtests)
 
