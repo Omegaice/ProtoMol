@@ -1,23 +1,15 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
+
 import sys
 import math
 import logging
-
 
 def absDiff(one, two, ignoreSign=False):
     if ignoreSign:
         (one, two) = (math.fabs(one), math.fabs(two))
     return max(one, two) - min(one, two)
 
-
-def compare(
-    fExpected,
-    fNew,
-    epsilon,
-    scalar=1.0,
-    ignoreSign=False,
-    ):
+def compare(fExpected, fNew, epsilon, scalar=1.0, ignoreSign=False):
     fone = open(fExpected, 'r')
     ftwo = open(fNew, 'r')
 
@@ -40,19 +32,15 @@ def compare(
         if lenone != lentwo:
             diffs = diffs + 1
             logging.debug('Line: %d differs in size.' % i)
-            logging.debug('Should be %d elements but there are %d.'
-                          % (lenone, lentwo))
+            logging.debug('Should be %d elements but there are %d.' % (lenone, lentwo))
         else:
             for j in range(lenone):
-
                 # used to ignore XYZ meta data such as # of frames and # of atoms
-
                 try:
                     feone = int(elementsone[j])
                     fetwo = int(elementstwo[j])
 
                     # these are ints -- skip this pair
-
                     continue
                 except ValueError:
                     pass
@@ -64,12 +52,8 @@ def compare(
 
                     if fediff > epsilon:
                         diffs = diffs + 1
-                        logging.debug('Line %d, Element %d Differs'
-                                % (i, j))
-                        logging.debug('Expected: %f, Actual: %f, Difference: %f'
-                                 % (feone, fetwo, fediff))
+                        logging.debug('Line %d, Element %d Differs' % (i, j))
+                        logging.debug('Expected: %f, Actual: %f, Difference: %f' % (feone, fetwo, fediff))
                 except ValueError:
                     pass
     return diffs == 0
-
-
