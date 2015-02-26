@@ -156,6 +156,12 @@ if __name__ == '__main__':
     logging.debug('Files: ' + str(files))
 
     protomol_path = find_protomol(pwd)
+    if args.parallel:
+        p = subprocess.Popen(protomol_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = p.communicate()
+        if "No MPI compilation" in stderr:
+            logging.critical("Parallel tests unavailable. Please recompile ProtoMol with MPI support.")
+            sys.exit(1)
 
     tests = 0
     testspassed = 0
