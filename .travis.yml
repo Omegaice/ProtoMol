@@ -16,5 +16,4 @@ script:
   - make install
   - cd test
   - cp $HOME/ProtoMol/bin/ProtoMol .
-  - python test.py --errorfailure
-  - python test.py --parallel
+  - python test.py --serial --parallel --errorfailure
