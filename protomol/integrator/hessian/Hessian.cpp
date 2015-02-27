@@ -121,226 +121,296 @@ void Hessian::findForces(ForceGroup *overloadedForces) {
   Real mCutoff = 0.0;
   D = 78.0; S = 0.3; epsi = 1.0;
   myBornSwitch = 3; myDielecConst = 80.0;
-  myBond = 
-      myAngle = 
-          myCoulomb = 
-              myCoulombDielec = 
+  myBond =
+      myAngle =
+          myCoulomb =
+              myCoulombDielec =
                    myCoulombSCPISM =
                        myLennardJones =
                            myDihedral =
-                              myImproper = 
+                              myImproper =
                                   myBornRadii =
-                                       myBornSelf = 
-                                           myRBDihedral = 
-                                              myGBBornRadii = 
-                                                  myGBACEForce = 
-                                                      myGBForce = 
+                                       myBornSelf =
+                                           myRBDihedral =
+                                              myGBBornRadii =
+                                                  myGBACEForce =
+                                                      myGBForce =
                                                           myGBPartialSum = false;
 
    solvationparam = 2.26 / 418.4 ; watersphereradius = 1.4;
 
   for (unsigned int i = 0; i < ListForces.size(); i++) {
+    std::vector<std::string> parts = splitString(ListForces[i]->getId());
 
-    if (equalNocase(ListForces[i]->getId(), "Bond")) {
-      myBond = true;
-    } else if (equalNocase(ListForces[i]->getId(), "Angle")) {
-      myAngle = true;
-    // Check for combined force
-    } else if (equalStartNocase("LennardJones CoulombSCPISM BornRadii", ListForces[i]->getId())) {
-      myBornRadii = true; myLennardJones = true; myCoulombSCPISM = true;
-      vector<Parameter> Fparam;
-      lSwitch = cSwitch = 1;
-      int curr_force = 0;
-      bool last_was_cutoff = false;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-        if (equalNocase(Fparam[j].keyword, "-cutoff")) {
-          //get outer cuttoff for C1/C2 switches
-          if(curr_force == 0){
-            cCutoff = Fparam[j].value;
-          }else if(curr_force == 1){          
-            lCutoff = Fparam[j].value;
+    int forces = 0;
+    for( unsigned int j = 0; j < parts.size(); j++ ){
+        if( removeBeginEndBlanks(parts[j])[0] != '-' ) {
+            forces++;
+        }else{
+            break;
+        }
+    }
+
+    if( forces == 1 ){
+        if (equalNocase(ListForces[i]->getId(), "Bond")) {
+          myBond = true;
+        } else if (equalNocase(ListForces[i]->getId(), "Angle")) {
+          myAngle = true;
+        } else if (equalStartNocase("CoulombDiElec", ListForces[i]->getId())) {
+          myCoulombDielec = true;
+          vector<Parameter> Fparam;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+            if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+              cCutoff = Fparam[j].value;
+              if (cSwitch == 0) cSwitch = 1;
+            } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
+              cSwitchon = Fparam[j].value;
+              if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
+              else if (equalStartNocase("Cn", Fparam[j].text))
+                cSwitch = 3;
+              else cSwitch = 1;
+            } else if (equalNocase(Fparam[j].keyword, "-n")) {
+              cOrder = Fparam[j].value;
+              cSwitch = 3;
+            } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
+              cSwitchoff = Fparam[j].value;
+              cSwitch = 3;
+            } else if (equalNocase(Fparam[j].keyword, "-D"))
+              D = Fparam[j].value;
+            else if (equalNocase(Fparam[j].keyword, "-S"))
+              S = Fparam[j].value;
+            else if (equalNocase(Fparam[j].keyword, "-EPS"))
+              epsi = Fparam[j].value;
           }
-          if(!last_was_cutoff){
-            curr_force++;
-          }else{
-            //if two cuttoffs in sequence then outer value
-            mCutoff = Fparam[j].value;
-          }
-          last_was_cutoff = true;
-        } else {
-          last_was_cutoff = false;
-          if (equalNocase(Fparam[j].keyword, "-switchon")) {
-            if(curr_force == 0){
+        } else if (equalStartNocase("CoulombSCPISM", ListForces[i]->getId())) {
+          myCoulombSCPISM = true;
+          vector<Parameter> Fparam;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+            if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+              cCutoff = Fparam[j].value;
+              if (cSwitch == 0) cSwitch = 1;
+            } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
               cSwitchon = Fparam[j].value;
               if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
               else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
               else cSwitch = 1;
-            }else if(curr_force == 1){
+            } else if (equalNocase(Fparam[j].keyword, "-n")) {
+              cOrder = Fparam[j].value;
+              cSwitch = 3;
+            } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
+              cSwitchoff = Fparam[j].value;
+              cSwitch = 3;
+            }
+          }
+        } else if (equalStartNocase("Coulomb", ListForces[i]->getId())) {
+          myCoulomb = true;
+          vector<Parameter> Fparam;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+            if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+              cCutoff = Fparam[j].value;
+              if (cSwitch == 0) cSwitch = 1;
+            } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
+              cSwitchon = Fparam[j].value;
+              if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
+              else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
+              else cSwitch = 1;
+            } else if (equalNocase(Fparam[j].keyword, "-n")) {
+              cOrder = Fparam[j].value;
+              cSwitch = 3;
+            } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
+              cSwitchoff = Fparam[j].value;
+              cSwitch = 3;
+            }
+          }
+        } else if (equalStartNocase("LennardJones", ListForces[i]->getId())) {
+          myLennardJones = true;
+          vector<Parameter> Fparam;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+            if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+              lCutoff = Fparam[j].value;
+              if (lSwitch == 0) lSwitch = 1;
+            } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
               lSwitchon = Fparam[j].value;
               if (equalStartNocase("C2", Fparam[j].text)) lSwitch = 2;
               else if (equalStartNocase("Cn", Fparam[j].text)) lSwitch = 3;
               else lSwitch = 1;
-            }
-          } else if (equalNocase(Fparam[j].keyword, "-n")) {
-            if(curr_force == 0){
-              cOrder = Fparam[j].value;
-              cSwitch = 3;
-            }else if(curr_force == 1){          
+            } else if (equalNocase(Fparam[j].keyword, "-n")) {
               lOrder = Fparam[j].value;
               lSwitch = 3;
-            }
-          } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
-            if(curr_force == 0){
-              cSwitchoff = Fparam[j].value;
-              cSwitch = 3;
-            }else if(curr_force == 1){          
+            } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
               lSwitchoff = Fparam[j].value;
               lSwitch = 3;
             }
           }
+        } else if (equalStartNocase("Dihedral", ListForces[i]->getId())) {
+          myDihedral = true;
+        } else if (equalStartNocase("RBDihedral", ListForces[i]->getId())) {
+          myRBDihedral = true;
+        } else if (equalStartNocase("Improper", ListForces[i]->getId())) {
+          myImproper = true;
+        } else if (equalStartNocase("BornRadii", ListForces[i]->getId())) {
+          myBornRadii = true;
+        } else if (equalStartNocase("BornSelf", ListForces[i]->getId())) {
+          myBornSelf = true;
+          vector<Parameter> Fparam;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+            if (equalNocase(Fparam[j].keyword, "-bornswitch")) {
+              myBornSwitch = Fparam[j].value;
+            } else if (equalNocase(Fparam[j].keyword, "-D")) {
+              myDielecConst = Fparam[j].value;
+            }
+          }
+        } else if (equalStartNocase("GBBornRadii", ListForces[i]->getId())) {
+            myGBBornRadii = true;
+        }else if (equalStartNocase("GBPartialSum", ListForces[i]->getId())) {
+            myGBPartialSum = true;
+        } else if (equalStartNocase("GBACEForce", ListForces[i]->getId())) {
+            myGBACEForce = true;
+            vector<Parameter> Fparam;
+            ListForces[i]->getParameters(Fparam);
+            for (unsigned int j = 0; j < Fparam.size(); j++) {
+               if (equalNocase(Fparam[j].keyword, "-solvationparam")) {
+                  solvationparam = Fparam[j].value;
+               }else if (equalNocase(Fparam[j].keyword,"-watersphereradius")) {
+                  watersphereradius = Fparam[j].value;
+               }
+            }
+        } else if (equalStartNocase("GBForce", ListForces[i]->getId())) {
+          myGBForce = true;
+          vector<Parameter> Fparam;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+             if (equalNocase(Fparam[j].keyword, "-soluteDielec")) {
+                soluteDielec = Fparam[j].value;
+             }else if (equalNocase(Fparam[j].keyword,"-solventDielec")) {
+                solventDielec = Fparam[j].value;
+             }
+          }
+        } else {
+            report << error << "Unknown Single Force: " << ListForces[i]->getId() << endr;
         }
-      }
-    // Single forces here
-    } else if (equalStartNocase("CoulombDiElec", ListForces[i]->getId())) {
-      myCoulombDielec = true;
-      vector<Parameter> Fparam;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-        if (equalNocase(Fparam[j].keyword, "-cutoff")) {
-          cCutoff = Fparam[j].value;
-          if (cSwitch == 0) cSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
-          cSwitchon = Fparam[j].value;
-          if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
-          else if (equalStartNocase("Cn", Fparam[j].text))
-            cSwitch = 3;
-          else cSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-n")) {
-          cOrder = Fparam[j].value;
-          cSwitch = 3;
-        } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
-          cSwitchoff = Fparam[j].value;
-          cSwitch = 3;
-        } else if (equalNocase(Fparam[j].keyword, "-D"))
-          D = Fparam[j].value;
-        else if (equalNocase(Fparam[j].keyword, "-S"))
-          S = Fparam[j].value;
-        else if (equalNocase(Fparam[j].keyword, "-EPS"))
-          epsi = Fparam[j].value;
-      }
-    } else if (equalStartNocase("CoulombSCPISM", ListForces[i]->getId())) {
-      myCoulombSCPISM = true;
-      vector<Parameter> Fparam;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-        if (equalNocase(Fparam[j].keyword, "-cutoff")) {
-          cCutoff = Fparam[j].value;
-          if (cSwitch == 0) cSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
-          cSwitchon = Fparam[j].value;
-          if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
-          else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
-          else cSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-n")) {
-          cOrder = Fparam[j].value;
-          cSwitch = 3;
-        } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
-          cSwitchoff = Fparam[j].value;
-          cSwitch = 3;
-        }
-      }
-    } else if (equalStartNocase("Coulomb", ListForces[i]->getId())) {
-      myCoulomb = true;
-      vector<Parameter> Fparam;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-        if (equalNocase(Fparam[j].keyword, "-cutoff")) {
-          cCutoff = Fparam[j].value;
-          if (cSwitch == 0) cSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
-          cSwitchon = Fparam[j].value;
-          if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
-          else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
-          else cSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-n")) {
-          cOrder = Fparam[j].value;
-          cSwitch = 3;
-        } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
-          cSwitchoff = Fparam[j].value;
-          cSwitch = 3;
-        }
-      }
-    } else if (equalStartNocase("LennardJones", ListForces[i]->getId())) {
-      myLennardJones = true;
-      vector<Parameter> Fparam;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-        if (equalNocase(Fparam[j].keyword, "-cutoff")) {
-          lCutoff = Fparam[j].value;
-          if (lSwitch == 0) lSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-switchon")) {
-          lSwitchon = Fparam[j].value;
-          if (equalStartNocase("C2", Fparam[j].text)) lSwitch = 2;
-          else if (equalStartNocase("Cn", Fparam[j].text)) lSwitch = 3;
-          else lSwitch = 1;
-        } else if (equalNocase(Fparam[j].keyword, "-n")) {
-          lOrder = Fparam[j].value;
-          lSwitch = 3;
-        } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
-          lSwitchoff = Fparam[j].value;
-          lSwitch = 3;
-        }
-      }
-    } else if (equalStartNocase("Dihedral", ListForces[i]->getId())) {
-      myDihedral = true;
-    } else if (equalStartNocase("RBDihedral", ListForces[i]->getId())) {
-      myRBDihedral = true;
-    } else if (equalStartNocase("Improper", ListForces[i]->getId())) {
-      myImproper = true;
-    } else if (equalStartNocase("BornRadii", ListForces[i]->getId())) {
-      myBornRadii = true;
-    } else if (equalStartNocase("BornSelf", ListForces[i]->getId())) {
-      myBornSelf = true;
-      vector<Parameter> Fparam;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-        if (equalNocase(Fparam[j].keyword, "-bornswitch")) {
-          myBornSwitch = Fparam[j].value;
-        } else if (equalNocase(Fparam[j].keyword, "-D")) {
-          myDielecConst = Fparam[j].value;
-        } 
-      }
-    } else if (equalStartNocase("GBBornRadii", ListForces[i]->getId())) {
-        myGBBornRadii = true;
-    }else if (equalStartNocase("GBPartialSum", ListForces[i]->getId())) {
-        myGBPartialSum = true;
-    } else if (equalStartNocase("GBACEForce", ListForces[i]->getId())) {
-        myGBACEForce = true;
-        vector<Parameter> Fparam;
-        ListForces[i]->getParameters(Fparam);
-        for (unsigned int j = 0; j < Fparam.size(); j++) {
-           if (equalNocase(Fparam[j].keyword, "-solvationparam")) {
-              solvationparam = Fparam[j].value;
-           }else if (equalNocase(Fparam[j].keyword,"-watersphereradius")) {
-              watersphereradius = Fparam[j].value;
-           }
-        }
-    } else if (equalStartNocase("GBForce", ListForces[i]->getId())) {
-
-      myGBForce = true;
-      vector<Parameter> Fparam;
-      ListForces[i]->getParameters(Fparam);
-      for (unsigned int j = 0; j < Fparam.size(); j++) {
-         if (equalNocase(Fparam[j].keyword, "-soluteDielec")) {
-            soluteDielec = Fparam[j].value;
-         }else if (equalNocase(Fparam[j].keyword,"-solventDielec")) {
-            solventDielec = Fparam[j].value;
-         }
+    }else{
+        if (equalStartNocase("LennardJones CoulombSCPISM BornRadii", ListForces[i]->getId())) {
+          myBornRadii = true; myLennardJones = true; myCoulombSCPISM = true;
+          vector<Parameter> Fparam;
+          lSwitch = cSwitch = 1;
+          int curr_force = 0;
+          bool last_was_cutoff = false;
+          ListForces[i]->getParameters(Fparam);
+          for (unsigned int j = 0; j < Fparam.size(); j++) {
+            if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+              //get outer cuttoff for C1/C2 switches
+              if(curr_force == 0){
+                cCutoff = Fparam[j].value;
+              }else if(curr_force == 1){
+                lCutoff = Fparam[j].value;
+              }
+              if(!last_was_cutoff){
+                curr_force++;
+              }else{
+                //if two cuttoffs in sequence then outer value
+                mCutoff = Fparam[j].value;
+              }
+              last_was_cutoff = true;
+            } else {
+              last_was_cutoff = false;
+              if (equalNocase(Fparam[j].keyword, "-switchon")) {
+                if(curr_force == 0){
+                  cSwitchon = Fparam[j].value;
+                  if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
+                  else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
+                  else cSwitch = 1;
+                }else if(curr_force == 1){
+                  lSwitchon = Fparam[j].value;
+                  if (equalStartNocase("C2", Fparam[j].text)) lSwitch = 2;
+                  else if (equalStartNocase("Cn", Fparam[j].text)) lSwitch = 3;
+                  else lSwitch = 1;
+                }
+              } else if (equalNocase(Fparam[j].keyword, "-n")) {
+                if(curr_force == 0){
+                  cOrder = Fparam[j].value;
+                  cSwitch = 3;
+                }else if(curr_force == 1){
+                  lOrder = Fparam[j].value;
+                  lSwitch = 3;
+                }
+              } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
+                if(curr_force == 0){
+                  cSwitchoff = Fparam[j].value;
+                  cSwitch = 3;
+                }else if(curr_force == 1){
+                  lSwitchoff = Fparam[j].value;
+                  lSwitch = 3;
+                }
+              }
+            }
+          }
+        } else if (equalStartNocase("LennardJones Coulomb", ListForces[i]->getId())) {
+            std::cout << "LJ Test" << std::endl;
+            myLennardJones = true; myCoulomb = true;
+            vector<Parameter> Fparam;
+            //lSwitch = cSwitch = 1;
+            int curr_force = 0;
+            bool last_was_cutoff = false;
+            ListForces[i]->getParameters(Fparam);
+            for (unsigned int j = 0; j < Fparam.size(); j++) {
+              if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+                //get outer cuttoff for C1/C2 switches
+                if(curr_force == 0){
+                  cCutoff = Fparam[j].value;
+                }else if(curr_force == 1){
+                  lCutoff = Fparam[j].value;
+                }
+                if(!last_was_cutoff){
+                  curr_force++;
+                }else{
+                  //if two cuttoffs in sequence then outer value
+                  mCutoff = Fparam[j].value;
+                }
+                last_was_cutoff = true;
+              } else {
+                last_was_cutoff = false;
+                if (equalNocase(Fparam[j].keyword, "-switchon")) {
+                  if(curr_force == 0){
+                    cSwitchon = Fparam[j].value;
+                    if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
+                    else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
+                    else cSwitch = 1;
+                  }else if(curr_force == 1){
+                    lSwitchon = Fparam[j].value;
+                    if (equalStartNocase("C2", Fparam[j].text)) lSwitch = 2;
+                    else if (equalStartNocase("Cn", Fparam[j].text)) lSwitch = 3;
+                    else lSwitch = 1;
+                  }
+                } else if (equalNocase(Fparam[j].keyword, "-n")) {
+                  if(curr_force == 0){
+                    cOrder = Fparam[j].value;
+                    cSwitch = 3;
+                  }else if(curr_force == 1){
+                    lOrder = Fparam[j].value;
+                    lSwitch = 3;
+                  }
+                } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
+                  if(curr_force == 0){
+                    cSwitchoff = Fparam[j].value;
+                    cSwitch = 3;
+                  }else if(curr_force == 1){
+                    lSwitchoff = Fparam[j].value;
+                    lSwitch = 3;
+                  }
+                }
+              }
+            }
+      } else {
+        report << error << "Unknown Combined Force: " << ListForces[i]->getId() << endr;
       }
     }
-
-  }      
+  }
   //set maxiumum cutoff value
   Real tempCoff = max(cCutoff, lCutoff);
   //allow for 'outer' cutoff
@@ -513,7 +583,7 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
      //report << plain <<"Hessian : Calculate forces GBBornRadii"<<endr;
      evaluateGBBornRadii(myPositions, myTopo);
   }
-  
+
   if (myGBPartialSum && myTopo->doGBSAOpenMM) {
     evaluateGBPartialSum(myPositions, myTopo);
   }
@@ -524,10 +594,10 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
 
   unsigned int atoms_size = myTopo->atoms.size();
   for (unsigned int i = 0; i < atoms_size; i++){
-    for (unsigned int j = i + 1; j < atoms_size; j++){ 
+    for (unsigned int j = i + 1; j < atoms_size; j++){
       Matrix3By3 rhp(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0);
       //Lennard jones
-      if (myLennardJones) 
+      if (myLennardJones)
         rhp += evaluatePairsMatrix(i, j, LENNARDJONES, myPositions, myTopo, mrw);
       //Coulombic
       if (myCoulomb)
@@ -539,7 +609,7 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
       if (myCoulombSCPISM)
         rhp += evaluatePairsMatrix(i, j, COULOMBSCPISM, myPositions, myTopo, mrw);
       //Bourn radii
-      if (myBornRadii && myBornSelf && myTopo->doSCPISM)          
+      if (myBornRadii && myBornSelf && myTopo->doSCPISM)
         rhp += evaluateBornSelfPair(i, j, myPositions, myTopo);
 
 
@@ -561,7 +631,7 @@ void Hessian::evaluate(const Vector3DBlock *myPositions,
 }
 
 void Hessian::evaluatePairs(int i, int j, int pairType, const Vector3DBlock *myPositions,
-                                        const GenericTopology *myTopo, bool mrw, 
+                                        const GenericTopology *myTopo, bool mrw,
                                             int mat_i, int mat_j, int mat_sz, double * mat_array) {
 
   Matrix3By3 rha = evaluatePairsMatrix(i, j, pairType, myPositions, myTopo, mrw);
@@ -589,15 +659,15 @@ Matrix3By3 Hessian::evaluatePairsMatrix(int i, int j, int pairType, const Vector
   //SCP
   Real alpha_ij = 0;
   //Switches
-  Real pCutoff, pSwitchon, pSwitch, pOrder, pSwitchoff; 
+  Real pCutoff, pSwitchon, pSwitch, pOrder, pSwitchoff;
 
 
   if(pairType == LENNARDJONES){	//setup switch paramiters
-    pCutoff = lCutoff; pSwitchon = lSwitchon; 
-    pSwitch = lSwitch; pOrder = lOrder; pSwitchoff = lSwitchoff; 
+    pCutoff = lCutoff; pSwitchon = lSwitchon;
+    pSwitch = lSwitch; pOrder = lOrder; pSwitchoff = lSwitchoff;
   }else{
-    pCutoff = cCutoff; pSwitchon = cSwitchon; 
-    pSwitch = cSwitch; pOrder = cOrder; pSwitchoff = cSwitchoff; 
+    pCutoff = cCutoff; pSwitchon = cSwitchon;
+    pSwitch = cSwitch; pOrder = cOrder; pSwitchoff = cSwitchoff;
   }
   //if not bonded/dihedral
   ec = myTopo->exclusions.check(i, j);
@@ -683,7 +753,7 @@ Matrix3By3 Hessian::evaluatePairsMatrix(int i, int j, int pairType, const Vector
   //
 }
 
-void Hessian::outputSparsePairMatrix(int i, int j, Real massi, Real massj, 
+void Hessian::outputSparsePairMatrix(int i, int j, Real massi, Real massj,
                                         Matrix3By3 rha, bool mrw, int arrSz, double *basePoint){
     int eye, jay;
     Real tempf, ms1, ms2, ms3;
@@ -709,7 +779,7 @@ void Hessian::outputSparsePairMatrix(int i, int j, Real massi, Real massj,
     }
 }
 
-void Hessian::outputSparseMatrix(int i, int j, Real massi, Real massj, 
+void Hessian::outputSparseMatrix(int i, int j, Real massi, Real massj,
                                     Matrix3By3 rha, bool mrw, int arrSz, double *basePoint){
 
     for (int ll = 0; ll < 3; ll++)
@@ -717,7 +787,7 @@ void Hessian::outputSparseMatrix(int i, int j, Real massi, Real massj,
             if (mrw)
                 basePoint[(i * 3 + ll) + (j * 3 + mm) * arrSz] +=
                         ((rha(ll, mm) / sqrt(massi * massj)));
-            else 
+            else
                 basePoint[(i * 3 + ll) + (j * 3 + mm) * arrSz] +=
                         rha(ll, mm);
 
@@ -739,14 +809,14 @@ void Hessian::evaluateBornRadii(const Vector3DBlock *myPositions,
   }
   //check all pairs
   for (unsigned int i = 0; i < atoms_size; i++){
-    for (unsigned int j = i + 1; j < atoms_size; j++){ 
+    for (unsigned int j = i + 1; j < atoms_size; j++){
       //if not bonded/dihedral
       ExclusionClass ec = myTopo->exclusions.check(i, j);
       if (ec != EXCLUSION_FULL) {
         Vector3D rij =
               myTopo->minimalDifference((*myPositions)[i], (*myPositions)[j]);
         Real a = rij.normSquared();
-        if(a < BORNCUTOFF2){ //within cutoff of 5A?      
+        if(a < BORNCUTOFF2){ //within cutoff of 5A?
           Real rawE = 0.0, rawF = 0.0;
           br(rawE, rawF, a, 1.0 / a, rij, myTopo, i, j, ec);  //do the calculation, no force/energy returned.
         }
@@ -754,12 +824,12 @@ void Hessian::evaluateBornRadii(const Vector3DBlock *myPositions,
     }
   }
 }
-  
+
 //SCPISM Pairwise Born Self energy Hessian
 Matrix3By3 Hessian::evaluateBornSelfPair(int i, int j, const Vector3DBlock *myPositions,
                                        const GenericTopology *myTopo) {
 
-  ReducedHessBornSelf rHessBS;  
+  ReducedHessBornSelf rHessBS;
   Matrix3By3 rha(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   //find the Hessian
   //if not bonded/dihedral
@@ -768,7 +838,7 @@ Matrix3By3 Hessian::evaluateBornSelfPair(int i, int j, const Vector3DBlock *myPo
     Vector3D rij =
           myTopo->minimalDifference((*myPositions)[i], (*myPositions)[j]);
     Real a = rij.normSquared();
-    if(a < BORNCUTOFF2){ //within cutoff of 5A?      
+    if(a < BORNCUTOFF2){ //within cutoff of 5A?
       rha = rHessBS(a, rij, myTopo, i, j, myBornSwitch, myDielecConst, ec);  //find Hessian
     }
   }
@@ -804,7 +874,7 @@ void Hessian::evaluateGBBornRadii(const Vector3DBlock *myPositions,
 //GB Partial Sum
 void Hessian::evaluateGBPartialSum(const Vector3DBlock *myPositions,
                                   GenericTopology *myTopo) {
-  
+
   unsigned int atom_size = myTopo->atoms.size();
   GBPartialSum gbPartialSum;
 
@@ -846,7 +916,7 @@ Matrix3By3 Hessian::evaluateGBACEPair(int i, int j, const Vector3DBlock *myPosit
 }
 
 //GB force
-Matrix3By3 Hessian::evaluateGBPair(int i, int j, const Vector3DBlock *myPositions, 
+Matrix3By3 Hessian::evaluateGBPair(int i, int j, const Vector3DBlock *myPositions,
                                   const GenericTopology *myTopo) {
 
    ReducedHessGB rHessGB;
@@ -872,7 +942,7 @@ void Hessian::clear() {
 
 }
     //set Hessian column
-    bool Hessian::setHessianColumn( const Vector3DBlock &hescol, const unsigned int columnNumber, 
+    bool Hessian::setHessianColumn( const Vector3DBlock &hescol, const unsigned int columnNumber,
                                     const GenericTopology *myTopo, const bool massWeight ){
         //get size
         sz = 3 * hescol.size();
@@ -880,20 +950,20 @@ void Hessian::clear() {
         //loop over column elements
         if (hessM != 0 && columnNumber < sz){
             for (unsigned int i = 0; i < sz; i++){
-                
+
                 Real factor = 1.0;
-                
+
                 if(massWeight) factor /= sqrt(myTopo->atoms[i/3].scaledMass);
-                
+
                 hessM[columnNumber * sz + i] += hescol[i/3][i%3] * factor;
             }
-            
+
             return true;
-            
+
         }else{
             return false;
         }
-        
+
     }
-    
+
 }
