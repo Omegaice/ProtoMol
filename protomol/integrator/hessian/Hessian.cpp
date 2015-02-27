@@ -141,7 +141,17 @@ void Hessian::findForces(ForceGroup *overloadedForces) {
 
   for (unsigned int i = 0; i < ListForces.size(); i++) {
     std::vector<std::string> parts = splitString(ListForces[i]->getId());
-    if( parts.size() == 1 ){
+
+    int forces = 0;
+    for( unsigned int j = 0; j < parts.size(); j++ ){
+        if( removeBeginEndBlanks(parts[j])[0] != '-' ) {
+            forces++;
+        }else{
+            break;
+        }
+    }
+
+    if( forces == 1 ){
         if (equalNocase(ListForces[i]->getId(), "Bond")) {
           myBond = true;
         } else if (equalNocase(ListForces[i]->getId(), "Angle")) {
@@ -340,6 +350,62 @@ void Hessian::findForces(ForceGroup *overloadedForces) {
               }
             }
           }
+        } else if (equalStartNocase("LennardJones Coulomb", ListForces[i]->getId())) {
+            std::cout << "LJ Test" << std::endl;
+            myLennardJones = true; myCoulomb = true;
+            vector<Parameter> Fparam;
+            //lSwitch = cSwitch = 1;
+            int curr_force = 0;
+            bool last_was_cutoff = false;
+            ListForces[i]->getParameters(Fparam);
+            for (unsigned int j = 0; j < Fparam.size(); j++) {
+              if (equalNocase(Fparam[j].keyword, "-cutoff")) {
+                //get outer cuttoff for C1/C2 switches
+                if(curr_force == 0){
+                  cCutoff = Fparam[j].value;
+                }else if(curr_force == 1){
+                  lCutoff = Fparam[j].value;
+                }
+                if(!last_was_cutoff){
+                  curr_force++;
+                }else{
+                  //if two cuttoffs in sequence then outer value
+                  mCutoff = Fparam[j].value;
+                }
+                last_was_cutoff = true;
+              } else {
+                last_was_cutoff = false;
+                if (equalNocase(Fparam[j].keyword, "-switchon")) {
+                  if(curr_force == 0){
+                    cSwitchon = Fparam[j].value;
+                    if (equalStartNocase("C2", Fparam[j].text)) cSwitch = 2;
+                    else if (equalStartNocase("Cn", Fparam[j].text)) cSwitch = 3;
+                    else cSwitch = 1;
+                  }else if(curr_force == 1){
+                    lSwitchon = Fparam[j].value;
+                    if (equalStartNocase("C2", Fparam[j].text)) lSwitch = 2;
+                    else if (equalStartNocase("Cn", Fparam[j].text)) lSwitch = 3;
+                    else lSwitch = 1;
+                  }
+                } else if (equalNocase(Fparam[j].keyword, "-n")) {
+                  if(curr_force == 0){
+                    cOrder = Fparam[j].value;
+                    cSwitch = 3;
+                  }else if(curr_force == 1){
+                    lOrder = Fparam[j].value;
+                    lSwitch = 3;
+                  }
+                } else if (equalNocase(Fparam[j].keyword, "-switchoff")) {
+                  if(curr_force == 0){
+                    cSwitchoff = Fparam[j].value;
+                    cSwitch = 3;
+                  }else if(curr_force == 1){
+                    lSwitchoff = Fparam[j].value;
+                    lSwitch = 3;
+                  }
+                }
+              }
+            }
       } else {
         report << error << "Unknown Combined Force: " << ListForces[i]->getId() << endr;
       }
