@@ -65,9 +65,10 @@ def run_test(protomol_path, conf_file, pwd, parallel):
         cmd.append('2')
     cmd.append(protomol_path)
     cmd.append(conf_file)
+    cmd.append(">/dev/null")
+    cmd.append("2>&1")
 
-    DEVNULL = open(os.devnull, 'w')
-    if subprocess.call(cmd, stdout=DEVNULL, stderr=DEVNULL) > 0:
+    if subprocess.call(cmd, stdout=None, stderr=None) > 0:
         s = 'Not able to execute Protomol!\n'
         s += 'cmd: ' + str(cmd) + '\n'
         logging.critical(s)
