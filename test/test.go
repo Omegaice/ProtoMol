@@ -122,6 +122,24 @@ func isMatchingDCD(actual, expected string) bool {
 				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
 				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
 			}
+
+			yExpected := dcdExpected.Frames[frame].Y[atom]
+			yActual := dcdActual.Frames[frame].Y[atom]
+
+			if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
+				diffs++
+				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+			}
+
+			zExpected := dcdExpected.Frames[frame].X[atom]
+			zActual := dcdActual.Frames[frame].Z[atom]
+
+			if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
+				diffs++
+				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+			}
 		}
 	}
 
