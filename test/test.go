@@ -91,6 +91,9 @@ func main() {
 				}
 				break
 			case ".vel":
+				if !isMatchingVelocity(output, expected) {
+					log.Println("\t\tFailed")
+				}
 				break
 			}
 		}
@@ -660,4 +663,51 @@ func ReadPosition(filename string) (*PositionFile, error) {
 	}
 
 	return &result, nil
+}
+
+// Velocity Comparison
+func isMatchingVelocity(actual, expected string) bool {
+	aPosition, err := ReadPosition(actual)
+	if err != nil {
+		return true
+	}
+
+	ePosition, err := ReadPosition(expected)
+	if err != nil {
+		return true
+	}
+
+	if aPosition.AtomCount != ePosition.AtomCount {
+		log.Printf("Atom Count Differs. Should be %d but is %d\n", ePosition.AtomCount, aPosition.AtomCount)
+		return false
+	}
+
+	diffs := 0
+	for atom := 0; atom < ePosition.AtomCount; atom++ {
+		xExpected := ePosition.Atom[atom].X
+		xActual := aPosition.Atom[atom].X
+
+		if math.Max(xExpected, xActual)-math.Min(xExpected, xActual) > 0.00001 {
+			diffs++
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
+		}
+
+		yExpected := ePosition.Atom[atom].Y
+		yActual := aPosition.Atom[atom].Y
+
+		if math.Max(yExpected, yActual)-math.Min(yExpected, yActual) > 0.00001 {
+			diffs++
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
+		}
+
+		zExpected := ePosition.Atom[atom].Z
+		zActual := aPosition.Atom[atom].Z
+
+		if math.Max(zExpected, zActual)-math.Min(zExpected, zActual) > 0.00001 {
+			diffs++
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
+		}
+	}
+
+	return diffs == 0
 }
