@@ -72,6 +72,9 @@ func main() {
 				}
 				break
 			case ".forces":
+				if !isMatchingForce(output, expected) {
+					log.Println("Differ")
+				}
 				break
 			case ".pos":
 				break
@@ -82,6 +85,47 @@ func main() {
 
 		break
 	}
+}
+
+// Generic Parsing
+type AtomPosition struct {
+	Name    string
+	X, Y, Z float64
+}
+
+func ParseAtomPosition(line string) (*AtomPosition, error) {
+	var values []string
+	for _, value := range strings.Split(line, " ") {
+		if len(value) > 0 {
+			values = append(values, strings.TrimSpace(value))
+		}
+	}
+
+	if len(values) != 4 {
+		return nil, errors.New("invalid atom position line")
+	}
+
+	result := AtomPosition{Name: values[0]}
+
+	x, err := strconv.ParseFloat(values[1], 64)
+	if err != nil {
+		return nil, err
+	}
+	result.X = x
+
+	y, err := strconv.ParseFloat(values[2], 64)
+	if err != nil {
+		return nil, err
+	}
+	result.Y = y
+
+	z, err := strconv.ParseFloat(values[3], 64)
+	if err != nil {
+		return nil, err
+	}
+	result.Z = z
+
+	return &result, nil
 }
 
 // DCD Comparison
@@ -383,6 +427,130 @@ func ReadEnergy(filename string) (*EnergyFile, error) {
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
+	}
+
+	return &result, nil
+}
+
+// Force Comparison
+func isMatchingForce(actual, expected string) bool {
+	aForce, err := ReadForce(actual)
+	if err != nil {
+		return true
+	}
+
+	eForce, err := ReadForce(expected)
+	if err != nil {
+		return true
+	}
+
+	if aForce.FrameCount != eForce.FrameCount {
+		log.Printf("Frame Count Differs. Should be %d but is %d\n", eForce.FrameCount, aForce.FrameCount)
+		return false
+	}
+
+	if aForce.AtomCount != eForce.AtomCount {
+		log.Printf("Atom Count Differs. Should be %d but is %d\n", eForce.AtomCount, aForce.AtomCount)
+		return false
+	}
+
+	diffs := 0
+	for frame := 0; frame < eForce.FrameCount; frame++ {
+		for atom := 0; atom < eForce.AtomCount; atom++ {
+			xExpected := eForce.Frame[frame].Atom[atom].X
+			xActual := aForce.Frame[frame].Atom[atom].X
+
+			if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
+				diffs++
+				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+			}
+
+			yExpected := eForce.Frame[frame].Atom[atom].Y
+			yActual := aForce.Frame[frame].Atom[atom].Y
+
+			if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
+				diffs++
+				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+			}
+
+			zExpected := eForce.Frame[frame].Atom[atom].Z
+			zActual := aForce.Frame[frame].Atom[atom].Z
+
+			if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
+				diffs++
+				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+			}
+		}
+	}
+
+	return diffs == 0
+}
+
+// Energy Parsing
+type ForceFile struct {
+	FrameCount int
+	AtomCount  int
+	Frame      []ForceFileFrame
+}
+
+type ForceFileFrame struct {
+	Atom []AtomPosition
+}
+
+func ReadForce(filename string) (*ForceFile, error) {
+	// Parse File
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	r := bufio.NewReader(file)
+
+	// Read Framecount and atomcount
+	sFrames, err := r.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	sAtoms, err := r.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert framecount and atomcount
+	frameCount, err := strconv.Atoi(sFrames)
+	if err != nil {
+		return nil, err
+	}
+
+	atomCount, err := strconv.Atoi(sAtoms)
+	if err != nil {
+		return nil, err
+	}
+
+	result := ForceFile{FrameCount: frameCount, AtomCount: atomCount}
+
+	// Parse Frames
+	for frame := 0; frame < result.FrameCount; frame++ {
+		var frameData ForceFileFrame
+		for atom := 0; atom < result.AtomCount; atom++ {
+			sAtom, err := r.ReadString('\n')
+			if err != nil {
+				return nil, err
+			}
+
+			atomValue, err := ParseAtomPosition(sAtom)
+			if err != nil {
+				return nil, err
+			}
+
+			frameData.Atom = append(frameData.Atom, *atomValue)
+		}
+		result.Frame = append(result.Frame, frameData)
 	}
 
 	return &result, nil
