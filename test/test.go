@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +19,9 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	debug := flag.Bool("debug", false, "Enable debugging of ProtoMol execution")
+	flag.Parse()
 
 	// Update Path Variable
 	os.Setenv("PATH", ".:"+os.Getenv("PATH"))
@@ -42,8 +46,13 @@ func main() {
 		log.Println("Executing Test:", basename)
 
 		cmd := exec.Command("ProtoMol", test)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		if *debug {
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stdout
+		} else {
+			cmd.Stdout = nil
+			cmd.Stderr = nil
+		}
 		if err := cmd.Run(); err != nil {
 			log.Fatal(err)
 		}
