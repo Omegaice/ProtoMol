@@ -66,11 +66,13 @@ func main() {
 		// Compare Results
 		for _, expected := range expects {
 			output := "tests/output/" + filepath.Base(expected)
-
 			extension := filepath.Ext(output)
 			if extension == ".header" {
 				continue
 			}
+
+			log.Println(fmt.Sprintf("\tTesting %s vs %s", output, expected))
+
 			switch extension {
 			case ".dcd":
 				if !isMatchingDCD(output, expected) {
