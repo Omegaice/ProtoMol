@@ -77,6 +77,9 @@ func main() {
 				}
 				break
 			case ".pos":
+				if !isMatchingPosition(output, expected) {
+					log.Println("Differ")
+				}
 				break
 			case ".vel":
 				break
@@ -551,6 +554,100 @@ func ReadForce(filename string) (*ForceFile, error) {
 			frameData.Atom = append(frameData.Atom, *atomValue)
 		}
 		result.Frame = append(result.Frame, frameData)
+	}
+
+	return &result, nil
+}
+
+// Position Comparison
+func isMatchingPosition(actual, expected string) bool {
+	aPosition, err := ReadPosition(actual)
+	if err != nil {
+		return true
+	}
+
+	ePosition, err := ReadPosition(expected)
+	if err != nil {
+		return true
+	}
+
+	if aPosition.AtomCount != ePosition.AtomCount {
+		log.Printf("Atom Count Differs. Should be %d but is %d\n", ePosition.AtomCount, aPosition.AtomCount)
+		return false
+	}
+
+	diffs := 0
+	for atom := 0; atom < ePosition.AtomCount; atom++ {
+		xExpected := ePosition.Atom[atom].X
+		xActual := aPosition.Atom[atom].X
+
+		if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
+			diffs++
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+		}
+
+		yExpected := ePosition.Atom[atom].Y
+		yActual := aPosition.Atom[atom].Y
+
+		if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
+			diffs++
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+		}
+
+		zExpected := ePosition.Atom[atom].Z
+		zActual := aPosition.Atom[atom].Z
+
+		if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
+			diffs++
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+		}
+	}
+
+	return diffs == 0
+}
+
+// Energy Parsing
+type PositionFile struct {
+	AtomCount int
+	Atom      []AtomPosition
+}
+
+func ReadPosition(filename string) (*PositionFile, error) {
+	// Parse File
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	r := bufio.NewReader(file)
+
+	// Read AtomCount and convert
+	sAtoms, err := r.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+
+	atomCount, err := strconv.Atoi(sAtoms)
+	if err != nil {
+		return nil, err
+	}
+
+	result := PositionFile{AtomCount: atomCount}
+
+	// Parse Frames
+	for atom := 0; atom < result.AtomCount; atom++ {
+		sAtom, err := r.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+
+		atomValue, err := ParseAtomPosition(sAtom)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Atom = append(result.Atom, *atomValue)
 	}
 
 	return &result, nil
