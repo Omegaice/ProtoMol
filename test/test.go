@@ -76,32 +76,41 @@ func main() {
 			switch extension {
 			case ".dcd":
 				if !isMatchingDCD(output, expected) {
-					log.Println("Differ")
+					log.Println("\t\tFailed")
+				} else {
+					log.Println("\t\tPassed")
 				}
 				break
 			case ".energy":
 				if !isMatchingEnergy(output, expected) {
-					log.Println("Differ")
+					log.Println("\t\tFailed")
+				} else {
+					log.Println("\t\tPassed")
 				}
 				break
 			case ".forces":
 				if !isMatchingForce(output, expected) {
-					log.Println("Differ")
+					log.Println("\t\tFailed")
+				} else {
+					log.Println("\t\tPassed")
 				}
 				break
 			case ".pos":
 				if !isMatchingPosition(output, expected) {
-					log.Println("Differ")
+					log.Println("\t\tFailed")
+				} else {
+					log.Println("\t\tPassed")
 				}
 				break
 			case ".vel":
 				if !isMatchingVelocity(output, expected) {
 					log.Println("\t\tFailed")
+				} else {
+					log.Println("\t\tPassed")
 				}
 				break
 			}
 		}
-
 	}
 }
 
