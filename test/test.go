@@ -68,7 +68,9 @@ func main() {
 			output := "tests/output/" + filepath.Base(expected)
 
 			extension := filepath.Ext(output)
-			log.Println(extension)
+			if extension == ".header" {
+				continue
+			}
 			switch extension {
 			case ".dcd":
 				if !isMatchingDCD(output, expected) {
