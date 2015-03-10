@@ -475,28 +475,25 @@ func isMatchingForce(actual, expected string) bool {
 			xExpected := eForce.Frame[frame].Atom[atom].X
 			xActual := aForce.Frame[frame].Atom[atom].X
 
-			if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
+			if math.Max(xExpected, xActual)-math.Min(xExpected, xActual) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+				log.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
 			}
 
 			yExpected := eForce.Frame[frame].Atom[atom].Y
 			yActual := aForce.Frame[frame].Atom[atom].Y
 
-			if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
+			if math.Max(yExpected, yActual)-math.Min(yExpected, yActual) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+				log.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
 			}
 
 			zExpected := eForce.Frame[frame].Atom[atom].Z
 			zActual := aForce.Frame[frame].Atom[atom].Z
 
-			if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
+			if math.Max(zExpected, zActual)-math.Min(zExpected, zActual) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+				log.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
 			}
 		}
 	}
@@ -593,25 +590,25 @@ func isMatchingPosition(actual, expected string) bool {
 		xExpected := ePosition.Atom[atom].X
 		xActual := aPosition.Atom[atom].X
 
-		if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
+		if math.Max(xExpected, xActual)-math.Min(xExpected, xActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
 		}
 
 		yExpected := ePosition.Atom[atom].Y
 		yActual := aPosition.Atom[atom].Y
 
-		if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
+		if math.Max(yExpected, yActual)-math.Min(yExpected, yActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
 		}
 
 		zExpected := ePosition.Atom[atom].Z
 		zActual := aPosition.Atom[atom].Z
 
-		if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
+		if math.Max(zExpected, zActual)-math.Min(zExpected, zActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
 		}
 	}
 
