@@ -102,7 +102,6 @@ func main() {
 			}
 		}
 
-		break
 	}
 }
 
