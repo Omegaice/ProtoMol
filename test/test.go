@@ -18,14 +18,23 @@ import (
 )
 
 var debug bool
+var verbose bool
 var parallel bool
 
-func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+var vLogger *log.Logger
 
+func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debugging of ProtoMol execution")
+	flag.BoolVar(&verbose, "verbose", false, "Enable verbose output")
 	flag.BoolVar(&parallel, "parallel", false, "Enable parallel ProtoMol execution")
 	flag.Parse()
+
+	// Setup Verbose Logger
+	if verbose {
+		vLogger = log.New(os.Stdout, "", log.LstdFlags)
+	} else {
+		vLogger = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
 
 	// Update Path Variable
 	os.Setenv("PATH", ".:"+os.Getenv("PATH"))
@@ -191,17 +200,17 @@ func isMatchingDCD(actual, expected string) bool {
 	}
 
 	if dcdActual.Header.Frames != dcdExpected.Header.Frames {
-		log.Println("Atom Count Differs")
+		vLogger.Println("Atom Count Differs")
 		return false
 	}
 
 	if dcdActual.Header.FirstStep != dcdExpected.Header.FirstStep {
-		log.Printf("First Step Differs. Should be %d but is %d\n", dcdExpected.Header.FirstStep, dcdActual.Header.FirstStep)
+		vLogger.Printf("First Step Differs. Should be %d but is %d\n", dcdExpected.Header.FirstStep, dcdActual.Header.FirstStep)
 		return false
 	}
 
 	if dcdActual.Atoms != dcdExpected.Atoms {
-		log.Printf("Atom Count Differs. Should be %d but is %d\n", dcdExpected.Atoms, dcdActual.Atoms)
+		vLogger.Printf("Atom Count Differs. Should be %d but is %d\n", dcdExpected.Atoms, dcdActual.Atoms)
 		return false
 	}
 
@@ -213,8 +222,8 @@ func isMatchingDCD(actual, expected string) bool {
 
 			if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+				vLogger.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				vLogger.Printf("Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
 			}
 
 			yExpected := dcdExpected.Frames[frame].Y[atom]
@@ -222,8 +231,8 @@ func isMatchingDCD(actual, expected string) bool {
 
 			if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+				vLogger.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				vLogger.Printf("Expected: %f, Actual: %f, Difference: %f\n", yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
 			}
 
 			zExpected := dcdExpected.Frames[frame].X[atom]
@@ -231,8 +240,8 @@ func isMatchingDCD(actual, expected string) bool {
 
 			if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				log.Printf("Expected: %f, Actual: %f, Difference: %f\n", zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+				vLogger.Printf("Frame %d, Atom %d Differs\n", frame, atom)
+				vLogger.Printf("Expected: %f, Actual: %f, Difference: %f\n", zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
 			}
 		}
 	}
@@ -394,19 +403,19 @@ func isMatchingEnergy(actual, expected string) bool {
 	}
 
 	if len(energyActual.Column) != len(energyExpected.Column) {
-		log.Printf("Column Count Differs. Should be %d but is %d\n", len(energyActual.Column), len(energyExpected.Column))
+		vLogger.Printf("Column Count Differs. Should be %d but is %d\n", len(energyActual.Column), len(energyExpected.Column))
 		return false
 	}
 
 	var diffs int
 	for i := 0; i < len(energyExpected.Column); i++ {
 		if energyActual.Column[i].Name != energyExpected.Column[i].Name {
-			log.Printf("Column Name Differs. Should be %s but is %s\n", energyActual.Column[i].Name, energyExpected.Column[i].Name)
+			vLogger.Printf("Column Name Differs. Should be %s but is %s\n", energyActual.Column[i].Name, energyExpected.Column[i].Name)
 			return false
 		}
 
 		if len(energyActual.Column[i].Values) != len(energyExpected.Column[i].Values) {
-			log.Printf("Column Value Count Differs. Should be %d but is %d\n", len(energyActual.Column[i].Values), len(energyExpected.Column[i].Values))
+			vLogger.Printf("Column Value Count Differs. Should be %d but is %d\n", len(energyActual.Column[i].Values), len(energyExpected.Column[i].Values))
 			return false
 		}
 
@@ -416,7 +425,7 @@ func isMatchingEnergy(actual, expected string) bool {
 
 			if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
 				diffs++
-				log.Printf("Column Value Differs. Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+				vLogger.Printf("Column Value Differs. Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
 			}
 		}
 	}
@@ -495,12 +504,12 @@ func isMatchingForce(actual, expected string) bool {
 	}
 
 	if aForce.FrameCount != eForce.FrameCount {
-		log.Printf("Frame Count Differs. Should be %d but is %d\n", eForce.FrameCount, aForce.FrameCount)
+		vLogger.Printf("Frame Count Differs. Should be %d but is %d\n", eForce.FrameCount, aForce.FrameCount)
 		return false
 	}
 
 	if aForce.AtomCount != eForce.AtomCount {
-		log.Printf("Atom Count Differs. Should be %d but is %d\n", eForce.AtomCount, aForce.AtomCount)
+		vLogger.Printf("Atom Count Differs. Should be %d but is %d\n", eForce.AtomCount, aForce.AtomCount)
 		return false
 	}
 
@@ -512,7 +521,7 @@ func isMatchingForce(actual, expected string) bool {
 
 			if math.Max(xExpected, xActual)-math.Min(xExpected, xActual) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
+				vLogger.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
 			}
 
 			yExpected := eForce.Frame[frame].Atom[atom].Y
@@ -520,7 +529,7 @@ func isMatchingForce(actual, expected string) bool {
 
 			if math.Max(yExpected, yActual)-math.Min(yExpected, yActual) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
+				vLogger.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
 			}
 
 			zExpected := eForce.Frame[frame].Atom[atom].Z
@@ -528,7 +537,7 @@ func isMatchingForce(actual, expected string) bool {
 
 			if math.Max(zExpected, zActual)-math.Min(zExpected, zActual) > 0.00001 {
 				diffs++
-				log.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
+				vLogger.Printf("Frame %d, Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
 			}
 		}
 	}
@@ -616,7 +625,7 @@ func isMatchingPosition(actual, expected string) bool {
 	}
 
 	if aPosition.AtomCount != ePosition.AtomCount {
-		log.Printf("Atom Count Differs. Should be %d but is %d\n", ePosition.AtomCount, aPosition.AtomCount)
+		vLogger.Printf("Atom Count Differs. Should be %d but is %d\n", ePosition.AtomCount, aPosition.AtomCount)
 		return false
 	}
 
@@ -627,7 +636,7 @@ func isMatchingPosition(actual, expected string) bool {
 
 		if math.Max(xExpected, xActual)-math.Min(xExpected, xActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
+			vLogger.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
 		}
 
 		yExpected := ePosition.Atom[atom].Y
@@ -635,7 +644,7 @@ func isMatchingPosition(actual, expected string) bool {
 
 		if math.Max(yExpected, yActual)-math.Min(yExpected, yActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
+			vLogger.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
 		}
 
 		zExpected := ePosition.Atom[atom].Z
@@ -643,7 +652,7 @@ func isMatchingPosition(actual, expected string) bool {
 
 		if math.Max(zExpected, zActual)-math.Min(zExpected, zActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
+			vLogger.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
 		}
 	}
 
@@ -710,7 +719,7 @@ func isMatchingVelocity(actual, expected string) bool {
 	}
 
 	if aPosition.AtomCount != ePosition.AtomCount {
-		log.Printf("Atom Count Differs. Should be %d but is %d\n", ePosition.AtomCount, aPosition.AtomCount)
+		vLogger.Printf("Atom Count Differs. Should be %d but is %d\n", ePosition.AtomCount, aPosition.AtomCount)
 		return false
 	}
 
@@ -721,7 +730,7 @@ func isMatchingVelocity(actual, expected string) bool {
 
 		if math.Max(xExpected, xActual)-math.Min(xExpected, xActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
+			vLogger.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, xExpected, xActual, math.Max(xExpected, xActual)-math.Min(xExpected, xActual))
 		}
 
 		yExpected := ePosition.Atom[atom].Y
@@ -729,7 +738,7 @@ func isMatchingVelocity(actual, expected string) bool {
 
 		if math.Max(yExpected, yActual)-math.Min(yExpected, yActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
+			vLogger.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, yExpected, yActual, math.Max(yExpected, yActual)-math.Min(yExpected, yActual))
 		}
 
 		zExpected := ePosition.Atom[atom].Z
@@ -737,7 +746,7 @@ func isMatchingVelocity(actual, expected string) bool {
 
 		if math.Max(zExpected, zActual)-math.Min(zExpected, zActual) > 0.00001 {
 			diffs++
-			log.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
+			vLogger.Printf("Atom %d Differs. Expected: %f, Actual: %f, Difference: %f\n", atom, zExpected, zActual, math.Max(zExpected, zActual)-math.Min(zExpected, zActual))
 		}
 	}
 
