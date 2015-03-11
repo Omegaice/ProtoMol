@@ -228,31 +228,25 @@ func isMatchingDCD(actual, expected string) bool {
 	diffs := 0
 	for frame := int32(0); frame < dcdExpected.Header.Frames; frame++ {
 		for atom := int32(0); atom < dcdExpected.Atoms; atom++ {
-			xExpected := dcdExpected.Frames[frame].X[atom]
-			xActual := dcdActual.Frames[frame].X[atom]
+			ePosition := dcdExpected.Frames[frame].Position[atom]
+			aPosition := dcdActual.Frames[frame].Position[atom]
 
-			if math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)) > 0.00001 {
+			xDiff := math.Max(ePosition.X, aPosition.X) - math.Min(ePosition.X, aPosition.X)
+			if xDiff > 0.00001 {
 				diffs++
-				vLogger.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				vLogger.Printf("Expected: %f, Actual: %f, Difference: %f\n", xExpected, xActual, math.Max(float64(xExpected), float64(xActual))-math.Min(float64(xExpected), float64(xActual)))
+				vLogger.Printf("Frame %d, Atom %d Differs X. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, ePosition.X, aPosition.X, xDiff)
 			}
 
-			yExpected := dcdExpected.Frames[frame].Y[atom]
-			yActual := dcdActual.Frames[frame].Y[atom]
-
-			if math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)) > 0.00001 {
+			yDiff := math.Max(ePosition.Y, aPosition.Y) - math.Min(ePosition.Y, aPosition.Y)
+			if yDiff > 0.00001 {
 				diffs++
-				vLogger.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				vLogger.Printf("Expected: %f, Actual: %f, Difference: %f\n", yExpected, yActual, math.Max(float64(yExpected), float64(yActual))-math.Min(float64(yExpected), float64(yActual)))
+				vLogger.Printf("Frame %d, Atom %d Differs Y. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, ePosition.Y, aPosition.Y, yDiff)
 			}
 
-			zExpected := dcdExpected.Frames[frame].X[atom]
-			zActual := dcdActual.Frames[frame].Z[atom]
-
-			if math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)) > 0.00001 {
+			zDiff := math.Max(ePosition.X, aPosition.X) - math.Min(ePosition.X, aPosition.X)
+			if zDiff > 0.00001 {
 				diffs++
-				vLogger.Printf("Frame %d, Atom %d Differs\n", frame, atom)
-				vLogger.Printf("Expected: %f, Actual: %f, Difference: %f\n", zExpected, zActual, math.Max(float64(zExpected), float64(zActual))-math.Min(float64(zExpected), float64(zActual)))
+				vLogger.Printf("Frame %d, Atom %d Differs Z. Expected: %f, Actual: %f, Difference: %f\n", frame, atom, ePosition.Z, aPosition.Z, zDiff)
 			}
 		}
 	}
@@ -261,6 +255,9 @@ func isMatchingDCD(actual, expected string) bool {
 }
 
 // DCD Parsing
+type Vector3f struct {
+	X, Y, Z float64
+}
 type DCDFile struct {
 	Header  DCDHeader
 	Comment []byte
@@ -269,7 +266,7 @@ type DCDFile struct {
 }
 
 type DCDFrame struct {
-	X, Y, Z []float32
+	Position []Vector3f
 }
 type DCDHeader struct {
 	Frames      int32
@@ -333,27 +330,31 @@ func ReadDCD(filename string) (*DCDFile, error) {
 	}
 
 	// Read Frames
+	tempX := make([]float32, result.Atoms)
+	tempY := make([]float32, result.Atoms)
+	tempZ := make([]float32, result.Atoms)
+
 	for i := int32(0); i < result.Header.Frames; i++ {
 		var frame DCDFrame
 
 		// Read X
-		frame.X = make([]float32, result.Atoms)
-		if err := FortranRead(file, order, &frame.X); err != nil {
+		if err := FortranRead(file, order, &tempX); err != nil {
 			return nil, err
 		}
 
 		// Read Y
-		frame.Y = make([]float32, result.Atoms)
-		if err := FortranRead(file, order, &frame.Y); err != nil {
+		if err := FortranRead(file, order, &tempY); err != nil {
 			return nil, err
 		}
 
 		// Read Z
-		frame.Z = make([]float32, result.Atoms)
-		if err := FortranRead(file, order, &frame.Z); err != nil {
+		if err := FortranRead(file, order, &tempZ); err != nil {
 			return nil, err
 		}
 
+		for j := int32(0); j < result.Atoms; j++ {
+			frame.Position = append(frame.Position, Vector3f{X: float64(tempX[j]), Y: float64(tempY[j]), Z: float64(tempZ[j])})
+		}
 		result.Frames = append(result.Frames, frame)
 	}
 
