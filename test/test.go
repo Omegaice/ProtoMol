@@ -61,14 +61,15 @@ func main() {
 		}
 	}
 
+	// Create Output Directory
+	os.Mkdir("tests/output", 0755)
+
 	// Find Tests
 	tests, err := filepath.Glob("tests/*.conf")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Create Output Directory
-	os.Mkdir("tests/output", 0755)
 	if len(*single) > 0 {
 		tests = []string{*single}
 	}
@@ -101,9 +102,8 @@ func RunTest(config string, parallel bool) {
 		cmd.Stdout = nil
 		cmd.Stderr = nil
 	}
-	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
-	}
+
+	cmd.Run()
 
 	// Find Expected Results
 	expects, err := filepath.Glob("tests/expected/" + basename + ".*")
