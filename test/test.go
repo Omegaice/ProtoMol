@@ -47,17 +47,14 @@ func main() {
 		log.Fatalln("ProtoMol executable could not be found")
 	}
 
-	// Check if we can find mpirun
-	if _, err := exec.LookPath("mpirun"); err != nil {
-		log.Fatalln("MPI executable could not be found")
-	}
-
-	// Check if protomol was built with MPI
 	if parallel {
-		out, err := exec.Command("ProtoMol").CombinedOutput()
-		if err != nil {
-			log.Fatal(err)
+		// Check if we can find mpirun
+		if _, err := exec.LookPath("mpirun"); err != nil {
+			log.Fatalln("MPI executable could not be found")
 		}
+
+		// Check if protomol was built with MPI
+		out, _ := exec.Command("ProtoMol").CombinedOutput()
 		if strings.Contains(string(out), "No MPI compilation") {
 			log.Fatalln("Parallel tests unavailable. Please recompile ProtoMol with MPI support.")
 		}
