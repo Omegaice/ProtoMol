@@ -17,10 +17,12 @@ import (
 	"strings"
 )
 
+var debug bool
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	debug := flag.Bool("debug", false, "Enable debugging of ProtoMol execution")
+	flag.BoolVar(&debug, "debug", false, "Enable debugging of ProtoMol execution")
 	flag.Parse()
 
 	// Update Path Variable
@@ -42,74 +44,78 @@ func main() {
 
 	// Run Tests
 	for _, test := range tests {
-		basename := strings.Replace(filepath.Base(test), filepath.Ext(test), "", -1)
-		log.Println("Executing Test:", basename)
+		RunTest(test)
+	}
+}
 
-		cmd := exec.Command("ProtoMol", test)
-		if *debug {
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stdout
-		} else {
-			cmd.Stdout = nil
-			cmd.Stderr = nil
-		}
-		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
+func RunTest(config string) {
+	basename := strings.Replace(filepath.Base(config), filepath.Ext(config), "", -1)
+	log.Println("Executing Test:", basename)
+
+	cmd := exec.Command("ProtoMol", config)
+	if debug {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stdout
+	} else {
+		cmd.Stdout = nil
+		cmd.Stderr = nil
+	}
+	if err := cmd.Run(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Find Expected Results
+	expects, err := filepath.Glob("tests/expected/" + basename + ".*")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Compare Results
+	for _, expected := range expects {
+		output := "tests/output/" + filepath.Base(expected)
+		extension := filepath.Ext(output)
+		if extension == ".header" {
+			continue
 		}
 
-		// Find Expected Results
-		expects, err := filepath.Glob("tests/expected/" + basename + ".*")
-		if err != nil {
-			log.Fatalln(err)
-		}
+		log.Println(fmt.Sprintf("\tTesting %s vs %s", output, expected))
 
-		// Compare Results
-		for _, expected := range expects {
-			output := "tests/output/" + filepath.Base(expected)
-			extension := filepath.Ext(output)
-			if extension == ".header" {
-				continue
+		switch extension {
+		case ".dcd":
+			if !isMatchingDCD(output, expected) {
+				log.Println("\t\tFailed")
+			} else {
+				log.Println("\t\tPassed")
 			}
-
-			log.Println(fmt.Sprintf("\tTesting %s vs %s", output, expected))
-
-			switch extension {
-			case ".dcd":
-				if !isMatchingDCD(output, expected) {
-					log.Println("\t\tFailed")
-				} else {
-					log.Println("\t\tPassed")
-				}
-				break
-			case ".energy":
-				if !isMatchingEnergy(output, expected) {
-					log.Println("\t\tFailed")
-				} else {
-					log.Println("\t\tPassed")
-				}
-				break
-			case ".forces":
-				if !isMatchingForce(output, expected) {
-					log.Println("\t\tFailed")
-				} else {
-					log.Println("\t\tPassed")
-				}
-				break
-			case ".pos":
-				if !isMatchingPosition(output, expected) {
-					log.Println("\t\tFailed")
-				} else {
-					log.Println("\t\tPassed")
-				}
-				break
-			case ".vel":
-				if !isMatchingVelocity(output, expected) {
-					log.Println("\t\tFailed")
-				} else {
-					log.Println("\t\tPassed")
-				}
-				break
+			break
+		case ".energy":
+			if !isMatchingEnergy(output, expected) {
+				log.Println("\t\tFailed")
+			} else {
+				log.Println("\t\tPassed")
 			}
+			break
+		case ".forces":
+			if !isMatchingForce(output, expected) {
+				log.Println("\t\tFailed")
+			} else {
+				log.Println("\t\tPassed")
+			}
+			break
+		case ".pos":
+			if !isMatchingPosition(output, expected) {
+				log.Println("\t\tFailed")
+			} else {
+				log.Println("\t\tPassed")
+			}
+			break
+		case ".vel":
+			if !isMatchingVelocity(output, expected) {
+				log.Println("\t\tFailed")
+			} else {
+				log.Println("\t\tPassed")
+			}
+			break
 		}
 	}
 }
