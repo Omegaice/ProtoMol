@@ -105,7 +105,10 @@ func RunTest(config string, parallel bool) {
 		cmd.Stderr = nil
 	}
 
-	cmd.Run()
+	if err := cmd.Run(); err != nil {
+		log.Println("\tIgnored")
+		return
+	}
 
 	// Find Expected Results
 	expects, err := filepath.Glob("tests/expected/" + basename + ".*")
@@ -140,6 +143,15 @@ func RunTest(config string, parallel bool) {
 		case ".vel":
 			result = isMatchingVelocity(output, expected)
 			break
+		case ".vec":
+			result = isMatchingVelocity(output, expected)
+			break
+		case ".val":
+			result = isMatchingVelocity(output, expected)
+			break
+		default:
+			log.Println("\t\tIgnored")
+			continue
 		}
 
 		if !result {
