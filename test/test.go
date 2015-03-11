@@ -20,6 +20,7 @@ import (
 var debug bool
 var verbose bool
 var parallel bool
+var errorfailure bool
 
 var vLogger *log.Logger
 
@@ -27,6 +28,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debugging of ProtoMol execution")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose output")
 	flag.BoolVar(&parallel, "parallel", false, "Enable parallel ProtoMol execution")
+	flag.BoolVar(&errorfailure, "errorfailure", false, "Force failure of on a single test failure")
 	single := flag.String("single", "", "Single test to run")
 	flag.Parse()
 
@@ -121,42 +123,33 @@ func RunTest(config string, parallel bool) {
 
 		log.Println(fmt.Sprintf("\tTesting %s vs %s", output, expected))
 
+		var result bool
 		switch extension {
 		case ".dcd":
-			if !isMatchingDCD(output, expected) {
-				log.Println("\t\tFailed")
-			} else {
-				log.Println("\t\tPassed")
-			}
+			result = isMatchingDCD(output, expected)
 			break
 		case ".energy":
-			if !isMatchingEnergy(output, expected) {
-				log.Println("\t\tFailed")
-			} else {
-				log.Println("\t\tPassed")
-			}
+			result = isMatchingEnergy(output, expected)
 			break
 		case ".forces":
-			if !isMatchingForce(output, expected) {
-				log.Println("\t\tFailed")
-			} else {
-				log.Println("\t\tPassed")
-			}
+			result = isMatchingForce(output, expected)
 			break
 		case ".pos":
-			if !isMatchingPosition(output, expected) {
-				log.Println("\t\tFailed")
-			} else {
-				log.Println("\t\tPassed")
-			}
+			result = isMatchingPosition(output, expected)
 			break
 		case ".vel":
-			if !isMatchingVelocity(output, expected) {
-				log.Println("\t\tFailed")
-			} else {
-				log.Println("\t\tPassed")
-			}
+			result = isMatchingVelocity(output, expected)
 			break
+		}
+
+		if !result {
+			if errorfailure {
+				log.Fatalln("\t\tFailed")
+			} else {
+				log.Println("\t\tFailed")
+			}
+		} else {
+			log.Println("\t\tPassed")
 		}
 	}
 }
