@@ -27,6 +27,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debugging of ProtoMol execution")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose output")
 	flag.BoolVar(&parallel, "parallel", false, "Enable parallel ProtoMol execution")
+	single := flag.String("single", "", "Single test to run")
 	flag.Parse()
 
 	// Setup Verbose Logger
@@ -68,6 +69,9 @@ func main() {
 
 	// Create Output Directory
 	os.Mkdir("tests/output", 0755)
+	if len(*single) > 0 {
+		tests = []string{*single}
+	}
 
 	// Run Tests
 	for _, test := range tests {
