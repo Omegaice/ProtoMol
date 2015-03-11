@@ -18,11 +18,13 @@ import (
 )
 
 var debug bool
+var parallel bool
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	flag.BoolVar(&debug, "debug", false, "Enable debugging of ProtoMol execution")
+	flag.BoolVar(&parallel, "parallel", false, "Enable parallel ProtoMol execution")
 	flag.Parse()
 
 	// Update Path Variable
@@ -30,7 +32,12 @@ func main() {
 
 	// Check if we can find ProtoMol
 	if _, err := exec.LookPath("ProtoMol"); err != nil {
-		log.Fatal("ProtoMol executable could not be found")
+		log.Fatalln("ProtoMol executable could not be found")
+	}
+
+	// Check if we can find mpirun
+	if _, err := exec.LookPath("mpirun"); err != nil {
+		log.Fatalln("MPI executable could not be found")
 	}
 
 	// Find Tests
@@ -44,15 +51,25 @@ func main() {
 
 	// Run Tests
 	for _, test := range tests {
-		RunTest(test)
+		RunTest(test, false)
+		if parallel {
+			RunTest(test, true)
+		}
 	}
 }
 
-func RunTest(config string) {
+func RunTest(config string, parallel bool) {
 	basename := strings.Replace(filepath.Base(config), filepath.Ext(config), "", -1)
-	log.Println("Executing Test:", basename)
 
-	cmd := exec.Command("ProtoMol", config)
+	var cmd *exec.Cmd
+	if parallel {
+		log.Println("Executing Parallel Test:", basename)
+		cmd = exec.Command("mpirun", "-np", "2", "ProtoMol", config)
+	} else {
+		log.Println("Executing Test:", basename)
+		cmd = exec.Command("ProtoMol", config)
+	}
+
 	if debug {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stdout
