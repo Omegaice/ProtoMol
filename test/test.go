@@ -49,6 +49,17 @@ func main() {
 		log.Fatalln("MPI executable could not be found")
 	}
 
+	// Check if protomol was built with MPI
+	if parallel {
+		out, err := exec.Command("ProtoMol").CombinedOutput()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if strings.Contains(string(out), "No MPI compilation") {
+			log.Fatalln("Parallel tests unavailable. Please recompile ProtoMol with MPI support.")
+		}
+	}
+
 	// Find Tests
 	tests, err := filepath.Glob("tests/*.conf")
 	if err != nil {
