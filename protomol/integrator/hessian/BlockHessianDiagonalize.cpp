@@ -257,7 +257,7 @@ namespace ProtoMol {
         for( unsigned i=0; i < 3 * sz; i++ ){
             dForce[i] = deltaForce[i/3][i%3]
                             * ( 1.0 / sqrt(myTopo->atoms[i/3].scaledMass) )
-                                * ( 1.0 / epsilon );
+                                * ( -1.0 / epsilon );
         }
 
         //create output column matrix
