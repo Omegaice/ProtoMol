@@ -9,10 +9,10 @@ sudo: false
 addons:
   apt:
     packages:
-      libblas-dev
-      liblapack-dev
-      gromacs-dev
-      openmpi
+      - libblas-dev
+      - liblapack-dev
+      - gromacs-dev
+      - openmpi
 
 script:
   - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON
