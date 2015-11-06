@@ -18,6 +18,7 @@ defineInputValue(InputRandomType, "randomtype")
 defineInputValue(InputFirststep, "firststep")
 defineInputValue(InputRealfirststep, "realfirststep")
 defineInputValue(InputNumsteps, "numsteps")
+defineInputValue(InputSimulationTime, "totaltime")
 defineInputValueAndText(InputDebug, "debug", "report level, suppresses all "
                         "output with higher output level")
 defineInputValue(InputIntegrator, "integrator")
@@ -65,6 +66,7 @@ void MainModule::init(ProtoMolApp *app) {
   InputDoGBSAObc::registerConfiguration(config, 0);
   InputDebugLimit::registerConfiguration(config, 0);
   //lel, no defaults
+  InputSimulationTime::registerConfiguration(config);
   InputUseBarrier::registerConfiguration(config);
   InputParallelPipe::registerConfiguration(config);
   InputParallelMode::registerConfiguration(config);
@@ -107,8 +109,9 @@ void MainModule::configure(ProtoMolApp *app) {
   if (!config[InputFirststep::keyword].valid())
     THROW("Firststep undefined.");
 
-  if (!config[InputNumsteps::keyword].valid())
+  if (!config[InputNumsteps::keyword].valid()){
     THROW("Numsteps undefined.");
+  }
 }
 
 
