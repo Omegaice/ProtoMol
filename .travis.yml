@@ -4,6 +4,8 @@ compiler:
   - gcc
   - clang
 
+sudo: false
+
 addons:
   apt:
     packages:
@@ -11,7 +13,7 @@ addons:
       liblapack-dev
       gromacs-dev
       openmpi
-  
+
 script:
   - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON
   - make
