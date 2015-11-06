@@ -6,7 +6,7 @@
 
 namespace ProtoMol {
   class ProtoMolApp;
-  
+
   declareInputValue(InputNumsteps, LONG, NOCONSTRAINTS)
   declareInputValue(InputFirststep, LONG, NOCONSTRAINTS)
   declareInputValue(InputRealfirststep, INT, NOCONSTRAINTS)
@@ -25,6 +25,8 @@ namespace ProtoMol {
   declareInputValue(InputDoGBSAObc, BOOL, NOCONSTRAINTS)
   declareInputValue(InputDebugLimit, INT, NOCONSTRAINTS)
   //parallel
+  declareInputValue(InputSimulationTime, STRING, NOCONSTRAINTS)
+  declareInputValue(InputOutputTime, STRING, NOCONSTRAINTS)
   declareInputValue(InputUseBarrier, BOOL, NOCONSTRAINTS)
   declareInputValue(InputParallelMode, STRING,NOTEMPTY)
   declareInputValue(InputParallelPipe, INT, NOCONSTRAINTS)
