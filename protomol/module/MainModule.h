@@ -26,6 +26,7 @@ namespace ProtoMol {
   declareInputValue(InputDebugLimit, INT, NOCONSTRAINTS)
   //parallel
   declareInputValue(InputSimulationTime, STRING, NOCONSTRAINTS)
+  declareInputValue(InputOutputTime, STRING, NOCONSTRAINTS)
   declareInputValue(InputUseBarrier, BOOL, NOCONSTRAINTS)
   declareInputValue(InputParallelMode, STRING,NOTEMPTY)
   declareInputValue(InputParallelPipe, INT, NOCONSTRAINTS)

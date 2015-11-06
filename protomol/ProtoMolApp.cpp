@@ -316,6 +316,7 @@ void ProtoMolApp::build() {
   integrator =
     integratorFactory.make(config[InputIntegrator::keyword], &forceFactory);
 
+  // Update number of steps based on a provided total simulation time
   if( config[InputSimulationTime::keyword].valid() ) {
     std::string sTime = config[InputSimulationTime::keyword];
 	std::transform(sTime.begin(), sTime.end(), sTime.begin(), ::tolower);
@@ -342,6 +343,35 @@ void ProtoMolApp::build() {
 
 	// Update number of steps
     config[InputNumsteps::keyword] = int(integrator->getTimestep() * SimTime);
+  }
+
+  // Update number of steps between outputs based on a provided output step time
+  if( config[InputOutputTime::keyword].valid() ) {
+    std::string sTime = config[InputOutputTime::keyword];
+	std::transform(sTime.begin(), sTime.end(), sTime.begin(), ::tolower);
+
+    int rTime;
+	char sUnit[2];
+    sscanf( sTime.c_str(), "%d", &rTime );
+
+	// Is it an integer
+	if( sTime[sTime.length()-2] > 47 && sTime[sTime.length()-2] < 58 ){
+		sUnit[0] = sTime[sTime.length()-1];
+	}else{
+		sUnit[0] = sTime[sTime.length()-2];
+		sUnit[1] = sTime[sTime.length()-1];
+	}
+
+    Real SimTime = 0.0f;
+    if( strncmp(sUnit, "fs", 2) == 0 ) SimTime = rTime;
+    if( strncmp(sUnit, "ps", 2) == 0 ) SimTime = rTime * 1e3;
+    if( strncmp(sUnit, "ns", 2) == 0 ) SimTime = rTime * 1e6;
+    if( strncmp(sUnit, "us", 2) == 0 ) SimTime = rTime * 1e9;
+    if( strncmp(sUnit, "ms", 2) == 0 ) SimTime = rTime * 1e12;
+    if( strncmp(sUnit, "s", 1) == 0 ) SimTime = rTime * 1e15;
+
+	// Update number of steps
+    config[InputOutputfreq::keyword] = int(integrator->getTimestep() * SimTime);
   }
 
   // Setup run parameters (used for GUI so required here)

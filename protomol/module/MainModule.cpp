@@ -32,6 +32,7 @@ defineInputValueAndText(InputMolVirialCalc, "molVirialCalc",
                         "Required for constant pressure simulations.")
 // TODO These should be in output module
 defineInputValue(InputOutputfreq,"outputfreq")
+defineInputValue(InputOutputTime, "outputtime")
 defineInputValue(InputOutput,"output")
 defineInputValueAndText(InputMinimalImage, "minimalImage",
                         "global default flag whether the coordinates should be "
@@ -67,6 +68,7 @@ void MainModule::init(ProtoMolApp *app) {
   InputDebugLimit::registerConfiguration(config, 0);
   //lel, no defaults
   InputSimulationTime::registerConfiguration(config);
+  InputOutputTime::registerConfiguration(config);
   InputUseBarrier::registerConfiguration(config);
   InputParallelPipe::registerConfiguration(config);
   InputParallelMode::registerConfiguration(config);
