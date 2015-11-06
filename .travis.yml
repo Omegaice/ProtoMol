@@ -12,7 +12,7 @@ addons:
       - libblas-dev
       - liblapack-dev
       - gromacs-dev
-      - openmpi
+      - openmpi-bin
 
 script:
   - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON
