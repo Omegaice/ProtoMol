@@ -40,6 +40,19 @@ OutputDCDTrajectory::~OutputDCDTrajectory() {
   }
 }
 
+void parsePlane( std::string &str, std::string prs, std::ostringstream &stm){
+    size_t ppos;
+    if( (ppos = str.find(prs)) != string::npos ){
+        std::istringstream istm( str.substr( ppos + prs.length(), string::npos) );
+
+        float tintg;
+        istm >> tintg;
+
+        stm << " " << tintg;
+    }else{
+        stm << " " << 0;
+    }
+}
 
 void OutputDCDTrajectory::doInitialize() {
   // Get first frame (must exist or error)
@@ -62,6 +75,65 @@ void OutputDCDTrajectory::doInitialize() {
     dCD = new DCDTrajectoryWriter(mode, frameOffset, filename);
 
   }
+
+  const int size = app->topology->bonds.size();
+
+  std::ostringstream stm;
+
+  //start bonds
+  stm << "\n<BONDS> " << size;
+
+  //add bonds
+  for( int i=0; i<size; i++ ){
+      stm << " " << app->topology->bonds[i].atom1 << " "
+      << app->topology->bonds[i].atom2;
+  }
+
+  //end bonds
+  stm << " </BONDS> ";
+
+  //start types
+  const int tsize = app->topology->atoms.size();
+
+  stm << "\n<ATOMTYPE> " << tsize;
+
+  //add types
+  for( int i=0; i<tsize; i++ ){
+      stm << " " << app->topology->atoms[i].name;
+  }
+
+  //end types
+  stm << " </ATOMTYPE> ";
+
+  //Plane data?
+
+  string intg = app->config["integrator"];
+  std::transform(intg.begin(), intg.end(), intg.begin(), ::tolower);
+
+  size_t ppos = intg.find("plane");
+
+  //exists?
+  if( ppos != string::npos ){
+
+      //get plane section of string
+      intg = intg.substr(ppos, string::npos);
+
+      stm << "\n<PLANE> ";
+
+      parsePlane( intg, (string)"sigma", stm );
+
+      parsePlane( intg, (string)"normx", stm );
+      parsePlane( intg, (string)"normy", stm );
+      parsePlane( intg, (string)"normz", stm );
+
+      parsePlane( intg, (string)"pointx", stm );
+      parsePlane( intg, (string)"pointy", stm );
+      parsePlane( intg, (string)"pointz", stm );
+
+      stm << " </PLANE> ";
+  }
+
+  dCD->setComment(stm.str());
 
   if (!dCD || !dCD->open())
     THROWS("Can not open '" << (dCD ? dCD->getFilename() : "")
@@ -144,4 +216,3 @@ bool OutputDCDTrajectory::adjustWithDefaultParameters(
 
   return checkParameters(values);
 }
-
