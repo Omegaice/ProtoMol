@@ -17,6 +17,7 @@ addons:
 
 script:
   - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON
+  - cmake -DMPI_C_LINK_FLAGS="" -DMPI_CXX_LINK_FLAGS="" 
   - make VERBOSE=1
   - make install
   - cd test
