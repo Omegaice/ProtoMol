@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 
+#include <protomol/parallel/Parallel.h>
 #include "protomol/base/Timer.h"
 #include "protomol/config/ConstraintValueType.h"
 #include "protomol/config/Parameter.h"

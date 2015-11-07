@@ -3,6 +3,7 @@
 #include <mpi.h>
 #endif
 
+#include <unistd.h>
 #include <protomol/base/MathUtilities.h>
 #include <protomol/base/Report.h>
 #include <protomol/base/SystemUtilities.h>
@@ -15,10 +16,8 @@
 #include "protomol/parallel/ParallelType.h"
 #include "protomol/type/Real.h"
 
-namespace ProtoMol {
-class ScalarStructure;
-class Vector3DBlock;
-}  // namespace ProtoMol
+#include <protomol/type/ScalarStructure.h>
+#include <protomol/type/Vector3DBlock.h>
 
 using namespace std;
 using namespace ProtoMol::Report;
@@ -88,6 +87,10 @@ static void mpiEndSerial(bool exludeMaster) {
   }
 }
 #endif
+
+//____ MPITypeTraits
+template<typename T>
+struct MPITypeTraits;
 
 #ifdef HAVE_MPI
 template<>
