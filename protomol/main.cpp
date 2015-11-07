@@ -1,9 +1,11 @@
-#include <protomol/ProtoMolApp.h>
-#include <protomol/base/ModuleManager.h>
-#include <protomol/module/MainModule.h>
-#include <protomol/base/Exception.h>
-
-#include <iostream>
+#include <protomol/ProtoMolApp.h>           // for ProtoMolApp
+#include <protomol/base/Exception.h>        // for operator<<, Exception
+#include <protomol/base/ModuleManager.h>    // for ModuleManager
+#include <protomol/module/MainModule.h>     // for InputDebug
+#include <iostream>                         // for cout, operator<<, ostream, basic_ostream, cerr, endl
+#include "protomol/base/Report.h"           // for cerr
+#include "protomol/config/Configuration.h"  // for Configuration
+#include "protomol/config/Value.h"          // for Value
 
 using namespace std;
 using namespace ProtoMol;
@@ -32,4 +34,3 @@ int main(int argc, char *argv[]) {
 
   return 1;
 }
-
