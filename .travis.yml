@@ -15,11 +15,17 @@ addons:
       - openmpi-bin
       - libopenmpi-dev
 
+before_install:
+  - pip install --user cpp-coveralls
+
 script:
-  - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON
+  - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON -DCODE_COVERAGE=ON
   - cmake -DMPI_C_LINK_FLAGS="" -DMPI_CXX_LINK_FLAGS=""
   - make
   - make install
   - cd test
   - cp $HOME/ProtoMol/bin/ProtoMol .
   - python test.py --serial --parallel --errorfailure
+
+after_success:
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
