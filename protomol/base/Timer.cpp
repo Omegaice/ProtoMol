@@ -34,7 +34,6 @@
 
 #include <protomol/base/Timer.h>
 #include <stddef.h>
-#include <sys/_types/_timeval.h>
 #include <iostream>
 
 #include "protomol/base/Report.h"
@@ -232,4 +231,3 @@ TimeRep Timer::getCurrentTime() {
 
   return TimeRep(realTime, userTime, sysTime);
 }
-
