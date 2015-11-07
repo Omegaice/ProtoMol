@@ -3,8 +3,12 @@
 #include <protomol/base/ModuleManager.h>    // for ModuleManager
 #include <protomol/module/MainModule.h>     // for InputDebug
 #include <iostream>                         // for cout, operator<<, ostream, basic_ostream, cerr, endl
+
+#include "protomol/base/Report.h"
 #include "protomol/base/Report.h"           // for cerr
+#include "protomol/config/Configuration.h"
 #include "protomol/config/Configuration.h"  // for Configuration
+#include "protomol/config/Value.h"
 #include "protomol/config/Value.h"          // for Value
 
 using namespace std;
