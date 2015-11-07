@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <fstream>
 
-#include "/Users/Omegaice/Documents/Code/ProtoMol/protomol/base/Exception.h"
+#include "protomol/base/Exception.h"
 
 #ifdef HAVE_LIBFAH
 #include <fah/checksum/overrides.h>
