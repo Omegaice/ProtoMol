@@ -7,13 +7,6 @@
 #define COMM_NNCOORD 050363
 #define NUMCONN      20
 
-#include <_types/_uint32_t.h>
-#include <_types/_uint64_t.h>
-#include <_types/_uint8_t.h>
-#include <sys/_pthread/_pthread_mutex_t.h>
-#include <sys/_pthread/_pthread_t.h>
-#include <sys/_types/_fd_def.h>
-#include <sys/_types/_int64_t.h>
 #include <sys/types.h>
 
 #include "stdtypes.h"

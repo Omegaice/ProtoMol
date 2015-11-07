@@ -5,11 +5,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/_endian.h>
-#include <sys/_select.h>
-#include <sys/_types/_fd_isset.h>
-#include <sys/_types/_fd_set.h>
-#include <sys/_types/_fd_zero.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <time.h>
