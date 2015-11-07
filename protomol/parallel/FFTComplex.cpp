@@ -41,8 +41,6 @@ extern "C" {
 #  endif
 #endif
 
-using namespace ProtoMol::Report;
-
 namespace ProtoMol {
 
   //
