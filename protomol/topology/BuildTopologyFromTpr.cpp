@@ -11,14 +11,6 @@
 #include <iostream>
 #include <vector>
 
-#include "gromacs/types/atoms.h"
-#include "gromacs/types/block.h"
-#include "gromacs/types/idef.h"
-#include "gromacs/types/ifunc.h"
-#include "gromacs/types/inputrec.h"
-#include "gromacs/types/simple.h"
-#include "gromacs/types/state.h"
-#include "gromacs/types/topology.h"
 #include "protomol/base/MathUtilities.h"
 #include "protomol/base/PMConstants.h"
 #include "protomol/base/Report.h"
