@@ -28,4 +28,4 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - coveralls --gcov-options '\-lp' --b .. -r ..
+  - coveralls --gcov-options '\-lp' --b .. -r .. &> cover.log
