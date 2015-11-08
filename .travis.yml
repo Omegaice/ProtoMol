@@ -13,8 +13,6 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - clang-3.8
-      - gcc-4.8
-      - lcov
       - libblas-dev
       - liblapack-dev
       - gromacs-dev
@@ -23,6 +21,7 @@ addons:
 
 before_install:
   - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.8" CC="clang-3.8"; fi
+  - pip install codecov
 
 script:
   - mkdir build
@@ -31,14 +30,10 @@ script:
   - cmake -DMPI_C_LINK_FLAGS="" -DMPI_CXX_LINK_FLAGS="" ..
   - make
   - make install
-  - lcov --directory . --zerocounters
   - cd ../test
   - cp $HOME/ProtoMol/bin/ProtoMol .
   - python test.py --serial --parallel --errorfailure
 
 after_success:
   - cd ..
-  - lcov --gcov-tool /usr/bin/gcov-4.8 -q --list-full-path --directory build --capture --output-file coverage.info
-  - lcov --gcov-tool /usr/bin/gcov-4.8 -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
-  - npm install coveralls
-  - cat coverage.info.clean | ./node_modules/coveralls/bin/coveralls.js
+  - codecov
