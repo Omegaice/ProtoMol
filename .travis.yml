@@ -33,4 +33,5 @@ script:
 
 after_success:
   - find /home/travis/build/Omegaice/ProtoMol -type f -name '*.gcno'
+  - find /home/travis/build/Omegaice/ProtoMol -type f -name '*.gcno' -exec gcov -pb {} +
   - bash <(curl -s https://codecov.io/bash)
