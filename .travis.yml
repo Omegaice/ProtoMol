@@ -24,16 +24,13 @@ before_install:
   - pip install --user codecov
 
 script:
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON -DCODE_COVERAGE=ON ..
-  - cmake -DMPI_C_LINK_FLAGS="" -DMPI_CXX_LINK_FLAGS="" ..
+  - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON -DCODE_COVERAGE=ON
+  - cmake -DMPI_C_LINK_FLAGS="" -DMPI_CXX_LINK_FLAGS=""
   - make
   - make install
-  - cd ../test
+  - cd test
   - cp $HOME/ProtoMol/bin/ProtoMol .
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - cd ../build
   - codecov
