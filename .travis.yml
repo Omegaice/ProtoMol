@@ -28,4 +28,5 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - coveralls --gcov-options '\-lp' --b ../build -r ..
+  - echo $PWD
+  - coveralls --gcov-options '\-lp' --dryrun
