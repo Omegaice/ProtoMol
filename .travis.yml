@@ -28,4 +28,4 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+  - coveralls --gcov-options '\-lp' --b ../build -r ..
