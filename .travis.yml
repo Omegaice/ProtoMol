@@ -9,6 +9,7 @@ sudo: false
 addons:
   apt:
     packages:
+      - lcov
       - libblas-dev
       - liblapack-dev
       - gromacs-dev
@@ -16,16 +17,19 @@ addons:
       - libopenmpi-dev
 
 before_install:
-  - pip install --user cpp-coveralls
+  - gem install lcoveralls
 
 script:
   - cmake -DCMAKE_INSTALL_PREFIX=$HOME/ProtoMol -DBUILD_LAPACK_TYPE=lapack -DBUILD_GROMACS=ON -DBUILD_PARALLEL=ON -DCODE_COVERAGE=ON
   - cmake -DMPI_C_LINK_FLAGS="" -DMPI_CXX_LINK_FLAGS=""
   - make
   - make install
+  - lcov --directory . --zerocounters
   - cd test
   - cp $HOME/ProtoMol/bin/ProtoMol .
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - coveralls --gcov-options '\-lp' --b .. -r .. &> cover.log
+  - lcov --directory .. --capture --output-file coverage.info
+  - lcov --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
+  - lcoveralls
