@@ -16,9 +16,6 @@ addons:
       - openmpi-bin
       - libopenmpi-dev
 
-before_install:
-  - gem install lcoveralls
-
 script:
   - mkdir build
   - cd build
@@ -35,4 +32,5 @@ after_success:
   - cd ..
   - lcov -q --list-full-path --directory build --capture --output-file coverage.info
   - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
-  - lcoveralls -q --root build
+  - npm install coveralls
+  - cat coverage.info.clean | ./node_modules/coveralls/bin/coveralls.js
