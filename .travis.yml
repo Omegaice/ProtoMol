@@ -35,5 +35,5 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - cd ..
-  - codecov --gcov-args '\-lp' 
+  - cd ../build
+  - codecov
