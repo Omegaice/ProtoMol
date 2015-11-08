@@ -13,6 +13,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - clang-3.8
+      - gcc-4.8
       - lcov
       - libblas-dev
       - liblapack-dev
@@ -37,7 +38,7 @@ script:
 
 after_success:
   - cd ..
-  - lcov -q --list-full-path --directory build --capture --output-file coverage.info
-  - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
+  - lcov --gcov-tool /usr/bin/gcov-4.8 -q --list-full-path --directory build --capture --output-file coverage.info
+  - lcov --gcov-tool /usr/bin/gcov-4.8 -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
   - npm install coveralls
   - cat coverage.info.clean | ./node_modules/coveralls/bin/coveralls.js
