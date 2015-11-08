@@ -36,4 +36,4 @@ script:
 
 after_success:
   - cd ..
-  - codecov --gcov-args '\-lp'
+  - codecov --gcov-args '\-lp' 
