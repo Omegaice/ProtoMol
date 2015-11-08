@@ -35,4 +35,4 @@ after_success:
   - cd ..
   - lcov -q --list-full-path --directory build --capture --output-file coverage.info
   - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
-  - lcoveralls -q
+  - lcoveralls -q --root build
