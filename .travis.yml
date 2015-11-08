@@ -32,5 +32,5 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - find /home/travis/build/Omegaice/ProtoMol -type f -name '*.gcno' -exec echo gcov -pb {} +
+  - find /home/travis/build/Omegaice/ProtoMol -type f -name '*.gcno' -exec echo gcov -pb {} \;
   - bash <(curl -s https://codecov.io/bash)
