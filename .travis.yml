@@ -30,6 +30,6 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - lcov -q --directory .. --capture --output-file coverage.info
-  - lcov -q --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
+  - lcov -q --list-full-path --directory .. --capture --output-file coverage.info
+  - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
   - lcoveralls --root $TRAVIS_BUILD_DIR
