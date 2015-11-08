@@ -30,6 +30,6 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - lcov -q --list-full-path --directory .. --capture --output-file coverage.info
-  - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
+  - lcov -q --list-full-path --directory .. --capture --output-file coverage.info &> /tmp/capture.log
+  - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean &> /tmp/clean.log
   - lcoveralls -q --root ..
