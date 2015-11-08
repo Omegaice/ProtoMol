@@ -32,7 +32,7 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - cd ../build
-  - lcov -q --list-full-path --capture --output-file coverage.info &> /tmp/capture.log
+  - cd ..
+  - lcov -q --list-full-path --directory build --capture --output-file coverage.info
   - lcov -q --list-full-path --remove coverage.info '/usr/*' '*OpenMM/include*' --output-file coverage.info.clean
   - lcoveralls -q
