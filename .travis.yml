@@ -21,6 +21,7 @@ addons:
       - libopenmpi-dev
 
 before_install:
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
   - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.8" CC="clang-3.8"; fi
 
 script:
@@ -33,4 +34,4 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -p $PWD -x /usr/bin/gcov-4.8
+  - bash <(curl -s https://raw.githubusercontent.com/Omegaice/codecov-bash/master/codecov)
