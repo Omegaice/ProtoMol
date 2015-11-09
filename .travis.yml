@@ -12,7 +12,7 @@ addons:
       - llvm-toolchain-precise
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-4.8
+      - g++-4.8
       - clang-3.8
       - libblas-dev
       - liblapack-dev
@@ -34,4 +34,4 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - bash <(curl -s https://raw.githubusercontent.com/Omegaice/codecov-bash/master/codecov)
+  - bash <(curl -s https://raw.githubusercontent.com/Omegaice/codecov-bash/travis_ci_fix/codecov)
