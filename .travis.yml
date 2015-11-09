@@ -12,6 +12,7 @@ addons:
       - llvm-toolchain-precise
       - ubuntu-toolchain-r-test
     packages:
+      - gcc-4.8
       - clang-3.8
       - libblas-dev
       - liblapack-dev
@@ -32,5 +33,4 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - find /home/travis/build/Omegaice/ProtoMol -type f -name '*.gcno' -exec echo gcov -pb {} \;
-  - bash <(curl -s https://codecov.io/bash) -v
+  - bash <(curl -s https://codecov.io/bash) -p $PWD -x /usr/bin/gcov-4.8
