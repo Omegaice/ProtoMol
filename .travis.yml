@@ -34,4 +34,5 @@ script:
   - python test.py --serial --parallel --errorfailure
 
 after_success:
-  - bash <(curl -s https://raw.githubusercontent.com/Omegaice/codecov-bash/travis_ci_fix/codecov)
+  - if [ "$CXX" = "g++" ]; bash <(curl -s https://raw.githubusercontent.com/Omegaice/codecov-bash/travis_ci_fix/codecov) -x /usr/bin/gcov-4.8
+  - if [ "$CXX" = "clang++" ]; bash <(curl -s https://raw.githubusercontent.com/Omegaice/codecov-bash/travis_ci_fix/codecov)
